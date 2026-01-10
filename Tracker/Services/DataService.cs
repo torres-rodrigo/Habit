@@ -117,10 +117,16 @@ namespace Tracker.Services
             _tasks.Add(task1);
             _tasks.Add(task2);
 
-            // Set parent task IDs for subtasks
-            foreach (var subTask in task1.SubTasks)
+            // Set parent task references for subtasks
+            SetSubTaskParentReferences(task1);
+        }
+
+        private void SetSubTaskParentReferences(TodoTask task)
+        {
+            foreach (var subTask in task.SubTasks)
             {
-                subTask.ParentTaskId = task1.Id;
+                subTask.ParentTaskId = task.Id;
+                subTask.SetParentTask(task);
             }
         }
 
@@ -192,9 +198,25 @@ namespace Tracker.Services
         }
 
         // Task methods
-        public List<TodoTask> GetAllTasks() => _tasks.OrderBy(t => t.DisplayOrder).ToList();
+        public List<TodoTask> GetAllTasks()
+        {
+            var tasks = _tasks.OrderBy(t => t.DisplayOrder).ToList();
+            foreach (var task in tasks)
+            {
+                SetSubTaskParentReferences(task);
+            }
+            return tasks;
+        }
 
-        public TodoTask? GetTaskById(Guid id) => _tasks.FirstOrDefault(t => t.Id == id);
+        public TodoTask? GetTaskById(Guid id)
+        {
+            var task = _tasks.FirstOrDefault(t => t.Id == id);
+            if (task != null)
+            {
+                SetSubTaskParentReferences(task);
+            }
+            return task;
+        }
 
         public void SaveTask(TodoTask task)
         {
@@ -207,6 +229,10 @@ namespace Tracker.Services
             {
                 task.DisplayOrder = _tasks.Count;
             }
+            
+            // Set parent references for all subtasks
+            SetSubTaskParentReferences(task);
+            
             _tasks.Add(task);
         }
 

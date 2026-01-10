@@ -120,6 +120,22 @@
                                                         </DataTemplate>
                                                     </CollectionView.ItemTemplate>
                                                 </CollectionView>
+                                                
+                                                <!-- Subtask Progress -->
+                                                <Label FontSize="12"
+                                                       TextColor="{StaticResource Gray500}"
+                                                       Margin="0,5,0,0">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding CompletedSubTasksCount}"/>
+                                                            <Span Text="/"/>
+                                                            <Span Text="{Binding TotalSubTasksCount}"/>
+                                                            <Span Text=" ("/>
+                                                            <Span Text="{Binding SubTaskCompletionPercentage}"/>
+                                                            <Span Text="%)"/>
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
                                             </VerticalStackLayout>
                                         </VerticalStackLayout>
 
@@ -214,6 +230,45 @@
                                             <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy}'}"
                                                    FontSize="12"
                                                    TextColor="{StaticResource Gray500}"/>
+                                            
+                                            <!-- Subtasks for Completed Tasks -->
+                                            <VerticalStackLayout Spacing="5" 
+                                                               IsVisible="{Binding SubTasks.Count, Converter={StaticResource CountToBoolConverter}}"
+                                                               Margin="0,5,0,0">
+                                                <CollectionView ItemsSource="{Binding SubTasks}" SelectionMode="None">
+                                                    <CollectionView.ItemTemplate>
+                                                        <DataTemplate x:DataType="models:SubTask">
+                                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5" Margin="0,2">
+                                                                <CheckBox Grid.Column="0" 
+                                                                        IsChecked="{Binding IsCompleted}"
+                                                                        Color="{StaticResource Secondary}"
+                                                                        IsEnabled="False"/>
+                                                                <Label Grid.Column="1" 
+                                                                     Text="{Binding Name}"
+                                                                     FontSize="13"
+                                                                     TextColor="{StaticResource Gray500}"
+                                                                     VerticalOptions="Center"
+                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </CollectionView.ItemTemplate>
+                                                </CollectionView>
+                                                
+                                                <!-- Subtask Progress -->
+                                                <Label FontSize="12"
+                                                       TextColor="{StaticResource Gray500}">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding CompletedSubTasksCount}"/>
+                                                            <Span Text="/"/>
+                                                            <Span Text="{Binding TotalSubTasksCount}"/>
+                                                            <Span Text=" ("/>
+                                                            <Span Text="{Binding SubTaskCompletionPercentage}"/>
+                                                            <Span Text="%)"/>
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+                                            </VerticalStackLayout>
                                         </VerticalStackLayout>
                                     </Grid>
                                 </Frame>
