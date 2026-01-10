@@ -473,3 +473,7 @@ If screen size allows it have the big list of subtaks be displayed side by side
 For sub tasks touching the text or the checkbox should have the same effect
 
 add timestamps of completion time can be an option
+
+order for tasks completed show be most recently completed to the top
+
+MAGIC 8 ball program 
