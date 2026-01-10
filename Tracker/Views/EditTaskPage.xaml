@@ -61,7 +61,7 @@
                 
                 <CollectionView ItemsSource="{Binding Subtasks}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="viewmodels:SubtaskItem">
                             <Grid ColumnDefinitions="*,Auto" Margin="0,5">
                                 <Entry Grid.Column="0" 
                                        Text="{Binding Name}"

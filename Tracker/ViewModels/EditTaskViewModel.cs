@@ -174,9 +174,27 @@ public class EditTaskViewModel : BaseViewModel
     }
 }
 
-public class SubtaskItem
+public class SubtaskItem : BaseViewModel
 {
-    public Guid? Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public bool IsCompleted { get; set; }
+    private Guid? _id;
+    private string _name = string.Empty;
+    private bool _isCompleted;
+
+    public Guid? Id
+    {
+        get => _id;
+        set => SetProperty(ref _id, value);
+    }
+
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public bool IsCompleted
+    {
+        get => _isCompleted;
+        set => SetProperty(ref _isCompleted, value);
+    }
 }
