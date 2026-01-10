@@ -424,8 +424,6 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-PUT THIS IN A REPO!!!
-
 Once it is in a repo ask ai to remove warnings, do performance improvements do code clean up.
 
 Notifications/reminders
@@ -434,7 +432,6 @@ Show priority and dead line on task card
 Move tab selection to bottom and center
 Have tab sections be collapsable
 On the statisctics tab have a filter for all time, and current year
-Fix the colorscheme from the task editor/creator to match the habit creator/editor colorscheme
 
 Add way to add note for the current day in the card for the habit
 it should have a revert to revert to the way the card was pre save
@@ -462,3 +459,17 @@ Filters
   Out of date comment for taks
 
 Make the Plus button "hover"
+
+Add toggle in task creation for auto complete task if all subtasks are completed
+slightly reduce the size of the subtask checkbox
+reducing spacing between sub task check box and text
+reduce spacing between subtasks
+put a limit to the lenght of the name of a subtask
+Have a maximum of 5 or seven subtasks that display if more scorll
+When there is enough subtasks to scroll then completing a subtasks sends it to the bottom so incomplete sub tasks
+show up first
+display the number of sub tasks completed x/y and the percentage
+If screen size allows it have the big list of subtaks be displayed side by side
+For sub tasks touching the text or the checkbox should have the same effect
+
+add timestamps of completion time can be an option
