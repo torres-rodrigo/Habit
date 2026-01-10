@@ -428,7 +428,6 @@ Once it is in a repo ask ai to remove warnings, do performance improvements do c
 
 Notifications/reminders
 
-Show priority and dead line on task card
 Move tab selection to bottom and center
 Have tab sections be collapsable
 On the statisctics tab have a filter for all time, and current year
@@ -457,8 +456,6 @@ Filters
   Are you sure you want to edit a completed task
 
   Out of date comment for taks
-
-Make the Plus button "hover"
 
 Add toggle in task creation for auto complete task if all subtasks are completed
 slightly reduce the size of the subtask checkbox

@@ -7,8 +7,8 @@
              x:DataType="viewmodels:TaskViewModel"
              Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView Grid.Row="0">
+    <Grid>
+        <ScrollView>
             <VerticalStackLayout Padding="20" Spacing="20">
                 
                 <!-- Priority Filter -->
@@ -225,8 +225,7 @@
         </ScrollView>
 
         <!-- Floating Action Button -->
-        <Button Grid.Row="1"
-                Text="+"
+        <Button Text="+"
                 FontSize="30"
                 WidthRequest="60"
                 HeightRequest="60"
@@ -239,8 +238,7 @@
                 Command="{Binding AddTaskCommand}"/>
 
         <!-- Popup Overlay -->
-        <Grid Grid.RowSpan="2"
-              IsVisible="{Binding ShowOverlay}"
+        <Grid IsVisible="{Binding ShowOverlay}"
               BackgroundColor="Transparent">
             <!-- Background overlay -->
             <BoxView BackgroundColor="#40000000"
