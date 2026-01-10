@@ -131,4 +131,60 @@ namespace Tracker.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class PriorityToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var priority = value as string;
+            return !string.IsNullOrEmpty(priority) && priority != "None";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class PriorityToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var priority = value as string;
+            return priority switch
+            {
+                "Low" => Color.FromArgb("#39FF14"),      // Fluorescent green
+                "Medium" => Color.FromArgb("#FF8C00"),   // Bright orange
+                "High" => Color.FromArgb("#FF0000"),     // Bright red
+                _ => Colors.Transparent
+            };
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class PriorityToShapeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var priority = value as string;
+            var targetShape = parameter as string;
+            
+            return priority switch
+            {
+                "Low" => targetShape == "Circle",
+                "Medium" => targetShape == "Hexagon",
+                "High" => targetShape == "Triangle",
+                _ => false
+            };
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

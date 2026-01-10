@@ -452,3 +452,13 @@ Filters
 
 - Tasks should have an all time, current year, current month, current week, current day
   (this is to see what you completed in this time)
+  Seperate priority filter
+  Creation date
+  Due date
+
+  Clicking a completed task should ask the user if they are sure they want to mark it as incomplete
+  Are you sure you want to edit a completed task
+
+  Out of date comment for taks
+
+Make the Plus button "hover"

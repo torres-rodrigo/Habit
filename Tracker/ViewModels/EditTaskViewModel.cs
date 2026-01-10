@@ -14,7 +14,7 @@ public class EditTaskViewModel : BaseViewModel
     private string _description = string.Empty;
     private bool _hasDueDate;
     private DateTime _dueDate = DateTime.Today.AddDays(7);
-    private string _selectedPriority = "Normal";
+    private string _selectedPriority = "None";
 
     public string? TaskId
     {
@@ -57,7 +57,7 @@ public class EditTaskViewModel : BaseViewModel
         set => SetProperty(ref _selectedPriority, value);
     }
 
-    public ObservableCollection<string> Priorities { get; } = new() { "Low", "Normal", "High" };
+    public ObservableCollection<string> Priorities { get; } = new() { "None", "● Low", "⬡ Medium", "▼ High" };
     public ObservableCollection<SubtaskItem> Subtasks { get; } = new();
 
     public ICommand AddSubtaskCommand { get; }
@@ -92,7 +92,7 @@ public class EditTaskViewModel : BaseViewModel
             Description = task.Description ?? string.Empty;
             HasDueDate = task.DueDate.HasValue;
             DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
-            SelectedPriority = task.Priority ?? "Normal";
+            SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
 
             Subtasks.Clear();
             foreach (var subtask in task.SubTasks)
@@ -153,7 +153,7 @@ public class EditTaskViewModel : BaseViewModel
             Name = TaskName,
             Description = string.IsNullOrWhiteSpace(Description) ? string.Empty : Description,
             DueDate = HasDueDate ? DueDate : null,
-            Priority = SelectedPriority,
+            Priority = ExtractPriorityName(SelectedPriority),
             CreatedDate = existingTask?.CreatedDate ?? DateTime.Now,
             IsCompleted = existingTask?.IsCompleted ?? false,
             CompletedDate = existingTask?.CompletedDate,
@@ -171,6 +171,25 @@ public class EditTaskViewModel : BaseViewModel
     private async Task Cancel()
     {
         await Shell.Current.GoToAsync("..");
+    }
+
+    private string ExtractPriorityName(string displayPriority)
+    {
+        if (string.IsNullOrEmpty(displayPriority)) return "None";
+        
+        // Remove symbols: ●, ⬡, ▼ and trim
+        return displayPriority.Replace("●", "").Replace("⬡", "").Replace("▼", "").Trim();
+    }
+
+    private string FormatPriorityForDisplay(string priority)
+    {
+        return priority switch
+        {
+            "Low" => "● Low",
+            "Medium" => "⬡ Medium",
+            "High" => "▼ High",
+            _ => "None"
+        };
     }
 }
 

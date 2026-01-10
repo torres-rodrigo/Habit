@@ -10,9 +10,23 @@ namespace Tracker.ViewModels
     public class TaskViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private PriorityOption _selectedPriorityFilter;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
+        public ObservableCollection<PriorityOption> PriorityFilterOptions { get; set; }
+
+        public PriorityOption SelectedPriorityFilter
+        {
+            get => _selectedPriorityFilter;
+            set
+            {
+                if (SetProperty(ref _selectedPriorityFilter, value))
+                {
+                    ApplyPriorityFilter();
+                }
+            }
+        }
 
         public ICommand AddTaskCommand { get; }
         public ICommand EditTaskCommand { get; }
@@ -25,6 +39,15 @@ namespace Tracker.ViewModels
             _dataService = dataService;
             PendingTasks = new ObservableCollection<TodoTask>();
             CompletedTasks = new ObservableCollection<TodoTask>();
+            PriorityFilterOptions = new ObservableCollection<PriorityOption> 
+            { 
+                new PriorityOption { Name = "ALL", DisplayName = "ALL" },
+                new PriorityOption { Name = "None", DisplayName = "None" },
+                new PriorityOption { Name = "Low", DisplayName = "● Low" },
+                new PriorityOption { Name = "Medium", DisplayName = "⬡ Medium" },
+                new PriorityOption { Name = "High", DisplayName = "▼ High" }
+            };
+            _selectedPriorityFilter = PriorityFilterOptions[0];
 
             AddTaskCommand = new Command(OnAddTask);
             EditTaskCommand = new Command<Guid>(OnEditTask);
@@ -47,6 +70,29 @@ namespace Tracker.ViewModels
                     CompletedTasks.Add(task);
                 else
                     PendingTasks.Add(task);
+            }
+            
+            ApplyPriorityFilter();
+        }
+
+        private void ApplyPriorityFilter()
+        {
+            if (SelectedPriorityFilter?.Name == "ALL" || SelectedPriorityFilter?.Name == "None")
+            {
+                // No filtering, show all tasks
+                return;
+            }
+
+            // Filter pending tasks by priority
+            var allTasks = _dataService.GetAllTasks();
+            var filteredPendingTasks = allTasks
+                .Where(t => !t.IsCompleted && t.Priority == SelectedPriorityFilter?.Name)
+                .ToList();
+
+            PendingTasks.Clear();
+            foreach (var task in filteredPendingTasks)
+            {
+                PendingTasks.Add(task);
             }
         }
 

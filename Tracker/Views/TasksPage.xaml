@@ -11,12 +11,23 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="20">
                 
-                <!-- To-Do Section -->
+                <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="To-Do" 
+                    <Label Text="TODO" 
                            FontSize="22" 
                            FontAttributes="Bold"
                            TextColor="{StaticResource Primary}"/>
+                    
+                    <!-- Priority Filter -->
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Priority ⚡" 
+                               VerticalOptions="Center"
+                               FontSize="14"/>
+                        <Picker ItemsSource="{Binding PriorityFilterOptions}"
+                                SelectedItem="{Binding SelectedPriorityFilter}"
+                                ItemDisplayBinding="{Binding DisplayName}"
+                                WidthRequest="150"/>
+                    </HorizontalStackLayout>
 
                     <CollectionView ItemsSource="{Binding PendingTasks}" SelectionMode="None">
                         <CollectionView.ItemsLayout>
@@ -34,30 +45,55 @@
                                                             CommandParameter="{Binding Id}"/>
                                     </Frame.GestureRecognizers>
                                     
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                        <!-- Checkbox -->
-                                        <Frame Grid.Column="0"
-                                               CornerRadius="15"
-                                               WidthRequest="30"
-                                               HeightRequest="30"
-                                               Padding="0"
-                                               BorderColor="{StaticResource Primary}"
-                                               BackgroundColor="White"
-                                               HasShadow="False">
-                                            <Frame.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
-                                                                    CommandParameter="{Binding Id}"/>
-                                            </Frame.GestureRecognizers>
-                                        </Frame>
-
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                         <!-- Task Content -->
-                                        <VerticalStackLayout Grid.Column="1" Spacing="5">
-                                            <Label Text="{Binding Name}" 
-                                                   FontSize="16" 
-                                                   FontAttributes="Bold"/>
+                                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                            <HorizontalStackLayout Spacing="8">
+                                                <!-- Square Checkbox -->
+                                                <Frame CornerRadius="5"
+                                                       WidthRequest="20"
+                                                       HeightRequest="20"
+                                                       Padding="0"
+                                                       BorderColor="{StaticResource Primary}"
+                                                       BackgroundColor="White"
+                                                       HasShadow="False"
+                                                       VerticalOptions="Center">
+                                                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
+                                                                            CommandParameter="{Binding Id}"/>
+                                                    </Frame.GestureRecognizers>
+                                                </Frame>
+                                                
+                                                <!-- Priority Icon -->
+                                                <Grid WidthRequest="12" HeightRequest="12" VerticalOptions="Center"
+                                                      IsVisible="{Binding Priority, Converter={StaticResource PriorityToVisibilityConverter}}">
+                                                    <!-- Circle for Low -->
+                                                    <Ellipse Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             WidthRequest="12"
+                                                             HeightRequest="12"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Circle}"/>
+                                                    
+                                                    <!-- Hexagon for Medium -->
+                                                    <Polygon Points="6,0 12,3 12,9 6,12 0,9 0,3"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Hexagon}"/>
+                                                    
+                                                    <!-- Inverted Triangle for High -->
+                                                    <Polygon Points="6,12 0,0 12,0"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Triangle}"/>
+                                                </Grid>
+                                                
+                                                <Label Text="{Binding Name}" 
+                                                       FontSize="16" 
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
                                             <Label Text="{Binding Description}" 
                                                    FontSize="14"
                                                    TextColor="{StaticResource Gray600}"
+                                                   MaxLines="5"
+                                                   LineBreakMode="TailTruncation"
                                                    IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
                                             <Label Text="{Binding DueDate, StringFormat='Due: {0:MMM dd, yyyy}'}"
                                                    FontSize="12"
@@ -88,7 +124,7 @@
                                         </VerticalStackLayout>
 
                                         <!-- Arrow Icon -->
-                                        <Label Grid.Column="2" 
+                                        <Label Grid.Column="1" 
                                                Text="›" 
                                                FontSize="24"
                                                TextColor="{StaticResource Gray400}"
@@ -147,11 +183,34 @@
 
                                         <!-- Task Content -->
                                         <VerticalStackLayout Grid.Column="1" Spacing="5">
-                                            <Label Text="{Binding Name}" 
-                                                   FontSize="16" 
-                                                   FontAttributes="Bold"
-                                                   TextDecorations="Strikethrough"
-                                                   TextColor="{StaticResource Gray600}"/>
+                                            <HorizontalStackLayout Spacing="8">
+                                                <!-- Priority Icon -->
+                                                <Grid WidthRequest="12" HeightRequest="12" VerticalOptions="Center"
+                                                      IsVisible="{Binding Priority, Converter={StaticResource PriorityToVisibilityConverter}}">
+                                                    <!-- Circle for Low -->
+                                                    <Ellipse Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             WidthRequest="12"
+                                                             HeightRequest="12"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Circle}"/>
+                                                    
+                                                    <!-- Hexagon for Medium -->
+                                                    <Polygon Points="6,0 12,3 12,9 6,12 0,9 0,3"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Hexagon}"/>
+                                                    
+                                                    <!-- Inverted Triangle for High -->
+                                                    <Polygon Points="6,12 0,0 12,0"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Triangle}"/>
+                                                </Grid>
+                                                
+                                                <Label Text="{Binding Name}" 
+                                                       FontSize="16" 
+                                                       FontAttributes="Bold"
+                                                       TextDecorations="Strikethrough"
+                                                       TextColor="{StaticResource Gray600}"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
                                             <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy}'}"
                                                    FontSize="12"
                                                    TextColor="{StaticResource Gray500}"/>

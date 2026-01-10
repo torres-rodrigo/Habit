@@ -19,6 +19,9 @@
             <converters:BoolToTextDecorationConverter x:Key="BoolToTextDecorationConverter" />
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <converters:PriorityToVisibilityConverter x:Key="PriorityToVisibilityConverter" />
+            <converters:PriorityToColorConverter x:Key="PriorityToColorConverter" />
+            <converters:PriorityToShapeConverter x:Key="PriorityToShapeConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
