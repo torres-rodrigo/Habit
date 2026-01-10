@@ -85,8 +85,7 @@
                                                                FontSize="12" 
                                                                HorizontalOptions="Center"
                                                                VerticalOptions="End"
-                                                               TextColor="{StaticResource Gray600}"
-                                                               Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"/>
+                                                               TextColor="{StaticResource Gray600}"/>
                                                     </Grid>
                                                     <Frame CornerRadius="20" 
                                                            WidthRequest="40" 
