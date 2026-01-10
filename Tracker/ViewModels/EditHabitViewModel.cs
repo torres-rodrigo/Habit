@@ -101,13 +101,13 @@ namespace Tracker.ViewModels
 
             DaysOfWeek = new ObservableCollection<DayOfWeekItem>
             {
-                new DayOfWeekItem { Day = DayOfWeek.Monday, Name = "Monday" },
-                new DayOfWeekItem { Day = DayOfWeek.Tuesday, Name = "Tuesday" },
-                new DayOfWeekItem { Day = DayOfWeek.Wednesday, Name = "Wednesday" },
-                new DayOfWeekItem { Day = DayOfWeek.Thursday, Name = "Thursday" },
-                new DayOfWeekItem { Day = DayOfWeek.Friday, Name = "Friday" },
-                new DayOfWeekItem { Day = DayOfWeek.Saturday, Name = "Saturday" },
-                new DayOfWeekItem { Day = DayOfWeek.Sunday, Name = "Sunday" }
+                new() { Day = DayOfWeek.Monday, Name = "Monday" },
+                new() { Day = DayOfWeek.Tuesday, Name = "Tuesday" },
+                new() { Day = DayOfWeek.Wednesday, Name = "Wednesday" },
+                new() { Day = DayOfWeek.Thursday, Name = "Thursday" },
+                new() { Day = DayOfWeek.Friday, Name = "Friday" },
+                new() { Day = DayOfWeek.Saturday, Name = "Saturday" },
+                new() { Day = DayOfWeek.Sunday, Name = "Sunday" }
             };
 
             SaveCommand = new Command(OnSave);
@@ -139,8 +139,7 @@ namespace Tracker.ViewModels
 
         private async void OnSave()
         {
-            var habit = _habitId == Guid.Empty ? new Habit() : _dataService.GetHabitById(_habitId);
-            if (habit == null) return;
+            var habit = _habitId == Guid.Empty ? new Habit() : _dataService.GetHabitById(_habitId) ?? new Habit();
 
             habit.Name = Name;
             habit.Description = Description;
@@ -151,12 +150,9 @@ namespace Tracker.ViewModels
             habit.NotesEnabled = NotesEnabled;
 
             habit.TrackingDays.Clear();
-            foreach (var item in DaysOfWeek)
+            foreach (var item in DaysOfWeek.Where(d => d.IsSelected))
             {
-                if (item.IsSelected)
-                {
-                    habit.TrackingDays.Add(item.Day);
-                }
+                habit.TrackingDays.Add(item.Day);
             }
 
             _dataService.SaveHabit(habit);

@@ -9,7 +9,7 @@ namespace Tracker.Services
     {
         // Habits
         List<Habit> GetAllHabits();
-        Habit GetHabitById(Guid id);
+        Habit? GetHabitById(Guid id);
         void SaveHabit(Habit habit);
         void DeleteHabit(Guid id);
         void UpdateHabitOrder(List<Habit> habits);
@@ -18,7 +18,7 @@ namespace Tracker.Services
         
         // Tasks
         List<TodoTask> GetAllTasks();
-        TodoTask GetTaskById(Guid id);
+        TodoTask? GetTaskById(Guid id);
         void SaveTask(TodoTask task);
         void DeleteTask(Guid id);
         void UpdateTaskOrder(List<TodoTask> tasks);
@@ -26,20 +26,20 @@ namespace Tracker.Services
         void ToggleSubTaskCompletion(Guid taskId, Guid subTaskId);
         
         // Statistics
-        HabitStatistics GetHabitStatistics(Guid habitId);
+        HabitStatistics? GetHabitStatistics(Guid habitId);
         List<HabitStatistics> GetAllHabitStatistics();
         TaskStatistics GetTaskStatistics();
     }
 
     public class DataService : IDataService
     {
-        private List<Habit> _habits;
-        private List<TodoTask> _tasks;
+        private readonly List<Habit> _habits;
+        private readonly List<TodoTask> _tasks;
 
         public DataService()
         {
-            _habits = new List<Habit>();
-            _tasks = new List<TodoTask>();
+            _habits = new();
+            _tasks = new();
             LoadSampleData();
         }
 
@@ -127,7 +127,7 @@ namespace Tracker.Services
         // Habit methods
         public List<Habit> GetAllHabits() => _habits.OrderBy(h => h.DisplayOrder).ToList();
 
-        public Habit GetHabitById(Guid id) => _habits.FirstOrDefault(h => h.Id == id);
+        public Habit? GetHabitById(Guid id) => _habits.FirstOrDefault(h => h.Id == id);
 
         public void SaveHabit(Habit habit)
         {
@@ -194,7 +194,7 @@ namespace Tracker.Services
         // Task methods
         public List<TodoTask> GetAllTasks() => _tasks.OrderBy(t => t.DisplayOrder).ToList();
 
-        public TodoTask GetTaskById(Guid id) => _tasks.FirstOrDefault(t => t.Id == id);
+        public TodoTask? GetTaskById(Guid id) => _tasks.FirstOrDefault(t => t.Id == id);
 
         public void SaveTask(TodoTask task)
         {
@@ -256,7 +256,7 @@ namespace Tracker.Services
         }
 
         // Statistics methods
-        public HabitStatistics GetHabitStatistics(Guid habitId)
+        public HabitStatistics? GetHabitStatistics(Guid habitId)
         {
             var habit = GetHabitById(habitId);
             if (habit == null) return null;
@@ -303,9 +303,11 @@ namespace Tracker.Services
 
         public List<HabitStatistics> GetAllHabitStatistics()
         {
-            return _habits.OrderBy(h => h.DisplayOrder)
+            return _habits
+                .OrderBy(h => h.DisplayOrder)
                 .Select(h => GetHabitStatistics(h.Id))
                 .Where(s => s != null)
+                .Cast<HabitStatistics>()
                 .ToList();
         }
 

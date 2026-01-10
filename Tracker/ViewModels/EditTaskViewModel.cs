@@ -173,7 +173,7 @@ public class EditTaskViewModel : BaseViewModel
         await Shell.Current.GoToAsync("..");
     }
 
-    private string ExtractPriorityName(string displayPriority)
+    private static string ExtractPriorityName(string displayPriority)
     {
         if (string.IsNullOrEmpty(displayPriority)) return "None";
         
@@ -181,7 +181,7 @@ public class EditTaskViewModel : BaseViewModel
         return displayPriority.Replace("●", "").Replace("⬡", "").Replace("▼", "").Trim();
     }
 
-    private string FormatPriorityForDisplay(string priority)
+    private static string FormatPriorityForDisplay(string priority)
     {
         return priority switch
         {

@@ -11,9 +11,7 @@ public partial class AppShell : Shell
 		// Register routes for navigation
 		Routing.RegisterRoute("selectitemtype", typeof(SelectItemTypePage));
 		Routing.RegisterRoute("habits/edithabit", typeof(EditHabitPage));
-		Routing.RegisterRoute("habits/addhabit", typeof(EditHabitPage));
 		Routing.RegisterRoute("tasks/edittask", typeof(EditTaskPage));
-		Routing.RegisterRoute("tasks/addtask", typeof(EditTaskPage));
 
 #if WINDOWS
 		// Customize tab bar styling on Windows

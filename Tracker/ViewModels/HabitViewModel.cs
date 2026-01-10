@@ -84,31 +84,16 @@ namespace Tracker.ViewModels
             LoadHabits();
         }
 
-        private void OnToggleCompletion(DayCompletionViewModel dayCompletion)
+        private void OnToggleCompletion(DayCompletionViewModel? dayCompletion)
         {
-            try
-            {
-                if (dayCompletion == null || !dayCompletion.ShouldTrack) 
-                {
-                    System.Diagnostics.Debug.WriteLine($"Toggle skipped - dayCompletion: {dayCompletion?.Date}, ShouldTrack: {dayCompletion?.ShouldTrack}");
-                    return;
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"Toggling completion for habit {dayCompletion.HabitId} on {dayCompletion.Date}");
-                _dataService.ToggleHabitCompletion(dayCompletion.HabitId, dayCompletion.Date);
-                
-                // Update only the toggled day and recalculate percentages
-                var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
-                if (habitCard != null)
-                {
-                    habitCard.UpdateDayCompletion(dayCompletion.Date);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error toggling completion: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
+            if (dayCompletion == null || !dayCompletion.ShouldTrack)
+                return;
+
+            _dataService.ToggleHabitCompletion(dayCompletion.HabitId, dayCompletion.Date);
+            
+            // Update only the toggled day and recalculate percentages
+            var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+            habitCard?.UpdateDayCompletion(dayCompletion.Date);
         }
 
         public void Refresh()
@@ -176,27 +161,19 @@ namespace Tracker.ViewModels
 
         private void RecalculateWeeklyCompletion()
         {
-            int completedDays = 0;
-            int trackedDays = 0;
+            var trackedDays = WeekDays.Where(d => d.ShouldTrack).ToList();
+            var completedDays = trackedDays.Count(d => d.IsCompleted);
 
-            foreach (var day in WeekDays)
-            {
-                if (day.ShouldTrack)
-                {
-                    trackedDays++;
-                    if (day.IsCompleted)
-                    {
-                        completedDays++;
-                    }
-                }
-            }
+            UpdateCompletionPercentage(completedDays, trackedDays.Count);
+        }
 
-            // Update percentage
-            if (trackedDays > 0)
+        private void UpdateCompletionPercentage(int completed, int total)
+        {
+            if (total > 0)
             {
-                var percentage = (int)Math.Round((double)completedDays / trackedDays * 100);
+                var percentage = (int)Math.Round((double)completed / total * 100);
                 WeeklyCompletionPercentage = $"{percentage}%";
-                WeeklyCompletionDecimal = (double)completedDays / trackedDays;
+                WeeklyCompletionDecimal = (double)completed / total;
             }
             else
             {
@@ -248,17 +225,7 @@ namespace Tracker.ViewModels
             }
 
             // Calculate percentage
-            if (trackedDays > 0)
-            {
-                var percentage = (int)Math.Round((double)completedDays / trackedDays * 100);
-                WeeklyCompletionPercentage = $"{percentage}%";
-                WeeklyCompletionDecimal = (double)completedDays / trackedDays;
-            }
-            else
-            {
-                WeeklyCompletionPercentage = "0%";
-                WeeklyCompletionDecimal = 0.0;
-            }
+            UpdateCompletionPercentage(completedDays, trackedDays);
         }
     }
 

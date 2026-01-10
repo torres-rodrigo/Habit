@@ -8,7 +8,7 @@ namespace Tracker.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public List<DayOfWeek> TrackingDays { get; set; } = new List<DayOfWeek>();
+        public List<DayOfWeek> TrackingDays { get; set; } = new();
         public bool TrackEveryday { get; set; } = true;
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime? Deadline { get; set; }
@@ -16,7 +16,7 @@ namespace Tracker.Models
         public TimeSpan? ReminderTime { get; set; }
         public bool NotesEnabled { get; set; }
         public int DisplayOrder { get; set; }
-        public List<HabitCompletion> Completions { get; set; } = new List<HabitCompletion>();
+        public List<HabitCompletion> Completions { get; set; } = new();
     }
 
     public class HabitCompletion

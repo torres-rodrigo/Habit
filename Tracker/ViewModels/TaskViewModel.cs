@@ -49,13 +49,13 @@ namespace Tracker.ViewModels
             _dataService = dataService;
             PendingTasks = new ObservableCollection<TodoTask>();
             CompletedTasks = new ObservableCollection<TodoTask>();
-            PriorityFilterOptions = new ObservableCollection<PriorityOption> 
-            { 
-                new PriorityOption { Name = "ALL", DisplayName = "ALL" },
-                new PriorityOption { Name = "None", DisplayName = "None" },
-                new PriorityOption { Name = "Low", DisplayName = "● Low" },
-                new PriorityOption { Name = "Medium", DisplayName = "⬡ Medium" },
-                new PriorityOption { Name = "High", DisplayName = "▼ High" }
+            PriorityFilterOptions = new ObservableCollection<PriorityOption>
+            {
+                new() { Name = "ALL", DisplayName = "ALL" },
+                new() { Name = "None", DisplayName = "None" },
+                new() { Name = "Low", DisplayName = "● Low" },
+                new() { Name = "Medium", DisplayName = "⬡ Medium" },
+                new() { Name = "High", DisplayName = "▼ High" }
             };
             _selectedPriorityFilter = PriorityFilterOptions[0];
 
@@ -84,23 +84,12 @@ namespace Tracker.ViewModels
             var allTasks = _dataService.GetAllTasks();
             
             // Apply priority filter
-            IEnumerable<TodoTask> filteredTasks;
-            
-            if (SelectedPriorityFilter?.Name == "ALL")
+            var filteredTasks = SelectedPriorityFilter?.Name switch
             {
-                // Show all tasks regardless of priority
-                filteredTasks = allTasks;
-            }
-            else if (SelectedPriorityFilter?.Name == "None")
-            {
-                // Show only tasks with no priority (null or empty)
-                filteredTasks = allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None");
-            }
-            else
-            {
-                // Filter by specific priority (Low, Medium, High)
-                filteredTasks = allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name);
-            }
+                "ALL" => allTasks,
+                "None" => allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None"),
+                _ => allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name)
+            };
             
             // Separate into pending and completed
             foreach (var task in filteredTasks)

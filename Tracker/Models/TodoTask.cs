@@ -19,7 +19,7 @@ namespace Tracker.Models
         public bool HasReminders { get; set; }
         public TimeSpan? ReminderTime { get; set; }
         public int DisplayOrder { get; set; }
-        public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
+        public List<SubTask> SubTasks { get; set; } = new();
 
         public bool AllSubTasksCompleted => SubTasks.Count > 0 && SubTasks.All(st => st.IsCompleted);
         public bool CompletedOnTime => CompletedDate.HasValue && DueDate.HasValue && CompletedDate.Value <= DueDate.Value;
@@ -28,9 +28,9 @@ namespace Tracker.Models
 
     public class SubTask : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
