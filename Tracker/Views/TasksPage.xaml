@@ -11,23 +11,23 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="20">
                 
+                <!-- Priority Filter -->
+                <HorizontalStackLayout Spacing="10">
+                    <Label Text="Priority ⚡" 
+                           VerticalOptions="Center"
+                           FontSize="14"/>
+                    <Picker ItemsSource="{Binding PriorityFilterOptions}"
+                            SelectedItem="{Binding SelectedPriorityFilter}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            WidthRequest="150"/>
+                </HorizontalStackLayout>
+                
                 <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
                     <Label Text="TODO" 
                            FontSize="22" 
                            FontAttributes="Bold"
                            TextColor="{StaticResource Primary}"/>
-                    
-                    <!-- Priority Filter -->
-                    <HorizontalStackLayout Spacing="10">
-                        <Label Text="Priority ⚡" 
-                               VerticalOptions="Center"
-                               FontSize="14"/>
-                        <Picker ItemsSource="{Binding PriorityFilterOptions}"
-                                SelectedItem="{Binding SelectedPriorityFilter}"
-                                ItemDisplayBinding="{Binding DisplayName}"
-                                WidthRequest="150"/>
-                    </HorizontalStackLayout>
 
                     <CollectionView ItemsSource="{Binding PendingTasks}" SelectionMode="None">
                         <CollectionView.ItemsLayout>

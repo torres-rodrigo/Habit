@@ -73,39 +73,42 @@ namespace Tracker.ViewModels
 
         private void LoadTasks()
         {
-            PendingTasks.Clear();
-            CompletedTasks.Clear();
-
-            var tasks = _dataService.GetAllTasks();
-            foreach (var task in tasks)
-            {
-                if (task.IsCompleted)
-                    CompletedTasks.Add(task);
-                else
-                    PendingTasks.Add(task);
-            }
-            
             ApplyPriorityFilter();
         }
 
         private void ApplyPriorityFilter()
         {
-            if (SelectedPriorityFilter?.Name == "ALL" || SelectedPriorityFilter?.Name == "None")
-            {
-                // No filtering, show all tasks
-                return;
-            }
-
-            // Filter pending tasks by priority
-            var allTasks = _dataService.GetAllTasks();
-            var filteredPendingTasks = allTasks
-                .Where(t => !t.IsCompleted && t.Priority == SelectedPriorityFilter?.Name)
-                .ToList();
-
             PendingTasks.Clear();
-            foreach (var task in filteredPendingTasks)
+            CompletedTasks.Clear();
+
+            var allTasks = _dataService.GetAllTasks();
+            
+            // Apply priority filter
+            IEnumerable<TodoTask> filteredTasks;
+            
+            if (SelectedPriorityFilter?.Name == "ALL")
             {
-                PendingTasks.Add(task);
+                // Show all tasks regardless of priority
+                filteredTasks = allTasks;
+            }
+            else if (SelectedPriorityFilter?.Name == "None")
+            {
+                // Show only tasks with no priority (null or empty)
+                filteredTasks = allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None");
+            }
+            else
+            {
+                // Filter by specific priority (Low, Medium, High)
+                filteredTasks = allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name);
+            }
+            
+            // Separate into pending and completed
+            foreach (var task in filteredTasks)
+            {
+                if (task.IsCompleted)
+                    CompletedTasks.Add(task);
+                else
+                    PendingTasks.Add(task);
             }
         }
 
