@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+             xmlns:models="clr-namespace:Tracker.Models"
+             x:Class="Tracker.Views.StatisticsPage"
+             x:DataType="viewmodels:StatisticsViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="5">
+            
+            <!-- Task Statistics Section -->
+            <Frame CornerRadius="10" BorderColor="{StaticResource Primary}" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Task Statistics" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"/>
+                    
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Total Tasks:" FontAttributes="Bold"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TaskStatistics.TotalTasks}" HorizontalOptions="End"/>
+                        
+                        <Label Grid.Row="1" Grid.Column="0" Text="Completed:" FontAttributes="Bold"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TaskStatistics.CompletedTasks}" HorizontalOptions="End"/>
+                        
+                        <Label Grid.Row="2" Grid.Column="0" Text="Pending:" FontAttributes="Bold"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding TaskStatistics.PendingTasks}" HorizontalOptions="End"/>
+                        
+                        <Label Grid.Row="3" Grid.Column="0" Text="Completion Rate:" FontAttributes="Bold"/>
+                        <Label Grid.Row="3" Grid.Column="1" Text="{Binding TaskStatistics.CompletionRate, StringFormat='{0:F1}%'}" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,10"/>
+
+                    <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Tasks w/ Deadlines:" FontAttributes="Bold"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TaskStatistics.TasksWithDeadlines}" HorizontalOptions="End"/>
+                        
+                        <Label Grid.Row="1" Grid.Column="0" Text="Completed On Time:" FontAttributes="Bold"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TaskStatistics.CompletedOnTime}" HorizontalOptions="End"/>
+                        <Label Grid.Row="1" Grid.Column="2" 
+                               Text="{Binding TaskStatistics.OnTimeRate, StringFormat='({0:F0}%)'}"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               HorizontalOptions="End"
+                               Margin="5,0,0,0"/>
+                        
+                        <Label Grid.Row="2" Grid.Column="0" Text="Completed Late:" FontAttributes="Bold"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding TaskStatistics.CompletedAfterDeadline}" HorizontalOptions="End"/>
+                        <Label Grid.Row="2" Grid.Column="2" 
+                               Text="{Binding TaskStatistics.LateRate, StringFormat='({0:F0}%)'}"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               HorizontalOptions="End"
+                               Margin="5,0,0,0"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Habit Statistics Section -->
+            <Label Text="Habit Statistics" 
+                   FontSize="22" 
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource Primary}"/>
+
+            <CollectionView ItemsSource="{Binding HabitStatistics}" SelectionMode="None">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:HabitStatistics">
+                        <Frame CornerRadius="10" 
+                               BorderColor="{StaticResource Primary}" 
+                               HasShadow="True" 
+                               Margin="0"
+                               Padding="15">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="{Binding HabitName}" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"/>
+
+                                <!-- Daily -->
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0" Text="Today:" FontAttributes="Bold"/>
+                                    <ProgressBar Grid.Column="1" 
+                                               Progress="{Binding DailyCompletions}"
+                                               ProgressColor="{StaticResource Primary}"
+                                               VerticalOptions="Center"/>
+                                    <Label Grid.Column="2" 
+                                         Text="{Binding DailyCompletions, StringFormat='{0}/1'}"
+                                         HorizontalOptions="End"/>
+                                    <Label Grid.Column="3" 
+                                         Text="{Binding DailyCompletions, StringFormat='({0:P0})'}"
+                                         TextColor="{StaticResource Primary}"
+                                         FontAttributes="Bold"
+                                         HorizontalOptions="End"
+                                         Margin="5,0,0,0"/>
+                                </Grid>
+
+                                <!-- Weekly -->
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0" Text="Week:" FontAttributes="Bold"/>
+                                    <ProgressBar Grid.Column="1" 
+                                               Progress="{Binding WeeklyProgress}"
+                                               ProgressColor="{StaticResource Primary}"
+                                               VerticalOptions="Center"/>
+                                    <Label Grid.Column="2" 
+                                         HorizontalOptions="End">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0}/{1}">
+                                                <Binding Path="WeeklyCompletions" />
+                                                <Binding Path="WeeklyTarget" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label Grid.Column="3" 
+                                         Text="{Binding WeeklyProgress, StringFormat='({0:P0})'}"
+                                         TextColor="{StaticResource Primary}"
+                                         FontAttributes="Bold"
+                                         HorizontalOptions="End"
+                                         Margin="5,0,0,0"/>
+                                </Grid>
+
+                                <!-- Monthly -->
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0" Text="Month:" FontAttributes="Bold"/>
+                                    <ProgressBar Grid.Column="1" 
+                                               Progress="{Binding MonthlyProgress}"
+                                               ProgressColor="{StaticResource Primary}"
+                                               VerticalOptions="Center"/>
+                                    <Label Grid.Column="2" 
+                                         HorizontalOptions="End">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0}/{1}">
+                                                <Binding Path="MonthlyCompletions" />
+                                                <Binding Path="MonthlyTarget" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label Grid.Column="3" 
+                                         Text="{Binding MonthlyProgress, StringFormat='({0:P0})'}"
+                                         TextColor="{StaticResource Primary}"
+                                         FontAttributes="Bold"
+                                         HorizontalOptions="End"
+                                         Margin="5,0,0,0"/>
+                                </Grid>
+
+                                <!-- Yearly -->
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0" Text="Year:" FontAttributes="Bold"/>
+                                    <ProgressBar Grid.Column="1" 
+                                               Progress="{Binding YearlyProgress}"
+                                               ProgressColor="{StaticResource Primary}"
+                                               VerticalOptions="Center"/>
+                                    <Label Grid.Column="2" 
+                                         HorizontalOptions="End">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0}/{1}">
+                                                <Binding Path="YearlyCompletions" />
+                                                <Binding Path="YearlyTarget" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label Grid.Column="3" 
+                                         Text="{Binding YearlyProgress, StringFormat='({0:P0})'}"
+                                         TextColor="{StaticResource Primary}"
+                                         FontAttributes="Bold"
+                                         HorizontalOptions="End"
+                                         Margin="5,0,0,0"/>
+                                </Grid>
+
+                                <BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,5"/>
+
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="5">
+                                    <Label Grid.Row="0" Grid.Column="0" Text="Current Streak:" FontAttributes="Bold"/>
+                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding CurrentStreak, StringFormat='{0} days'}" HorizontalOptions="End"/>
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0" Text="Longest Streak:" FontAttributes="Bold"/>
+                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding LongestStreak, StringFormat='{0} days'}" HorizontalOptions="End"/>
+                                    
+                                    <Label Grid.Row="2" Grid.Column="0" Text="Overall Rate:" FontAttributes="Bold"/>
+                                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding CompletionRate, StringFormat='{0:F1}%'}" HorizontalOptions="End"/>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

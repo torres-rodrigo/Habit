@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Tracker.Views.EditTaskPage"
+             xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+             x:DataType="viewmodels:EditTaskViewModel"
+             BackgroundColor="#F5F5F5">
+    
+    <Grid RowDefinitions="*,Auto" Padding="0">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="20" Padding="20">
+                
+                <!-- Task Name -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Task Name" FontSize="14" TextColor="#757575"/>
+                    <Border BackgroundColor="White" Stroke="#E0E0E0" StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <Entry Text="{Binding TaskName}" 
+                               Placeholder="Enter task name"
+                               BackgroundColor="Transparent"
+                               Margin="10,5"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Description -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Description (Optional)" FontSize="14" TextColor="#757575"/>
+                    <Border BackgroundColor="White" Stroke="#E0E0E0" StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <Editor Text="{Binding Description}" 
+                                Placeholder="Add details about this task"
+                                BackgroundColor="Transparent"
+                                AutoSize="TextChanges"
+                                MinimumHeightRequest="100"
+                                Margin="10,5"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Due Date -->
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Due Date" FontSize="14" TextColor="#757575" VerticalOptions="Center"/>
+                        <Switch Grid.Column="1" IsToggled="{Binding HasDueDate}"/>
+                    </Grid>
+                    <Border BackgroundColor="White" 
+                            Stroke="#E0E0E0" 
+                            StrokeThickness="1"
+                            IsVisible="{Binding HasDueDate}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <DatePicker Date="{Binding DueDate}"
+                                    BackgroundColor="Transparent"
+                                    Margin="10,5"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Priority -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Priority" FontSize="14" TextColor="#757575"/>
+                    <Border BackgroundColor="White" Stroke="#E0E0E0" StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <Picker ItemsSource="{Binding Priorities}"
+                                SelectedItem="{Binding SelectedPriority}"
+                                BackgroundColor="Transparent"
+                                Margin="10,5"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Subtasks -->
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Subtasks" FontSize="14" TextColor="#757575" VerticalOptions="Center"/>
+                        <Button Grid.Column="1" 
+                                Text="+ Add" 
+                                Command="{Binding AddSubtaskCommand}"
+                                BackgroundColor="#6366F1"
+                                TextColor="White"
+                                CornerRadius="6"
+                                Padding="15,8"/>
+                    </Grid>
+                    
+                    <CollectionView ItemsSource="{Binding Subtasks}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="White" 
+                                        Stroke="#E0E0E0" 
+                                        StrokeThickness="1"
+                                        Margin="0,4">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8"/>
+                                    </Border.StrokeShape>
+                                    <Grid ColumnDefinitions="*,Auto" Padding="15,10">
+                                        <Entry Grid.Column="0" 
+                                               Text="{Binding Name}"
+                                               Placeholder="Subtask name"
+                                               BackgroundColor="Transparent"
+                                               VerticalOptions="Center"/>
+                                        <Button Grid.Column="1" 
+                                                Text="✕"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditTaskViewModel}}, Path=RemoveSubtaskCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="Transparent"
+                                                TextColor="#EF4444"
+                                                FontSize="18"
+                                                Padding="10,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Action Buttons -->
+        <Grid Grid.Row="1" 
+              ColumnDefinitions="*,*" 
+              Padding="20" 
+              BackgroundColor="White"
+              ColumnSpacing="12">
+            <Border Grid.Column="0" Stroke="#E0E0E0" StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+                <Button Text="Cancel" 
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="White"
+                        TextColor="#424242"
+                        FontAttributes="Bold"/>
+            </Border>
+            <Button Grid.Column="1" 
+                    Text="Save" 
+                    Command="{Binding SaveCommand}"
+                    BackgroundColor="#6366F1"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontAttributes="Bold"/>
+        </Grid>
+    </Grid>
+</ContentPage>

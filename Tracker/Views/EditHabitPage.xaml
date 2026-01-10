@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+             x:Class="Tracker.Views.EditHabitPage"
+             x:DataType="viewmodels:EditHabitViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Habit Name -->
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Habit Name" FontAttributes="Bold"/>
+                <Entry Text="{Binding Name}" Placeholder="Enter habit name"/>
+            </VerticalStackLayout>
+
+            <!-- Description -->
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Description" FontAttributes="Bold"/>
+                <Editor Text="{Binding Description}" 
+                        Placeholder="Enter description (optional)"
+                        HeightRequest="100"/>
+            </VerticalStackLayout>
+
+            <!-- Tracking Days -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Tracking Schedule" FontAttributes="Bold" FontSize="16"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding TrackEveryday}"/>
+                    <Label Text="Track Everyday" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <VerticalStackLayout Spacing="5" IsVisible="{Binding TrackEveryday, Converter={StaticResource InvertedBoolConverter}}">
+                    <Label Text="Select Days:" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding DaysOfWeek}" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:DayOfWeekItem">
+                                <HorizontalStackLayout Spacing="10" Margin="0,5">
+                                    <CheckBox IsChecked="{Binding IsSelected}" Color="{StaticResource Primary}"/>
+                                    <Label Text="{Binding Name}" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Deadline -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Deadline" FontAttributes="Bold" FontSize="16"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding HasDeadline}"/>
+                    <Label Text="Set Deadline" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <DatePicker Date="{Binding Deadline}" 
+                          IsVisible="{Binding HasDeadline}"/>
+            </VerticalStackLayout>
+
+            <!-- Reminders -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding HasReminders}"/>
+                    <Label Text="Enable Reminders" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <TimePicker Time="{Binding ReminderTime}" 
+                          IsVisible="{Binding HasReminders}"/>
+            </VerticalStackLayout>
+
+            <!-- Notes -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Notes" FontAttributes="Bold" FontSize="16"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding NotesEnabled}"/>
+                    <Label Text="Enable Daily Notes" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20,0,0">
+                <Button Grid.Column="0" 
+                        Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{StaticResource Gray300}"/>
+                <Button Grid.Column="1" 
+                        Text="Save"
+                        Command="{Binding SaveCommand}"
+                        BackgroundColor="{StaticResource Primary}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

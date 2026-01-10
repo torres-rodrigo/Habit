@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+             xmlns:controls="clr-namespace:Tracker.Controls"
+             x:Class="Tracker.Views.HabitsPage"
+             x:DataType="viewmodels:HabitViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20" Spacing="15">
+                <CollectionView ItemsSource="{Binding Habits}" SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:HabitCardViewModel">
+                            <Frame CornerRadius="15" 
+                                   BorderColor="{StaticResource Primary}" 
+                                   HasShadow="True" 
+                                   Margin="0,0,0,5"
+                                   Padding="15">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
+                                                        CommandParameter="{Binding Id}"/>
+                                </Frame.GestureRecognizers>
+                                
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="{Binding Name}" 
+                                           FontSize="20" 
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Primary}"/>
+
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Label Grid.Column="0"
+                                               FontSize="14" 
+                                               TextColor="{StaticResource Gray600}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="Week " />
+                                                    <Span Text="{Binding WeekNumber}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <HorizontalStackLayout Grid.Column="2" 
+                                                              Spacing="8" 
+                                                              HorizontalOptions="End"
+                                                              Margin="0,0,10,0">
+                                            <!-- Circular Progress Indicator -->
+                                            <controls:CircularProgressView 
+                                                Progress="{Binding WeeklyCompletionDecimal}"
+                                                ProgressColor="Green"
+                                                TrackColor="{StaticResource Gray300}"
+                                                StrokeWidth="3"
+                                                WidthRequest="34"
+                                                HeightRequest="34"
+                                                VerticalOptions="Center"/>
+                                            <Label Text="{Binding WeeklyCompletionPercentage}"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Green"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Grid>
+
+                                    <!-- Week Progress -->
+                                    <CollectionView ItemsSource="{Binding WeekDays}" 
+                                                  SelectionMode="None">
+                                        <CollectionView.ItemsLayout>
+                                            <GridItemsLayout Orientation="Horizontal" Span="1" />
+                                        </CollectionView.ItemsLayout>
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate x:DataType="viewmodels:DayCompletionViewModel">
+                                                <VerticalStackLayout Spacing="5" Margin="0,0,5,0">
+                                                    <Grid HeightRequest="25" HorizontalOptions="Center">
+                                                        <!-- Green dot indicator for today -->
+                                                        <Ellipse Fill="Green"
+                                                                 WidthRequest="10"
+                                                                 HeightRequest="10"
+                                                                 HorizontalOptions="Center"
+                                                                 VerticalOptions="Start"
+                                                                 IsVisible="{Binding IsToday}"/>
+                                                        <Label Text="{Binding DayName}" 
+                                                               FontSize="12" 
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="End"
+                                                               TextColor="{StaticResource Gray600}"
+                                                               Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"/>
+                                                    </Grid>
+                                                    <Frame CornerRadius="20" 
+                                                           WidthRequest="40" 
+                                                           HeightRequest="40"
+                                                           Padding="0"
+                                                           BorderColor="{Binding ShouldTrack, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Primary|Gray300'}"
+                                                           BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Primary|White'}"
+                                                           Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"
+                                                           HasShadow="False">
+                                                        <Frame.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ToggleCompletionCommand}"
+                                                                                CommandParameter="{Binding .}"/>
+                                                        </Frame.GestureRecognizers>
+                                                        <Label Text="✓" 
+                                                               IsVisible="{Binding IsCompleted}"
+                                                               FontSize="20"
+                                                               TextColor="White"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center"/>
+                                                    </Frame>
+                                                </VerticalStackLayout>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Floating Action Button -->
+        <Button Grid.Row="1"
+                Text="+"
+                FontSize="30"
+                WidthRequest="60"
+                HeightRequest="60"
+                CornerRadius="30"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,20,20"
+                Command="{Binding AddHabitCommand}"/>
+    </Grid>
+</ContentPage>

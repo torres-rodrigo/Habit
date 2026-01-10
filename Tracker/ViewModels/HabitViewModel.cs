@@ -1,0 +1,256 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows.Input;
+using Tracker.Models;
+using Tracker.Services;
+
+namespace Tracker.ViewModels
+{
+    public class HabitViewModel : BaseViewModel
+    {
+        private readonly IDataService _dataService;
+
+        public ObservableCollection<HabitCardViewModel> Habits { get; set; }
+        public ICommand AddHabitCommand { get; }
+        public ICommand EditHabitCommand { get; }
+        public ICommand DeleteHabitCommand { get; }
+        public ICommand ToggleCompletionCommand { get; }
+
+        public HabitViewModel(IDataService dataService)
+        {
+            _dataService = dataService;
+            Habits = new ObservableCollection<HabitCardViewModel>();
+            
+            AddHabitCommand = new Command(OnAddHabit);
+            EditHabitCommand = new Command<Guid>(OnEditHabit);
+            DeleteHabitCommand = new Command<Guid>(OnDeleteHabit);
+            ToggleCompletionCommand = new Command<DayCompletionViewModel>(OnToggleCompletion);
+
+            LoadHabits();
+        }
+
+        private void LoadHabits()
+        {
+            Habits.Clear();
+            var habits = _dataService.GetAllHabits();
+            foreach (var habit in habits)
+            {
+                Habits.Add(new HabitCardViewModel(habit, _dataService));
+            }
+        }
+
+        private async void OnAddHabit()
+        {
+            // Navigate to item type selection page
+            await Shell.Current.GoToAsync("selectitemtype");
+        }
+
+        private async void OnEditHabit(Guid habitId)
+        {
+            // Navigate to edit habit page
+            await Shell.Current.GoToAsync($"habits/edithabit?id={habitId}");
+        }
+
+        private void OnDeleteHabit(Guid habitId)
+        {
+            _dataService.DeleteHabit(habitId);
+            LoadHabits();
+        }
+
+        private void OnToggleCompletion(DayCompletionViewModel dayCompletion)
+        {
+            try
+            {
+                if (dayCompletion == null || !dayCompletion.ShouldTrack) 
+                {
+                    System.Diagnostics.Debug.WriteLine($"Toggle skipped - dayCompletion: {dayCompletion?.Date}, ShouldTrack: {dayCompletion?.ShouldTrack}");
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Toggling completion for habit {dayCompletion.HabitId} on {dayCompletion.Date}");
+                _dataService.ToggleHabitCompletion(dayCompletion.HabitId, dayCompletion.Date);
+                
+                // Update only the toggled day and recalculate percentages
+                var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+                if (habitCard != null)
+                {
+                    habitCard.UpdateDayCompletion(dayCompletion.Date);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error toggling completion: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        public void Refresh()
+        {
+            LoadHabits();
+        }
+    }
+
+    public class HabitCardViewModel : BaseViewModel
+    {
+        private readonly Habit _habit;
+        private readonly IDataService _dataService;
+
+        public Guid Id => _habit.Id;
+        public string Name => _habit.Name;
+        public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
+        
+        private int _weekNumber;
+        public int WeekNumber 
+        { 
+            get => _weekNumber;
+            private set => SetProperty(ref _weekNumber, value);
+        }
+        
+        private string _weeklyCompletionPercentage = "0%";
+        public string WeeklyCompletionPercentage 
+        { 
+            get => _weeklyCompletionPercentage;
+            private set => SetProperty(ref _weeklyCompletionPercentage, value);
+        }
+        
+        private double _weeklyCompletionDecimal = 0.0;
+        public double WeeklyCompletionDecimal 
+        { 
+            get => _weeklyCompletionDecimal;
+            private set => SetProperty(ref _weeklyCompletionDecimal, value);
+        }
+
+        public HabitCardViewModel(Habit habit, IDataService dataService)
+        {
+            _habit = habit;
+            _dataService = dataService;
+            WeekDays = new ObservableCollection<DayCompletionViewModel>();
+            LoadWeekProgress();
+        }
+
+        public void RefreshWeekProgress()
+        {
+            LoadWeekProgress();
+        }
+
+        public void UpdateDayCompletion(DateTime date)
+        {
+            // Find the specific day and update only its completion status
+            var day = WeekDays.FirstOrDefault(d => d.Date.Date == date.Date);
+            if (day != null)
+            {
+                var isCompleted = _dataService.IsHabitCompletedOnDate(_habit.Id, date);
+                day.IsCompleted = isCompleted;
+                
+                // Recalculate percentages without rebuilding the collection
+                RecalculateWeeklyCompletion();
+            }
+        }
+
+        private void RecalculateWeeklyCompletion()
+        {
+            int completedDays = 0;
+            int trackedDays = 0;
+
+            foreach (var day in WeekDays)
+            {
+                if (day.ShouldTrack)
+                {
+                    trackedDays++;
+                    if (day.IsCompleted)
+                    {
+                        completedDays++;
+                    }
+                }
+            }
+
+            // Update percentage
+            if (trackedDays > 0)
+            {
+                var percentage = (int)Math.Round((double)completedDays / trackedDays * 100);
+                WeeklyCompletionPercentage = $"{percentage}%";
+                WeeklyCompletionDecimal = (double)completedDays / trackedDays;
+            }
+            else
+            {
+                WeeklyCompletionPercentage = "0%";
+                WeeklyCompletionDecimal = 0.0;
+            }
+        }
+
+        private void LoadWeekProgress()
+        {
+            WeekDays.Clear();
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+
+            // Calculate week number (ISO 8601)
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            var calendar = culture.Calendar;
+            WeekNumber = calendar.GetWeekOfYear(today, 
+                System.Globalization.CalendarWeekRule.FirstDay, 
+                DayOfWeek.Sunday);
+
+            int completedDays = 0;
+            int trackedDays = 0;
+
+            for (int i = 0; i < 7; i++)
+            {
+                var date = startOfWeek.AddDays(i);
+                var isCompleted = _dataService.IsHabitCompletedOnDate(_habit.Id, date);
+                var shouldTrack = _habit.TrackEveryday || _habit.TrackingDays.Contains(date.DayOfWeek);
+
+                if (shouldTrack)
+                {
+                    trackedDays++;
+                    if (isCompleted)
+                    {
+                        completedDays++;
+                    }
+                }
+
+                WeekDays.Add(new DayCompletionViewModel
+                {
+                    HabitId = _habit.Id,
+                    Date = date,
+                    DayName = date.ToString("ddd"),
+                    IsCompleted = isCompleted,
+                    ShouldTrack = shouldTrack,
+                    IsToday = date.Date == DateTime.Today
+                });
+            }
+
+            // Calculate percentage
+            if (trackedDays > 0)
+            {
+                var percentage = (int)Math.Round((double)completedDays / trackedDays * 100);
+                WeeklyCompletionPercentage = $"{percentage}%";
+                WeeklyCompletionDecimal = (double)completedDays / trackedDays;
+            }
+            else
+            {
+                WeeklyCompletionPercentage = "0%";
+                WeeklyCompletionDecimal = 0.0;
+            }
+        }
+    }
+
+    public class DayCompletionViewModel : BaseViewModel
+    {
+        public Guid HabitId { get; set; }
+        public DateTime Date { get; set; }
+        public string DayName { get; set; }
+        
+        private bool _isCompleted;
+        public bool IsCompleted 
+        { 
+            get => _isCompleted;
+            set => SetProperty(ref _isCompleted, value);
+        }
+        
+        public bool ShouldTrack { get; set; }
+        public bool IsToday { get; set; }
+    }
+}

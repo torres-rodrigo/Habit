@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+             xmlns:models="clr-namespace:Tracker.Models"
+             x:Class="Tracker.Views.TasksPage"
+             x:DataType="viewmodels:TaskViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20" Spacing="20">
+                
+                <!-- To-Do Section -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="To-Do" 
+                           FontSize="22" 
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"/>
+
+                    <CollectionView ItemsSource="{Binding PendingTasks}" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TodoTask">
+                                <Frame CornerRadius="15" 
+                                       BorderColor="{StaticResource Primary}" 
+                                       HasShadow="True" 
+                                       Margin="0,0,0,5"
+                                       Padding="15">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=EditTaskCommand}"
+                                                            CommandParameter="{Binding Id}"/>
+                                    </Frame.GestureRecognizers>
+                                    
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <!-- Checkbox -->
+                                        <Frame Grid.Column="0"
+                                               CornerRadius="15"
+                                               WidthRequest="30"
+                                               HeightRequest="30"
+                                               Padding="0"
+                                               BorderColor="{StaticResource Primary}"
+                                               BackgroundColor="White"
+                                               HasShadow="False">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
+                                                                    CommandParameter="{Binding Id}"/>
+                                            </Frame.GestureRecognizers>
+                                        </Frame>
+
+                                        <!-- Task Content -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                            <Label Text="{Binding Name}" 
+                                                   FontSize="16" 
+                                                   FontAttributes="Bold"/>
+                                            <Label Text="{Binding Description}" 
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
+                                            <Label Text="{Binding DueDate, StringFormat='Due: {0:MMM dd, yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Tertiary}"
+                                                   IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}"/>
+                                            
+                                            <!-- Subtasks -->
+                                            <VerticalStackLayout Spacing="5" 
+                                                               IsVisible="{Binding SubTasks.Count, Converter={StaticResource CountToBoolConverter}}">
+                                                <CollectionView ItemsSource="{Binding SubTasks}" SelectionMode="None">
+                                                    <CollectionView.ItemTemplate>
+                                                        <DataTemplate x:DataType="models:SubTask">
+                                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5" Margin="0,2">
+                                                                <CheckBox Grid.Column="0" 
+                                                                        IsChecked="{Binding IsCompleted}"
+                                                                        Color="{StaticResource Primary}"/>
+                                                                <Label Grid.Column="1" 
+                                                                     Text="{Binding Name}"
+                                                                     FontSize="13"
+                                                                     TextColor="{StaticResource Gray600}"
+                                                                     VerticalOptions="Center"
+                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </CollectionView.ItemTemplate>
+                                                </CollectionView>
+                                            </VerticalStackLayout>
+                                        </VerticalStackLayout>
+
+                                        <!-- Arrow Icon -->
+                                        <Label Grid.Column="2" 
+                                               Text="›" 
+                                               FontSize="24"
+                                               TextColor="{StaticResource Gray400}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!-- Completed Section -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Completed" 
+                           FontSize="22" 
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Secondary}"/>
+
+                    <CollectionView ItemsSource="{Binding CompletedTasks}" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TodoTask">
+                                <Frame CornerRadius="10" 
+                                       BorderColor="{StaticResource Gray300}" 
+                                       HasShadow="True" 
+                                       Margin="0,0,0,5"
+                                       Padding="15"
+                                       BackgroundColor="{StaticResource Gray100}">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=EditTaskCommand}"
+                                                            CommandParameter="{Binding Id}"/>
+                                    </Frame.GestureRecognizers>
+                                    
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                        <!-- Checkbox -->
+                                        <Frame Grid.Column="0"
+                                               CornerRadius="15"
+                                               WidthRequest="30"
+                                               HeightRequest="30"
+                                               Padding="0"
+                                               BorderColor="{StaticResource Secondary}"
+                                               BackgroundColor="{StaticResource Secondary}"
+                                               HasShadow="False">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
+                                                                    CommandParameter="{Binding Id}"/>
+                                            </Frame.GestureRecognizers>
+                                            <Label Text="✓" 
+                                                   FontSize="16"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Frame>
+
+                                        <!-- Task Content -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                            <Label Text="{Binding Name}" 
+                                                   FontSize="16" 
+                                                   FontAttributes="Bold"
+                                                   TextDecorations="Strikethrough"
+                                                   TextColor="{StaticResource Gray600}"/>
+                                            <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Gray500}"/>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Floating Action Button -->
+        <Button Grid.Row="1"
+                Text="+"
+                FontSize="30"
+                WidthRequest="60"
+                HeightRequest="60"
+                CornerRadius="30"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,20,20"
+                Command="{Binding AddTaskCommand}"/>
+    </Grid>
+</ContentPage>
