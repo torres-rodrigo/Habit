@@ -2,13 +2,18 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Tracker.Views.SelectItemTypePage"
-             BackgroundColor="#80000000">
+             BackgroundColor="Transparent">
     
-    <!-- Transparent background with gesture to dismiss -->
+    <!-- Semi-transparent overlay with blur effect -->
     <Grid>
-        <Grid.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding CancelCommand}"/>
-        </Grid.GestureRecognizers>
+        <!-- Background overlay -->
+        <BoxView BackgroundColor="#40000000"
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Fill">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CancelCommand}"/>
+            </BoxView.GestureRecognizers>
+        </BoxView>
         
         <!-- Modal popup container -->
         <Border WidthRequest="400"

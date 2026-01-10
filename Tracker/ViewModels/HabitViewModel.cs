@@ -11,12 +11,22 @@ namespace Tracker.ViewModels
     public class HabitViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private bool _showOverlay;
 
         public ObservableCollection<HabitCardViewModel> Habits { get; set; }
         public ICommand AddHabitCommand { get; }
         public ICommand EditHabitCommand { get; }
         public ICommand DeleteHabitCommand { get; }
         public ICommand ToggleCompletionCommand { get; }
+        public ICommand CloseOverlayCommand { get; }
+        public ICommand NavigateToHabitCommand { get; }
+        public ICommand NavigateToTaskCommand { get; }
+
+        public bool ShowOverlay
+        {
+            get => _showOverlay;
+            set => SetProperty(ref _showOverlay, value);
+        }
 
         public HabitViewModel(IDataService dataService)
         {
@@ -27,6 +37,9 @@ namespace Tracker.ViewModels
             EditHabitCommand = new Command<Guid>(OnEditHabit);
             DeleteHabitCommand = new Command<Guid>(OnDeleteHabit);
             ToggleCompletionCommand = new Command<DayCompletionViewModel>(OnToggleCompletion);
+            CloseOverlayCommand = new Command(() => ShowOverlay = false);
+            NavigateToHabitCommand = new Command(OnNavigateToHabit);
+            NavigateToTaskCommand = new Command(OnNavigateToTask);
 
             LoadHabits();
         }
@@ -41,10 +54,22 @@ namespace Tracker.ViewModels
             }
         }
 
-        private async void OnAddHabit()
+        private void OnAddHabit()
         {
-            // Navigate to item type selection page
-            await Shell.Current.GoToAsync("selectitemtype");
+            // Show overlay instead of navigating
+            ShowOverlay = true;
+        }
+
+        private async void OnNavigateToHabit()
+        {
+            ShowOverlay = false;
+            await Shell.Current.GoToAsync("//habits/edithabit");
+        }
+
+        private async void OnNavigateToTask()
+        {
+            ShowOverlay = false;
+            await Shell.Current.GoToAsync("//tasks/edittask");
         }
 
         private async void OnEditHabit(Guid habitId)

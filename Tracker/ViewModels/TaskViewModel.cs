@@ -11,6 +11,7 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private PriorityOption _selectedPriorityFilter;
+        private bool _showOverlay;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
@@ -28,11 +29,20 @@ namespace Tracker.ViewModels
             }
         }
 
+        public bool ShowOverlay
+        {
+            get => _showOverlay;
+            set => SetProperty(ref _showOverlay, value);
+        }
+
         public ICommand AddTaskCommand { get; }
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
         public ICommand ToggleTaskCompletionCommand { get; }
         public ICommand ToggleSubTaskCompletionCommand { get; }
+        public ICommand CloseOverlayCommand { get; }
+        public ICommand NavigateToHabitCommand { get; }
+        public ICommand NavigateToTaskCommand { get; }
 
         public TaskViewModel(IDataService dataService)
         {
@@ -54,6 +64,9 @@ namespace Tracker.ViewModels
             DeleteTaskCommand = new Command<Guid>(OnDeleteTask);
             ToggleTaskCompletionCommand = new Command<Guid>(OnToggleTaskCompletion);
             ToggleSubTaskCompletionCommand = new Command<(Guid taskId, Guid subTaskId)>(OnToggleSubTaskCompletion);
+            CloseOverlayCommand = new Command(() => ShowOverlay = false);
+            NavigateToHabitCommand = new Command(OnNavigateToHabit);
+            NavigateToTaskCommand = new Command(OnNavigateToTask);
 
             LoadTasks();
         }
@@ -96,10 +109,22 @@ namespace Tracker.ViewModels
             }
         }
 
-        private async void OnAddTask()
+        private void OnAddTask()
         {
-            // Navigate to item type selection page
-            await Shell.Current.GoToAsync("selectitemtype");
+            // Show overlay instead of navigating
+            ShowOverlay = true;
+        }
+
+        private async void OnNavigateToHabit()
+        {
+            ShowOverlay = false;
+            await Shell.Current.GoToAsync("//habits/edithabit");
+        }
+
+        private async void OnNavigateToTask()
+        {
+            ShowOverlay = false;
+            await Shell.Current.GoToAsync("//tasks/edittask");
         }
 
         private async void OnEditTask(Guid taskId)
