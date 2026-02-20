@@ -10,16 +10,16 @@
     Shell.TabBarIsVisible="True">
 
     <TabBar>
-        <Tab Title="Stats 📊" Route="statistics">
-            <ShellContent ContentTemplate="{DataTemplate views:StatisticsPage}" />
-        </Tab>
-
         <Tab Title="Habits ⚛️" Route="habits">
             <ShellContent ContentTemplate="{DataTemplate views:HabitsPage}" />
         </Tab>
 
         <Tab Title="Tasks 📋" Route="tasks">
             <ShellContent ContentTemplate="{DataTemplate views:TasksPage}" />
+        </Tab>
+
+        <Tab Title="Stats 📊" Route="statistics">
+            <ShellContent ContentTemplate="{DataTemplate views:StatisticsPage}" />
         </Tab>
     </TabBar>
 
