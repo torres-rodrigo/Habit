@@ -15,13 +15,13 @@ public static class TabBarHelper
 
         navigationView.Loaded += (s, e) =>
         {
-            // Keep NavigationView at top (Windows standard)
+            // Configure NavigationView for top mode (will be repositioned by BottomTabBarHandler)
             navigationView.PaneDisplayMode = NavigationViewPaneDisplayMode.Top;
-            
-            // Get footer menu items (where tabs are typically placed)
+
+            // Get menu items
             var footerItems = navigationView.FooterMenuItems;
             var menuItems = footerItems.Count > 0 ? footerItems : navigationView.MenuItems;
-            
+
             if (menuItems.Count > 0)
             {
                 // Initial setup and on size changed
@@ -31,7 +31,7 @@ public static class TabBarHelper
                     if (totalWidth > 0 && menuItems.Count > 0)
                     {
                         var tabWidth = totalWidth / menuItems.Count;
-                        
+
                         foreach (var item in menuItems)
                         {
                             if (item is NavigationViewItem navItem)
@@ -39,7 +39,7 @@ public static class TabBarHelper
                                 navItem.Width = tabWidth;
                                 navItem.HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Left;
                                 navItem.HorizontalContentAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Center;
-                                
+
                                 // Find the TextBlock and make it bold and larger
                                 var textBlock = FindVisualChild<TextBlock>(navItem);
                                 if (textBlock != null)
@@ -52,10 +52,10 @@ public static class TabBarHelper
                         }
                     }
                 }
-                
+
                 // Update immediately
                 UpdateTabWidths();
-                
+
                 // Update on window resize
                 navigationView.SizeChanged += (sender, args) => UpdateTabWidths();
             }
