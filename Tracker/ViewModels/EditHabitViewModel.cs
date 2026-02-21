@@ -11,6 +11,7 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private Guid _habitId;
+        private bool _isSaving;
 
         public string HabitIdString
         {
@@ -19,7 +20,7 @@ namespace Tracker.ViewModels
                 if (Guid.TryParse(value, out var habitId))
                 {
                     _habitId = habitId;
-                    LoadHabit();
+                    _ = LoadHabitAsync();
                 }
             }
         }
@@ -30,7 +31,7 @@ namespace Tracker.ViewModels
             set
             {
                 _habitId = value;
-                LoadHabit();
+                _ = LoadHabitAsync();
             }
         }
 
@@ -94,6 +95,12 @@ namespace Tracker.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
 
+        public bool IsSaving
+        {
+            get => _isSaving;
+            set => SetProperty(ref _isSaving, value);
+        }
+
         public EditHabitViewModel(IDataService dataService)
         {
             _dataService = dataService;
@@ -110,53 +117,88 @@ namespace Tracker.ViewModels
                 new() { Day = DayOfWeek.Sunday, Name = "Sunday" }
             };
 
-            SaveCommand = new Command(OnSave);
+            SaveCommand = new Command(async () => await OnSaveAsync());
             CancelCommand = new Command(OnCancel);
         }
 
-        private void LoadHabit()
+        private async Task LoadHabitAsync()
         {
             if (_habitId == Guid.Empty) return;
 
-            var habit = _dataService.GetHabitById(_habitId);
-            if (habit != null)
+            try
             {
-                Name = habit.Name;
-                Description = habit.Description;
-                TrackEveryday = habit.TrackEveryday;
-                HasDeadline = habit.Deadline.HasValue;
-                Deadline = habit.Deadline;
-                HasReminders = habit.HasReminders;
-                ReminderTime = habit.ReminderTime;
-                NotesEnabled = habit.NotesEnabled;
-
-                foreach (var item in DaysOfWeek)
+                var habit = await _dataService.GetHabitByIdAsync(_habitId);
+                if (habit != null)
                 {
-                    item.IsSelected = habit.TrackingDays.Contains(item.Day);
+                    Name = habit.Name;
+                    Description = habit.Description;
+                    TrackEveryday = habit.TrackEveryday;
+                    HasDeadline = habit.Deadline.HasValue;
+                    Deadline = habit.Deadline;
+                    HasReminders = habit.HasReminders;
+                    ReminderTime = habit.ReminderTime;
+                    NotesEnabled = habit.NotesEnabled;
+
+                    foreach (var item in DaysOfWeek)
+                    {
+                        item.IsSelected = habit.TrackingDays.Contains(item.Day);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to load habit: {ex.Message}", "OK");
+                await Shell.Current.GoToAsync("..");
             }
         }
 
-        private async void OnSave()
+        private async Task OnSaveAsync()
         {
-            var habit = _habitId == Guid.Empty ? new Habit() : _dataService.GetHabitById(_habitId) ?? new Habit();
+            if (IsSaving) return;
 
-            habit.Name = Name;
-            habit.Description = Description;
-            habit.TrackEveryday = TrackEveryday;
-            habit.Deadline = HasDeadline ? Deadline : null;
-            habit.HasReminders = HasReminders;
-            habit.ReminderTime = HasReminders ? ReminderTime : null;
-            habit.NotesEnabled = NotesEnabled;
-
-            habit.TrackingDays.Clear();
-            foreach (var item in DaysOfWeek.Where(d => d.IsSelected))
+            // Validate input
+            if (string.IsNullOrWhiteSpace(Name))
             {
-                habit.TrackingDays.Add(item.Day);
+                await Shell.Current.DisplayAlert("Validation Error", "Please enter a habit name.", "OK");
+                return;
             }
 
-            _dataService.SaveHabit(habit);
-            await Shell.Current.GoToAsync("..");
+            if (!TrackEveryday && !DaysOfWeek.Any(d => d.IsSelected))
+            {
+                await Shell.Current.DisplayAlert("Validation Error", "Please select at least one day to track this habit.", "OK");
+                return;
+            }
+
+            try
+            {
+                IsSaving = true;
+                var habit = _habitId == Guid.Empty ? new Habit() : await _dataService.GetHabitByIdAsync(_habitId) ?? new Habit();
+
+                habit.Name = Name;
+                habit.Description = Description;
+                habit.TrackEveryday = TrackEveryday;
+                habit.Deadline = HasDeadline ? Deadline : null;
+                habit.HasReminders = HasReminders;
+                habit.ReminderTime = HasReminders ? ReminderTime : null;
+                habit.NotesEnabled = NotesEnabled;
+
+                habit.TrackingDays.Clear();
+                foreach (var item in DaysOfWeek.Where(d => d.IsSelected))
+                {
+                    habit.TrackingDays.Add(item.Day);
+                }
+
+                await _dataService.SaveHabitAsync(habit);
+                await Shell.Current.GoToAsync("..");
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to save habit: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsSaving = false;
+            }
         }
 
         private async void OnCancel()

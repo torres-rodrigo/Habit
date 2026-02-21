@@ -8,27 +8,27 @@ namespace Tracker.Services
     public interface IDataService
     {
         // Habits
-        List<Habit> GetAllHabits();
-        Habit? GetHabitById(Guid id);
-        void SaveHabit(Habit habit);
-        void DeleteHabit(Guid id);
-        void UpdateHabitOrder(List<Habit> habits);
-        void ToggleHabitCompletion(Guid habitId, DateTime date, string? note = null);
-        bool IsHabitCompletedOnDate(Guid habitId, DateTime date);
-        
+        Task<List<Habit>> GetAllHabitsAsync();
+        Task<Habit?> GetHabitByIdAsync(Guid id);
+        Task SaveHabitAsync(Habit habit);
+        Task DeleteHabitAsync(Guid id);
+        Task UpdateHabitOrderAsync(List<Habit> habits);
+        Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null);
+        Task<bool> IsHabitCompletedOnDateAsync(Guid habitId, DateTime date);
+
         // Tasks
-        List<TodoTask> GetAllTasks();
-        TodoTask? GetTaskById(Guid id);
-        void SaveTask(TodoTask task);
-        void DeleteTask(Guid id);
-        void UpdateTaskOrder(List<TodoTask> tasks);
-        void ToggleTaskCompletion(Guid taskId);
-        void ToggleSubTaskCompletion(Guid taskId, Guid subTaskId);
-        
+        Task<List<TodoTask>> GetAllTasksAsync();
+        Task<TodoTask?> GetTaskByIdAsync(Guid id);
+        Task SaveTaskAsync(TodoTask task);
+        Task DeleteTaskAsync(Guid id);
+        Task UpdateTaskOrderAsync(List<TodoTask> tasks);
+        Task ToggleTaskCompletionAsync(Guid taskId);
+        Task ToggleSubTaskCompletionAsync(Guid taskId, Guid subTaskId);
+
         // Statistics
-        HabitStatistics? GetHabitStatistics(Guid habitId);
-        List<HabitStatistics> GetAllHabitStatistics();
-        TaskStatistics GetTaskStatistics();
+        Task<HabitStatistics?> GetHabitStatisticsAsync(Guid habitId);
+        Task<List<HabitStatistics>> GetAllHabitStatisticsAsync();
+        Task<TaskStatistics> GetTaskStatisticsAsync();
     }
 
     public class DataService : IDataService
@@ -131,11 +131,19 @@ namespace Tracker.Services
         }
 
         // Habit methods
-        public List<Habit> GetAllHabits() => _habits.OrderBy(h => h.DisplayOrder).ToList();
+        public Task<List<Habit>> GetAllHabitsAsync()
+        {
+            var habits = _habits.OrderBy(h => h.DisplayOrder).ToList();
+            return Task.FromResult(habits);
+        }
 
-        public Habit? GetHabitById(Guid id) => _habits.FirstOrDefault(h => h.Id == id);
+        public Task<Habit?> GetHabitByIdAsync(Guid id)
+        {
+            var habit = _habits.FirstOrDefault(h => h.Id == id);
+            return Task.FromResult(habit);
+        }
 
-        public void SaveHabit(Habit habit)
+        public Task SaveHabitAsync(Habit habit)
         {
             var existing = _habits.FirstOrDefault(h => h.Id == habit.Id);
             if (existing != null)
@@ -147,28 +155,31 @@ namespace Tracker.Services
                 habit.DisplayOrder = _habits.Count;
             }
             _habits.Add(habit);
+            return Task.CompletedTask;
         }
 
-        public void DeleteHabit(Guid id)
+        public Task DeleteHabitAsync(Guid id)
         {
             var habit = _habits.FirstOrDefault(h => h.Id == id);
             if (habit != null)
             {
                 _habits.Remove(habit);
             }
+            return Task.CompletedTask;
         }
 
-        public void UpdateHabitOrder(List<Habit> habits)
+        public Task UpdateHabitOrderAsync(List<Habit> habits)
         {
             for (int i = 0; i < habits.Count; i++)
             {
                 habits[i].DisplayOrder = i;
             }
+            return Task.CompletedTask;
         }
 
-        public void ToggleHabitCompletion(Guid habitId, DateTime date, string? note = null)
+        public async Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null)
         {
-            var habit = GetHabitById(habitId);
+            var habit = await GetHabitByIdAsync(habitId);
             if (habit == null) return;
 
             var dateOnly = date.Date;
@@ -189,36 +200,36 @@ namespace Tracker.Services
             }
         }
 
-        public bool IsHabitCompletedOnDate(Guid habitId, DateTime date)
+        public async Task<bool> IsHabitCompletedOnDateAsync(Guid habitId, DateTime date)
         {
-            var habit = GetHabitById(habitId);
+            var habit = await GetHabitByIdAsync(habitId);
             if (habit == null) return false;
 
             return habit.Completions.Any(c => c.CompletedDate.Date == date.Date);
         }
 
         // Task methods
-        public List<TodoTask> GetAllTasks()
+        public Task<List<TodoTask>> GetAllTasksAsync()
         {
             var tasks = _tasks.OrderBy(t => t.DisplayOrder).ToList();
             foreach (var task in tasks)
             {
                 SetSubTaskParentReferences(task);
             }
-            return tasks;
+            return Task.FromResult(tasks);
         }
 
-        public TodoTask? GetTaskById(Guid id)
+        public Task<TodoTask?> GetTaskByIdAsync(Guid id)
         {
             var task = _tasks.FirstOrDefault(t => t.Id == id);
             if (task != null)
             {
                 SetSubTaskParentReferences(task);
             }
-            return task;
+            return Task.FromResult(task);
         }
 
-        public void SaveTask(TodoTask task)
+        public Task SaveTaskAsync(TodoTask task)
         {
             var existing = _tasks.FirstOrDefault(t => t.Id == task.Id);
             if (existing != null)
@@ -229,42 +240,45 @@ namespace Tracker.Services
             {
                 task.DisplayOrder = _tasks.Count;
             }
-            
+
             // Set parent references for all subtasks
             SetSubTaskParentReferences(task);
-            
+
             _tasks.Add(task);
+            return Task.CompletedTask;
         }
 
-        public void DeleteTask(Guid id)
+        public Task DeleteTaskAsync(Guid id)
         {
             var task = _tasks.FirstOrDefault(t => t.Id == id);
             if (task != null)
             {
                 _tasks.Remove(task);
             }
+            return Task.CompletedTask;
         }
 
-        public void UpdateTaskOrder(List<TodoTask> tasks)
+        public Task UpdateTaskOrderAsync(List<TodoTask> tasks)
         {
             for (int i = 0; i < tasks.Count; i++)
             {
                 tasks[i].DisplayOrder = i;
             }
+            return Task.CompletedTask;
         }
 
-        public void ToggleTaskCompletion(Guid taskId)
+        public async Task ToggleTaskCompletionAsync(Guid taskId)
         {
-            var task = GetTaskById(taskId);
+            var task = await GetTaskByIdAsync(taskId);
             if (task == null) return;
 
             task.IsCompleted = !task.IsCompleted;
             task.CompletedDate = task.IsCompleted ? DateTime.Now : null;
         }
 
-        public void ToggleSubTaskCompletion(Guid taskId, Guid subTaskId)
+        public async Task ToggleSubTaskCompletionAsync(Guid taskId, Guid subTaskId)
         {
-            var task = GetTaskById(taskId);
+            var task = await GetTaskByIdAsync(taskId);
             if (task == null) return;
 
             var subTask = task.SubTasks.FirstOrDefault(st => st.Id == subTaskId);
@@ -282,9 +296,9 @@ namespace Tracker.Services
         }
 
         // Statistics methods
-        public HabitStatistics? GetHabitStatistics(Guid habitId)
+        public async Task<HabitStatistics?> GetHabitStatisticsAsync(Guid habitId)
         {
-            var habit = GetHabitById(habitId);
+            var habit = await GetHabitByIdAsync(habitId);
             if (habit == null) return null;
 
             var today = DateTime.Today;
@@ -327,17 +341,24 @@ namespace Tracker.Services
             };
         }
 
-        public List<HabitStatistics> GetAllHabitStatistics()
+        public async Task<List<HabitStatistics>> GetAllHabitStatisticsAsync()
         {
-            return _habits
-                .OrderBy(h => h.DisplayOrder)
-                .Select(h => GetHabitStatistics(h.Id))
-                .Where(s => s != null)
-                .Cast<HabitStatistics>()
-                .ToList();
+            var statistics = new List<HabitStatistics>();
+            var habits = _habits.OrderBy(h => h.DisplayOrder);
+
+            foreach (var habit in habits)
+            {
+                var stat = await GetHabitStatisticsAsync(habit.Id);
+                if (stat != null)
+                {
+                    statistics.Add(stat);
+                }
+            }
+
+            return statistics;
         }
 
-        public TaskStatistics GetTaskStatistics()
+        public Task<TaskStatistics> GetTaskStatisticsAsync()
         {
             var totalTasks = _tasks.Count;
             var completedTasks = _tasks.Count(t => t.IsCompleted);
@@ -350,7 +371,7 @@ namespace Tracker.Services
             var onTimeRate = tasksWithDeadlines > 0 ? (double)completedOnTime / tasksWithDeadlines * 100 : 0;
             var lateRate = tasksWithDeadlines > 0 ? (double)completedAfterDeadline / tasksWithDeadlines * 100 : 0;
 
-            return new TaskStatistics
+            var statistics = new TaskStatistics
             {
                 TotalTasks = totalTasks,
                 CompletedTasks = completedTasks,
@@ -362,6 +383,8 @@ namespace Tracker.Services
                 OnTimeRate = Math.Round(onTimeRate, 1),
                 LateRate = Math.Round(lateRate, 1)
             };
+
+            return Task.FromResult(statistics);
         }
 
         private int CalculateCurrentStreak(Habit habit)

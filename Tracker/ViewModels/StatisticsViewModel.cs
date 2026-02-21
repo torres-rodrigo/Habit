@@ -8,33 +8,54 @@ namespace Tracker.ViewModels
     public class StatisticsViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private bool _isLoading;
 
         public ObservableCollection<HabitStatistics> HabitStatistics { get; set; }
         public TaskStatistics TaskStatistics { get; set; } = null!;
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
 
         public StatisticsViewModel(IDataService dataService)
         {
             _dataService = dataService;
             HabitStatistics = new ObservableCollection<HabitStatistics>();
-            LoadStatistics();
+            _ = LoadStatisticsAsync();
         }
 
-        public void LoadStatistics()
+        public async Task LoadStatisticsAsync()
         {
-            HabitStatistics.Clear();
-            var habitStats = _dataService.GetAllHabitStatistics();
-            foreach (var stat in habitStats)
+            if (IsLoading) return;
+
+            try
             {
-                HabitStatistics.Add(stat);
-            }
+                IsLoading = true;
+                HabitStatistics.Clear();
+                var habitStats = await _dataService.GetAllHabitStatisticsAsync();
+                foreach (var stat in habitStats)
+                {
+                    HabitStatistics.Add(stat);
+                }
 
-            TaskStatistics = _dataService.GetTaskStatistics();
-            OnPropertyChanged(nameof(TaskStatistics));
+                TaskStatistics = await _dataService.GetTaskStatisticsAsync();
+                OnPropertyChanged(nameof(TaskStatistics));
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to load statistics: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
-        public void Refresh()
+        public async Task RefreshAsync()
         {
-            LoadStatistics();
+            await LoadStatisticsAsync();
         }
     }
 }

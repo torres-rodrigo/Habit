@@ -12,6 +12,7 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private bool _showOverlay;
+        private bool _isLoading;
 
         public ObservableCollection<HabitCardViewModel> Habits { get; set; }
         public ICommand AddHabitCommand { get; }
@@ -28,29 +29,49 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _showOverlay, value);
         }
 
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
+
         public HabitViewModel(IDataService dataService)
         {
             _dataService = dataService;
             Habits = new ObservableCollection<HabitCardViewModel>();
-            
+
             AddHabitCommand = new Command(OnAddHabit);
-            EditHabitCommand = new Command<Guid>(OnEditHabit);
-            DeleteHabitCommand = new Command<Guid>(OnDeleteHabit);
-            ToggleCompletionCommand = new Command<DayCompletionViewModel>(OnToggleCompletion);
+            EditHabitCommand = new Command<Guid>(async (id) => await OnEditHabit(id));
+            DeleteHabitCommand = new Command<Guid>(async (id) => await OnDeleteHabit(id));
+            ToggleCompletionCommand = new Command<DayCompletionViewModel>(async (day) => await OnToggleCompletion(day));
             CloseOverlayCommand = new Command(() => ShowOverlay = false);
             NavigateToHabitCommand = new Command(OnNavigateToHabit);
             NavigateToTaskCommand = new Command(OnNavigateToTask);
 
-            LoadHabits();
+            _ = LoadHabitsAsync();
         }
 
-        private void LoadHabits()
+        private async Task LoadHabitsAsync()
         {
-            Habits.Clear();
-            var habits = _dataService.GetAllHabits();
-            foreach (var habit in habits)
+            if (IsLoading) return;
+
+            try
             {
-                Habits.Add(new HabitCardViewModel(habit, _dataService));
+                IsLoading = true;
+                Habits.Clear();
+                var habits = await _dataService.GetAllHabitsAsync();
+                foreach (var habit in habits)
+                {
+                    Habits.Add(new HabitCardViewModel(habit, _dataService));
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to load habits: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -72,33 +93,65 @@ namespace Tracker.ViewModels
             await Shell.Current.GoToAsync("//tasks/edittask");
         }
 
-        private async void OnEditHabit(Guid habitId)
+        private async Task OnEditHabit(Guid habitId)
         {
             // Navigate to edit habit page
             await Shell.Current.GoToAsync($"habits/edithabit?id={habitId}");
         }
 
-        private void OnDeleteHabit(Guid habitId)
+        private async Task OnDeleteHabit(Guid habitId)
         {
-            _dataService.DeleteHabit(habitId);
-            LoadHabits();
+            if (IsLoading) return;
+
+            try
+            {
+                var confirm = await Shell.Current.DisplayAlert(
+                    "Delete Habit",
+                    "Are you sure you want to delete this habit? This action cannot be undone.",
+                    "Delete",
+                    "Cancel");
+
+                if (!confirm) return;
+
+                IsLoading = true;
+                await _dataService.DeleteHabitAsync(habitId);
+                await LoadHabitsAsync();
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
-        private void OnToggleCompletion(DayCompletionViewModel? dayCompletion)
+        private async Task OnToggleCompletion(DayCompletionViewModel? dayCompletion)
         {
             if (dayCompletion == null || !dayCompletion.ShouldTrack)
                 return;
 
-            _dataService.ToggleHabitCompletion(dayCompletion.HabitId, dayCompletion.Date);
-            
-            // Update only the toggled day and recalculate percentages
-            var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
-            habitCard?.UpdateDayCompletion(dayCompletion.Date);
+            try
+            {
+                await _dataService.ToggleHabitCompletionAsync(dayCompletion.HabitId, dayCompletion.Date);
+
+                // Update only the toggled day and recalculate percentages
+                var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+                if (habitCard != null)
+                {
+                    await habitCard.UpdateDayCompletionAsync(dayCompletion.Date);
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle completion: {ex.Message}", "OK");
+            }
         }
 
-        public void Refresh()
+        public async Task RefreshAsync()
         {
-            LoadHabits();
+            await LoadHabitsAsync();
         }
     }
 
@@ -137,23 +190,23 @@ namespace Tracker.ViewModels
             _habit = habit;
             _dataService = dataService;
             WeekDays = new ObservableCollection<DayCompletionViewModel>();
-            LoadWeekProgress();
+            _ = LoadWeekProgressAsync();
         }
 
-        public void RefreshWeekProgress()
+        public async Task RefreshWeekProgressAsync()
         {
-            LoadWeekProgress();
+            await LoadWeekProgressAsync();
         }
 
-        public void UpdateDayCompletion(DateTime date)
+        public async Task UpdateDayCompletionAsync(DateTime date)
         {
             // Find the specific day and update only its completion status
             var day = WeekDays.FirstOrDefault(d => d.Date.Date == date.Date);
             if (day != null)
             {
-                var isCompleted = _dataService.IsHabitCompletedOnDate(_habit.Id, date);
+                var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
                 day.IsCompleted = isCompleted;
-                
+
                 // Recalculate percentages without rebuilding the collection
                 RecalculateWeeklyCompletion();
             }
@@ -182,7 +235,7 @@ namespace Tracker.ViewModels
             }
         }
 
-        private void LoadWeekProgress()
+        private async Task LoadWeekProgressAsync()
         {
             WeekDays.Clear();
             var today = DateTime.Today;
@@ -191,8 +244,8 @@ namespace Tracker.ViewModels
             // Calculate week number (ISO 8601)
             var culture = System.Globalization.CultureInfo.CurrentCulture;
             var calendar = culture.Calendar;
-            WeekNumber = calendar.GetWeekOfYear(today, 
-                System.Globalization.CalendarWeekRule.FirstDay, 
+            WeekNumber = calendar.GetWeekOfYear(today,
+                System.Globalization.CalendarWeekRule.FirstDay,
                 DayOfWeek.Sunday);
 
             int completedDays = 0;
@@ -201,7 +254,7 @@ namespace Tracker.ViewModels
             for (int i = 0; i < 7; i++)
             {
                 var date = startOfWeek.AddDays(i);
-                var isCompleted = _dataService.IsHabitCompletedOnDate(_habit.Id, date);
+                var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
                 var shouldTrack = _habit.TrackEveryday || _habit.TrackingDays.Contains(date.DayOfWeek);
 
                 if (shouldTrack)

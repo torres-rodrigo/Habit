@@ -13,9 +13,9 @@ public partial class TasksPage : ContentPage
         BindingContext = _viewModel;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        _viewModel.Refresh();
+        await _viewModel.RefreshAsync();
     }
 }

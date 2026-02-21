@@ -17,6 +17,7 @@ public class EditTaskViewModel : BaseViewModel
     private string _selectedPriority = "None";
     private bool _hasReminders;
     private TimeSpan _reminderTime = new TimeSpan(9, 0, 0);
+    private bool _isSaving;
 
     public string? TaskId
     {
@@ -25,7 +26,7 @@ public class EditTaskViewModel : BaseViewModel
         {
             _taskId = value;
             OnPropertyChanged();
-            LoadTask();
+            _ = LoadTaskAsync();
         }
     }
 
@@ -79,6 +80,12 @@ public class EditTaskViewModel : BaseViewModel
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
+    public bool IsSaving
+    {
+        get => _isSaving;
+        set => SetProperty(ref _isSaving, value);
+    }
+
     public EditTaskViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -86,11 +93,11 @@ public class EditTaskViewModel : BaseViewModel
 
         AddSubtaskCommand = new Command(AddSubtask);
         RemoveSubtaskCommand = new Command<SubtaskItem>(RemoveSubtask);
-        SaveCommand = new Command(async () => await SaveTask());
+        SaveCommand = new Command(async () => await SaveTaskAsync());
         CancelCommand = new Command(async () => await Cancel());
     }
 
-    private void LoadTask()
+    private async Task LoadTaskAsync()
     {
         if (string.IsNullOrEmpty(TaskId) || !Guid.TryParse(TaskId, out var taskGuid))
         {
@@ -98,26 +105,34 @@ public class EditTaskViewModel : BaseViewModel
             return;
         }
 
-        var task = _dataService.GetTaskById(taskGuid);
-        if (task != null)
+        try
         {
-            Title = "Edit Task";
-            TaskName = task.Name;
-            Description = task.Description ?? string.Empty;
-            HasDueDate = task.DueDate.HasValue;
-            DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
-            SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
-
-            Subtasks.Clear();
-            foreach (var subtask in task.SubTasks)
+            var task = await _dataService.GetTaskByIdAsync(taskGuid);
+            if (task != null)
             {
-                Subtasks.Add(new SubtaskItem 
-                { 
-                    Id = subtask.Id,
-                    Name = subtask.Name,
-                    IsCompleted = subtask.IsCompleted
-                });
+                Title = "Edit Task";
+                TaskName = task.Name;
+                Description = task.Description ?? string.Empty;
+                HasDueDate = task.DueDate.HasValue;
+                DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
+                SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
+
+                Subtasks.Clear();
+                foreach (var subtask in task.SubTasks)
+                {
+                    Subtasks.Add(new SubtaskItem
+                    {
+                        Id = subtask.Id,
+                        Name = subtask.Name,
+                        IsCompleted = subtask.IsCompleted
+                    });
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error", $"Failed to load task: {ex.Message}", "OK");
+            await Shell.Current.GoToAsync("..");
         }
     }
 
@@ -134,52 +149,66 @@ public class EditTaskViewModel : BaseViewModel
         }
     }
 
-    private async Task SaveTask()
+    private async Task SaveTaskAsync()
     {
+        if (IsSaving) return;
+
+        // Validate input
         if (string.IsNullOrWhiteSpace(TaskName))
         {
-            await Shell.Current.DisplayAlert("Error", "Please enter a task name", "OK");
+            await Shell.Current.DisplayAlert("Validation Error", "Please enter a task name.", "OK");
             return;
         }
 
-        var taskId = string.IsNullOrEmpty(TaskId) || !Guid.TryParse(TaskId, out var parsedId) 
-            ? Guid.NewGuid() 
-            : parsedId;
-
-        // Get existing task to preserve properties like DisplayOrder, CreatedDate, etc.
-        var existingTask = string.IsNullOrEmpty(TaskId) ? null : _dataService.GetTaskById(taskId);
-
-        var subtaskList = Subtasks
-            .Where(s => !string.IsNullOrWhiteSpace(s.Name))
-            .Select((s, index) => new SubTask
-            {
-                Id = s.Id ?? Guid.NewGuid(),
-                ParentTaskId = taskId,
-                Name = s.Name,
-                IsCompleted = s.IsCompleted,
-                DisplayOrder = index
-            })
-            .ToList();
-
-        var task = new TodoTask
+        try
         {
-            Id = taskId,
-            Name = TaskName,
-            Description = string.IsNullOrWhiteSpace(Description) ? string.Empty : Description,
-            DueDate = HasDueDate ? DueDate : null,
-            Priority = ExtractPriorityName(SelectedPriority),
-            CreatedDate = existingTask?.CreatedDate ?? DateTime.Now,
-            IsCompleted = existingTask?.IsCompleted ?? false,
-            CompletedDate = existingTask?.CompletedDate,
-            DisplayOrder = existingTask?.DisplayOrder ?? 0,
-            HasReminders = existingTask?.HasReminders ?? false,
-            ReminderTime = existingTask?.ReminderTime,
-            SubTasks = subtaskList
-        };
+            IsSaving = true;
+            var taskId = string.IsNullOrEmpty(TaskId) || !Guid.TryParse(TaskId, out var parsedId)
+                ? Guid.NewGuid()
+                : parsedId;
 
-        _dataService.SaveTask(task);
+            // Get existing task to preserve properties like DisplayOrder, CreatedDate, etc.
+            var existingTask = string.IsNullOrEmpty(TaskId) ? null : await _dataService.GetTaskByIdAsync(taskId);
 
-        await Shell.Current.GoToAsync("..");
+            var subtaskList = Subtasks
+                .Where(s => !string.IsNullOrWhiteSpace(s.Name))
+                .Select((s, index) => new SubTask
+                {
+                    Id = s.Id ?? Guid.NewGuid(),
+                    ParentTaskId = taskId,
+                    Name = s.Name,
+                    IsCompleted = s.IsCompleted,
+                    DisplayOrder = index
+                })
+                .ToList();
+
+            var task = new TodoTask
+            {
+                Id = taskId,
+                Name = TaskName,
+                Description = string.IsNullOrWhiteSpace(Description) ? string.Empty : Description,
+                DueDate = HasDueDate ? DueDate : null,
+                Priority = ExtractPriorityName(SelectedPriority),
+                CreatedDate = existingTask?.CreatedDate ?? DateTime.Now,
+                IsCompleted = existingTask?.IsCompleted ?? false,
+                CompletedDate = existingTask?.CompletedDate,
+                DisplayOrder = existingTask?.DisplayOrder ?? 0,
+                HasReminders = existingTask?.HasReminders ?? false,
+                ReminderTime = existingTask?.ReminderTime,
+                SubTasks = subtaskList
+            };
+
+            await _dataService.SaveTaskAsync(task);
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error", $"Failed to save task: {ex.Message}", "OK");
+        }
+        finally
+        {
+            IsSaving = false;
+        }
     }
 
     private async Task Cancel()

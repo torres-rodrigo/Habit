@@ -12,6 +12,7 @@ namespace Tracker.ViewModels
         private readonly IDataService _dataService;
         private PriorityOption _selectedPriorityFilter;
         private bool _showOverlay;
+        private bool _isLoading;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
@@ -24,7 +25,7 @@ namespace Tracker.ViewModels
             {
                 if (SetProperty(ref _selectedPriorityFilter, value))
                 {
-                    ApplyPriorityFilter();
+                    _ = ApplyPriorityFilterAsync();
                 }
             }
         }
@@ -33,6 +34,12 @@ namespace Tracker.ViewModels
         {
             get => _showOverlay;
             set => SetProperty(ref _showOverlay, value);
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
         }
 
         public ICommand AddTaskCommand { get; }
@@ -61,43 +68,57 @@ namespace Tracker.ViewModels
 
             AddTaskCommand = new Command(OnAddTask);
             EditTaskCommand = new Command<Guid>(OnEditTask);
-            DeleteTaskCommand = new Command<Guid>(OnDeleteTask);
-            ToggleTaskCompletionCommand = new Command<Guid>(OnToggleTaskCompletion);
-            ToggleSubTaskCompletionCommand = new Command<(Guid taskId, Guid subTaskId)>(OnToggleSubTaskCompletion);
+            DeleteTaskCommand = new Command<Guid>(async (id) => await OnDeleteTaskAsync(id));
+            ToggleTaskCompletionCommand = new Command<Guid>(async (id) => await OnToggleTaskCompletionAsync(id));
+            ToggleSubTaskCompletionCommand = new Command<(Guid taskId, Guid subTaskId)>(async (args) => await OnToggleSubTaskCompletionAsync(args));
             CloseOverlayCommand = new Command(() => ShowOverlay = false);
             NavigateToHabitCommand = new Command(OnNavigateToHabit);
             NavigateToTaskCommand = new Command(OnNavigateToTask);
 
-            LoadTasks();
+            _ = LoadTasksAsync();
         }
 
-        private void LoadTasks()
+        private async Task LoadTasksAsync()
         {
-            ApplyPriorityFilter();
+            await ApplyPriorityFilterAsync();
         }
 
-        private void ApplyPriorityFilter()
+        private async Task ApplyPriorityFilterAsync()
         {
-            PendingTasks.Clear();
-            CompletedTasks.Clear();
+            if (IsLoading) return;
 
-            var allTasks = _dataService.GetAllTasks();
-            
-            // Apply priority filter
-            var filteredTasks = SelectedPriorityFilter?.Name switch
+            try
             {
-                "ALL" => allTasks,
-                "None" => allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None"),
-                _ => allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name)
-            };
-            
-            // Separate into pending and completed
-            foreach (var task in filteredTasks)
+                IsLoading = true;
+                PendingTasks.Clear();
+                CompletedTasks.Clear();
+
+                var allTasks = await _dataService.GetAllTasksAsync();
+
+                // Apply priority filter
+                var filteredTasks = SelectedPriorityFilter?.Name switch
+                {
+                    "ALL" => allTasks,
+                    "None" => allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None"),
+                    _ => allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name)
+                };
+
+                // Separate into pending and completed
+                foreach (var task in filteredTasks)
+                {
+                    if (task.IsCompleted)
+                        CompletedTasks.Add(task);
+                    else
+                        PendingTasks.Add(task);
+                }
+            }
+            catch (Exception ex)
             {
-                if (task.IsCompleted)
-                    CompletedTasks.Add(task);
-                else
-                    PendingTasks.Add(task);
+                await Shell.Current.DisplayAlert("Error", $"Failed to load tasks: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -125,72 +146,108 @@ namespace Tracker.ViewModels
             await Shell.Current.GoToAsync($"//tasks/edittask?id={taskId}");
         }
 
-        private void OnDeleteTask(Guid taskId)
+        private async Task OnDeleteTaskAsync(Guid taskId)
         {
-            _dataService.DeleteTask(taskId);
-            LoadTasks();
-        }
+            if (IsLoading) return;
 
-        private void OnToggleTaskCompletion(Guid taskId)
-        {
-            _dataService.ToggleTaskCompletion(taskId);
-            
-            // Find the task in either collection and move it to the appropriate one
-            var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == taskId);
-            var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
-            
-            if (taskInPending != null)
+            try
             {
-                // Task was pending, now completed - move to completed collection
-                var updatedTask = _dataService.GetTaskById(taskId);
-                if (updatedTask != null)
-                {
-                    PendingTasks.Remove(taskInPending);
-                    CompletedTasks.Add(updatedTask);
-                }
+                var confirm = await Shell.Current.DisplayAlert(
+                    "Delete Task",
+                    "Are you sure you want to delete this task? This action cannot be undone.",
+                    "Delete",
+                    "Cancel");
+
+                if (!confirm) return;
+
+                IsLoading = true;
+                await _dataService.DeleteTaskAsync(taskId);
+                await LoadTasksAsync();
             }
-            else if (taskInCompleted != null)
+            catch (Exception ex)
             {
-                // Task was completed, now pending - move to pending collection
-                var updatedTask = _dataService.GetTaskById(taskId);
-                if (updatedTask != null)
-                {
-                    CompletedTasks.Remove(taskInCompleted);
-                    PendingTasks.Add(updatedTask);
-                }
+                await Shell.Current.DisplayAlert("Error", $"Failed to delete task: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
-        private void OnToggleSubTaskCompletion((Guid taskId, Guid subTaskId) args)
+        private async Task OnToggleTaskCompletionAsync(Guid taskId)
         {
-            _dataService.ToggleSubTaskCompletion(args.taskId, args.subTaskId);
-            
-            // Find and update only the affected task
-            var task = PendingTasks.FirstOrDefault(t => t.Id == args.taskId) 
-                      ?? CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
-            
-            if (task != null)
+            try
             {
-                var updatedTask = _dataService.GetTaskById(args.taskId);
-                if (updatedTask != null)
+                await _dataService.ToggleTaskCompletionAsync(taskId);
+
+                // Find the task in either collection and move it to the appropriate one
+                var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == taskId);
+                var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
+
+                if (taskInPending != null)
                 {
-                    // Update the subtask in the existing task object
-                    var subTask = task.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                    if (subTask != null)
+                    // Task was pending, now completed - move to completed collection
+                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
+                    if (updatedTask != null)
                     {
-                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                        if (updatedSubTask != null)
+                        PendingTasks.Remove(taskInPending);
+                        CompletedTasks.Add(updatedTask);
+                    }
+                }
+                else if (taskInCompleted != null)
+                {
+                    // Task was completed, now pending - move to pending collection
+                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
+                    if (updatedTask != null)
+                    {
+                        CompletedTasks.Remove(taskInCompleted);
+                        PendingTasks.Add(updatedTask);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle task completion: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task OnToggleSubTaskCompletionAsync((Guid taskId, Guid subTaskId) args)
+        {
+            try
+            {
+                await _dataService.ToggleSubTaskCompletionAsync(args.taskId, args.subTaskId);
+
+                // Find and update only the affected task
+                var task = PendingTasks.FirstOrDefault(t => t.Id == args.taskId)
+                          ?? CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
+
+                if (task != null)
+                {
+                    var updatedTask = await _dataService.GetTaskByIdAsync(args.taskId);
+                    if (updatedTask != null)
+                    {
+                        // Update the subtask in the existing task object
+                        var subTask = task.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                        if (subTask != null)
                         {
-                            subTask.IsCompleted = updatedSubTask.IsCompleted;
+                            var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                            if (updatedSubTask != null)
+                            {
+                                subTask.IsCompleted = updatedSubTask.IsCompleted;
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle subtask completion: {ex.Message}", "OK");
+            }
         }
 
-        public void Refresh()
+        public async Task RefreshAsync()
         {
-            LoadTasks();
+            await LoadTasksAsync();
         }
     }
 }
