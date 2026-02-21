@@ -424,8 +424,6 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-Once it is in a repo ask ai to remove warnings, do performance improvements do code clean up.
-
 Notifications/reminders
 
 Move tab selection to bottom and center
@@ -467,7 +465,7 @@ When there is enough subtasks to scroll then completing a subtasks sends it to t
 show up first
 display the number of sub tasks completed x/y and the percentage
 If screen size allows it have the big list of subtaks be displayed side by side
-For sub tasks touching the text or the checkbox should have the same effect
+    For sub tasks touching the text or the checkbox should have the same effect
 
 add timestamps of completion time can be an option
 
