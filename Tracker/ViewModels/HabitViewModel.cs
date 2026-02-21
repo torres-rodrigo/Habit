@@ -233,7 +233,7 @@ namespace Tracker.ViewModels
     {
         public Guid HabitId { get; set; }
         public DateTime Date { get; set; }
-        public string DayName { get; set; }
+        public string DayName { get; set; } = string.Empty;
         
         private bool _isCompleted;
         public bool IsCompleted 

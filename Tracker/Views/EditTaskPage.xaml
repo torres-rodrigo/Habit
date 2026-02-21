@@ -65,10 +65,10 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodels:SubtaskItem">
                             <Grid ColumnDefinitions="*,Auto" Margin="0,5">
-                                <Entry Grid.Column="0" 
+                                <Entry Grid.Column="0"
                                        Text="{Binding Name}"
                                        Placeholder="Subtask name"/>
-                                <Button Grid.Column="1" 
+                                <Button Grid.Column="1"
                                         Text="✕"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditTaskViewModel}}, Path=RemoveSubtaskCommand}"
                                         CommandParameter="{Binding .}"

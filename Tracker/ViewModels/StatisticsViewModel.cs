@@ -10,7 +10,7 @@ namespace Tracker.ViewModels
         private readonly IDataService _dataService;
 
         public ObservableCollection<HabitStatistics> HabitStatistics { get; set; }
-        public TaskStatistics TaskStatistics { get; set; }
+        public TaskStatistics TaskStatistics { get; set; } = null!;
 
         public StatisticsViewModel(IDataService dataService)
         {

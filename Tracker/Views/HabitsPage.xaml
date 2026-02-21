@@ -17,16 +17,16 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodels:HabitCardViewModel">
-                            <Frame CornerRadius="15" 
-                                   BorderColor="{StaticResource Primary}" 
-                                   HasShadow="True" 
+                            <Frame CornerRadius="15"
+                                   BorderColor="{StaticResource Primary}"
+                                   HasShadow="True"
                                    Margin="0,0,0,5"
                                    Padding="15">
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
                                                         CommandParameter="{Binding Id}"/>
                                 </Frame.GestureRecognizers>
-                                
+
                                 <VerticalStackLayout Spacing="12">
                                     <Label Text="{Binding Name}" 
                                            FontSize="20" 
@@ -82,14 +82,14 @@
                                                                  HorizontalOptions="Center"
                                                                  VerticalOptions="Start"
                                                                  IsVisible="{Binding IsToday}"/>
-                                                        <Label Text="{Binding DayName}" 
-                                                               FontSize="12" 
+                                                        <Label Text="{Binding DayName}"
+                                                               FontSize="12"
                                                                HorizontalOptions="Center"
                                                                VerticalOptions="End"
                                                                TextColor="{StaticResource Gray600}"/>
                                                     </Grid>
-                                                    <Frame CornerRadius="20" 
-                                                           WidthRequest="40" 
+                                                    <Frame CornerRadius="20"
+                                                           WidthRequest="40"
                                                            HeightRequest="40"
                                                            Padding="0"
                                                            BorderColor="{Binding ShouldTrack, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Primary|Gray300'}"

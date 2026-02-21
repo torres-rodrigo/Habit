@@ -15,6 +15,8 @@ public class EditTaskViewModel : BaseViewModel
     private bool _hasDueDate;
     private DateTime _dueDate = DateTime.Today.AddDays(7);
     private string _selectedPriority = "None";
+    private bool _hasReminders;
+    private TimeSpan _reminderTime = new TimeSpan(9, 0, 0);
 
     public string? TaskId
     {
@@ -55,6 +57,18 @@ public class EditTaskViewModel : BaseViewModel
     {
         get => _selectedPriority;
         set => SetProperty(ref _selectedPriority, value);
+    }
+
+    public bool HasReminders
+    {
+        get => _hasReminders;
+        set => SetProperty(ref _hasReminders, value);
+    }
+
+    public TimeSpan ReminderTime
+    {
+        get => _reminderTime;
+        set => SetProperty(ref _reminderTime, value);
     }
 
     public ObservableCollection<string> Priorities { get; } = new() { "None", "● Low", "⬡ Medium", "▼ High" };
@@ -124,7 +138,7 @@ public class EditTaskViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(TaskName))
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", "Please enter a task name", "OK");
+            await Shell.Current.DisplayAlert("Error", "Please enter a task name", "OK");
             return;
         }
 

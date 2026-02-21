@@ -5,14 +5,14 @@ namespace Tracker.ViewModels
 {
     public class BaseViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
         {
             if (Equals(storage, value))
                 return false;
@@ -29,7 +29,7 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isBusy, value);
         }
 
-        private string _title;
+        private string _title = string.Empty;
         public string Title
         {
             get => _title;

@@ -35,9 +35,9 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:TodoTask">
-                                <Frame CornerRadius="15" 
-                                       BorderColor="{StaticResource Primary}" 
-                                       HasShadow="True" 
+                                <Frame CornerRadius="15"
+                                       BorderColor="{StaticResource Primary}"
+                                       HasShadow="True"
                                        Margin="0,0,0,5"
                                        Padding="15">
                                     <Frame.GestureRecognizers>
@@ -165,9 +165,9 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:TodoTask">
-                                <Frame CornerRadius="10" 
-                                       BorderColor="{StaticResource Gray300}" 
-                                       HasShadow="True" 
+                                <Frame CornerRadius="10"
+                                       BorderColor="{StaticResource Gray300}"
+                                       HasShadow="True"
                                        Margin="0,0,0,5"
                                        Padding="15"
                                        BackgroundColor="{StaticResource Gray100}">

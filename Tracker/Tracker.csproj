@@ -15,6 +15,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Suppress XAML binding compilation warnings (informational only, not errors) -->
+		<NoWarn>$(NoWarn);XC0022;XC0023;XC0025</NoWarn>
+
 		<!-- Display name -->
 		<ApplicationTitle>Tracker</ApplicationTitle>
 

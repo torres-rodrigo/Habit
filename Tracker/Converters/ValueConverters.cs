@@ -5,7 +5,7 @@ namespace Tracker.Converters
 {
     public class BoolToColorConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue && parameter is string colors)
             {
@@ -14,12 +14,12 @@ namespace Tracker.Converters
                 {
                     var trueColor = colorArray[0];
                     var falseColor = colorArray[1];
-                    
+
                     // Return color based on bool value
                     var colorName = boolValue ? trueColor : falseColor;
-                    
+
                     // Use Application.Current.Resources to get the color
-                    if (Application.Current.Resources.TryGetValue(colorName, out var color))
+                    if (Application.Current?.Resources.TryGetValue(colorName, out var color) == true)
                     {
                         return color;
                     }
@@ -28,7 +28,7 @@ namespace Tracker.Converters
             return Colors.Transparent;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -36,12 +36,12 @@ namespace Tracker.Converters
 
     public class StringNullOrEmptyConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return !string.IsNullOrWhiteSpace(value as string);
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -49,12 +49,12 @@ namespace Tracker.Converters
 
     public class NullToBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return value != null;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -62,7 +62,7 @@ namespace Tracker.Converters
 
     public class CountToBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is int count)
             {
@@ -71,7 +71,7 @@ namespace Tracker.Converters
             return false;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -79,7 +79,7 @@ namespace Tracker.Converters
 
     public class BoolToTextDecorationConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue && boolValue)
             {
@@ -88,7 +88,7 @@ namespace Tracker.Converters
             return TextDecorations.None;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -96,7 +96,7 @@ namespace Tracker.Converters
 
     public class InvertedBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
             {
@@ -105,7 +105,7 @@ namespace Tracker.Converters
             return false;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
             {
@@ -117,7 +117,7 @@ namespace Tracker.Converters
 
     public class BoolToOpacityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
             {
@@ -126,7 +126,7 @@ namespace Tracker.Converters
             return 0.3;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -134,13 +134,13 @@ namespace Tracker.Converters
 
     public class PriorityToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var priority = value as string;
             return !string.IsNullOrEmpty(priority) && priority != "None";
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -148,7 +148,7 @@ namespace Tracker.Converters
 
     public class PriorityToColorConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var priority = value as string;
             return priority switch
@@ -160,7 +160,7 @@ namespace Tracker.Converters
             };
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -168,11 +168,11 @@ namespace Tracker.Converters
 
     public class PriorityToShapeConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var priority = value as string;
             var targetShape = parameter as string;
-            
+
             return priority switch
             {
                 "Low" => targetShape == "Circle",
@@ -182,7 +182,7 @@ namespace Tracker.Converters
             };
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
