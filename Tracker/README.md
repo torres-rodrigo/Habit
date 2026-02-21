@@ -474,3 +474,74 @@ add timestamps of completion time can be an option
 order for tasks completed show be most recently completed to the top
 
 MAGIC 8 ball program 
+
+
+---
+Last changes
+1. Loading States
+
+  Added IsLoading property to prevent duplicate operations in:
+  - HabitViewModel - Prevents concurrent habit loading/deletion
+  - TaskViewModel - Prevents concurrent task loading/deletion
+  - EditHabitViewModel - Prevents double-saving with IsSaving
+  - EditTaskViewModel - Prevents double-saving with IsSaving
+  - StatisticsViewModel - Prevents concurrent statistics loading
+
+  2. Try-Catch Error Handling
+
+  All data operations now wrapped in try-catch blocks with user-friendly error messages:
+
+  HabitViewModel:
+  - LoadHabitsAsync() - Catches and displays habit loading errors
+  - OnDeleteHabitAsync() - Catches and displays deletion errors
+  - OnToggleCompletion() - Catches and displays toggle errors
+
+  EditHabitViewModel:
+  - LoadHabitAsync() - Catches load errors and navigates back
+  - OnSaveAsync() - Catches save errors with detailed messages
+
+  TaskViewModel:
+  - ApplyPriorityFilterAsync() - Catches and displays task loading errors
+  - OnDeleteTaskAsync() - Catches and displays deletion errors
+  - OnToggleTaskCompletionAsync() - Catches toggle errors
+  - OnToggleSubTaskCompletionAsync() - Catches subtask toggle errors
+
+  EditTaskViewModel:
+  - LoadTaskAsync() - Catches load errors and navigates back
+  - SaveTaskAsync() - Catches save errors with detailed messages
+
+  StatisticsViewModel:
+  - LoadStatisticsAsync() - Catches and displays statistics loading errors
+
+  3. Validation
+
+  Added input validation with clear user feedback:
+
+  EditHabitViewModel:
+  - Validates habit name is not empty
+  - Validates at least one day is selected when not tracking everyday
+  - Shows "Validation Error" alerts with specific messages
+
+  EditTaskViewModel:
+  - Validates task name is not empty
+  - Shows "Validation Error" alert with specific message
+
+  4. Confirmation Dialogs
+
+  Added confirmation prompts for destructive actions:
+  - Delete Habit - "Are you sure you want to delete this habit? This action cannot be undone."
+  - Delete Task - "Are you sure you want to delete this task? This action cannot be undone."
+
+  5. Error Messages
+
+  All error messages follow a consistent pattern:
+  - Title: Describes the issue type (e.g., "Error", "Validation Error")
+  - Message: Specific details about what failed (e.g., "Failed to load habits: {exception message}")
+  - Button: "OK" to dismiss
+
+  6. Graceful Failure Handling
+
+  When critical operations fail:
+  - Load errors in edit pages automatically navigate back to prevent broken state
+  - All finally blocks ensure loading states are cleared
+  - UI remains responsive even when operations fail
