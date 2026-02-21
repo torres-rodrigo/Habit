@@ -10,18 +10,35 @@
     <Grid>
         <ScrollView>
             <VerticalStackLayout Padding="20" Spacing="20">
-                
-                <!-- Priority Filter -->
-                <HorizontalStackLayout Spacing="10">
-                    <Label Text="Priority ⚡" 
+
+                <!-- All Filters in One Line -->
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Start">
+                    <Label Text="Filter"
+                           VerticalOptions="Center"
+                           FontSize="14"/>
+                    <Picker ItemsSource="{Binding DateTypeFilterOptions}"
+                            SelectedItem="{Binding SelectedDateTypeFilter}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            WidthRequest="120"/>
+
+                    <Label Text="by"
+                           VerticalOptions="Center"
+                           FontSize="14"/>
+                    <Picker ItemsSource="{Binding DatePeriodFilterOptions}"
+                            SelectedItem="{Binding SelectedDatePeriodFilter}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            IsEnabled="{Binding IsDatePeriodFilterEnabled}"
+                            WidthRequest="140"/>
+
+                    <Label Text="Priority ⚡"
                            VerticalOptions="Center"
                            FontSize="14"/>
                     <Picker ItemsSource="{Binding PriorityFilterOptions}"
                             SelectedItem="{Binding SelectedPriorityFilter}"
                             ItemDisplayBinding="{Binding DisplayName}"
-                            WidthRequest="150"/>
+                            WidthRequest="120"/>
                 </HorizontalStackLayout>
-                
+
                 <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
                     <Label Text="TODO" 

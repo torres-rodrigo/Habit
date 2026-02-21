@@ -426,6 +426,8 @@ PERSONAL TODO
 
 Notifications/reminders
 
+quick double click should cause like a failed case insted of success
+
 Move tab selection to bottom and center
 Have tab sections be collapsable
 On the statisctics tab have a filter for all time, and current year
@@ -447,7 +449,6 @@ Filters
 - Tasks should have an all time, current year, current month, current week, current day
   (this is to see what you completed in this time)
   Seperate priority filter
-  Creation date
   Due date
 
   Clicking a completed task should ask the user if they are sure they want to mark it as incomplete
@@ -1213,3 +1214,14 @@ Last changes
   6. Test on Windows
   7. Test on Android
   8. Verify data persists
+
+---
+
+# PROMPT TO IMPROVE FILES
+Read this <FILE>
+I now want you to review this file and look for improvements in performance or code syntax to make it more readable.
+Follow this guidelines
+Performance is paramount and the most important metric.
+All code changes you make should maintain the same behavior as the original code.
+The new code changes cannot cause new warnings to show up.
+Before making code changes understand what the purpouse of the original file is doing, if needed read related files to get the full context

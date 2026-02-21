@@ -11,12 +11,17 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private PriorityOption _selectedPriorityFilter;
+        private DateTypeOption _selectedDateTypeFilter;
+        private DatePeriodOption _selectedDatePeriodFilter;
         private bool _showOverlay;
         private bool _isLoading;
+        private bool _isDatePeriodFilterEnabled;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
         public ObservableCollection<PriorityOption> PriorityFilterOptions { get; set; }
+        public ObservableCollection<DateTypeOption> DateTypeFilterOptions { get; set; }
+        public ObservableCollection<DatePeriodOption> DatePeriodFilterOptions { get; set; }
 
         public PriorityOption SelectedPriorityFilter
         {
@@ -25,7 +30,39 @@ namespace Tracker.ViewModels
             {
                 if (SetProperty(ref _selectedPriorityFilter, value))
                 {
-                    _ = ApplyPriorityFilterAsync();
+                    _ = ApplyFiltersAsync();
+                }
+            }
+        }
+
+        public DateTypeOption SelectedDateTypeFilter
+        {
+            get => _selectedDateTypeFilter;
+            set
+            {
+                if (SetProperty(ref _selectedDateTypeFilter, value))
+                {
+                    // Enable/disable date period filter based on selection
+                    IsDatePeriodFilterEnabled = value?.Name != "NA";
+                    _ = ApplyFiltersAsync();
+                }
+            }
+        }
+
+        public bool IsDatePeriodFilterEnabled
+        {
+            get => _isDatePeriodFilterEnabled;
+            set => SetProperty(ref _isDatePeriodFilterEnabled, value);
+        }
+
+        public DatePeriodOption SelectedDatePeriodFilter
+        {
+            get => _selectedDatePeriodFilter;
+            set
+            {
+                if (SetProperty(ref _selectedDatePeriodFilter, value))
+                {
+                    _ = ApplyFiltersAsync();
                 }
             }
         }
@@ -56,6 +93,7 @@ namespace Tracker.ViewModels
             _dataService = dataService;
             PendingTasks = new ObservableCollection<TodoTask>();
             CompletedTasks = new ObservableCollection<TodoTask>();
+
             PriorityFilterOptions = new ObservableCollection<PriorityOption>
             {
                 new() { Name = "ALL", DisplayName = "ALL" },
@@ -65,6 +103,25 @@ namespace Tracker.ViewModels
                 new() { Name = "High", DisplayName = "▼ High" }
             };
             _selectedPriorityFilter = PriorityFilterOptions[0];
+
+            DateTypeFilterOptions = new ObservableCollection<DateTypeOption>
+            {
+                new() { Name = "NA", DisplayName = "N/A" },
+                new() { Name = "Created", DisplayName = "Created" },
+                new() { Name = "Completed", DisplayName = "Completed" }
+            };
+            _selectedDateTypeFilter = DateTypeFilterOptions[0]; // Default to N/A
+            _isDatePeriodFilterEnabled = false; // Disabled by default
+
+            DatePeriodFilterOptions = new ObservableCollection<DatePeriodOption>
+            {
+                new() { Name = "AllTime", DisplayName = "All time" },
+                new() { Name = "CurrentYear", DisplayName = "Current Year" },
+                new() { Name = "CurrentMonth", DisplayName = "Current Month" },
+                new() { Name = "CurrentWeek", DisplayName = "Current Week" },
+                new() { Name = "Today", DisplayName = "Today" }
+            };
+            _selectedDatePeriodFilter = DatePeriodFilterOptions[2]; // Default to Current Month
 
             AddTaskCommand = new Command(OnAddTask);
             EditTaskCommand = new Command<Guid>(OnEditTask);
@@ -80,10 +137,10 @@ namespace Tracker.ViewModels
 
         private async Task LoadTasksAsync()
         {
-            await ApplyPriorityFilterAsync();
+            await ApplyFiltersAsync();
         }
 
-        private async Task ApplyPriorityFilterAsync()
+        private async Task ApplyFiltersAsync()
         {
             if (IsLoading) return;
 
@@ -103,6 +160,9 @@ namespace Tracker.ViewModels
                     _ => allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name)
                 };
 
+                // Apply date filter
+                filteredTasks = ApplyDateFilter(filteredTasks);
+
                 // Separate into pending and completed
                 foreach (var task in filteredTasks)
                 {
@@ -119,6 +179,68 @@ namespace Tracker.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        private IEnumerable<TodoTask> ApplyDateFilter(IEnumerable<TodoTask> tasks)
+        {
+            // If N/A is selected, don't apply any date filtering
+            if (SelectedDateTypeFilter?.Name == "NA")
+                return tasks;
+
+            // Handle "All time" based on date type
+            if (SelectedDatePeriodFilter?.Name == "AllTime")
+            {
+                if (SelectedDateTypeFilter?.Name == "Completed")
+                {
+                    // Show only completed tasks
+                    return tasks.Where(t => t.IsCompleted && t.CompletedDate.HasValue);
+                }
+                else // Created
+                {
+                    // Show all tasks (all tasks have a created date)
+                    return tasks;
+                }
+            }
+
+            var today = DateTime.Today;
+            DateTime startDate;
+            DateTime endDate = today.AddDays(1).AddTicks(-1); // End of today
+
+            switch (SelectedDatePeriodFilter?.Name)
+            {
+                case "Today":
+                    startDate = today;
+                    break;
+                case "CurrentWeek":
+                    // Start of week (Sunday)
+                    startDate = today.AddDays(-(int)today.DayOfWeek);
+                    endDate = startDate.AddDays(7).AddTicks(-1); // End of Saturday
+                    break;
+                case "CurrentMonth":
+                    startDate = new DateTime(today.Year, today.Month, 1);
+                    endDate = startDate.AddMonths(1).AddTicks(-1); // End of month
+                    break;
+                case "CurrentYear":
+                    startDate = new DateTime(today.Year, 1, 1);
+                    endDate = new DateTime(today.Year, 12, 31, 23, 59, 59);
+                    break;
+                default:
+                    return tasks; // No filter
+            }
+
+            // Filter by date type (Created or Completed)
+            if (SelectedDateTypeFilter?.Name == "Completed")
+            {
+                return tasks.Where(t => t.IsCompleted &&
+                                       t.CompletedDate.HasValue &&
+                                       t.CompletedDate.Value >= startDate &&
+                                       t.CompletedDate.Value <= endDate);
+            }
+            else // Created
+            {
+                return tasks.Where(t => t.CreatedDate >= startDate &&
+                                       t.CreatedDate <= endDate);
             }
         }
 
