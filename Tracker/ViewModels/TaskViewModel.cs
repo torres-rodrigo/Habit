@@ -178,11 +178,26 @@ namespace Tracker.ViewModels
         {
             try
             {
+                // Check if task is currently completed
+                var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
+
+                if (taskInCompleted != null)
+                {
+                    // Task is being unmarked as complete - ask for confirmation
+                    var confirm = await Shell.Current.DisplayAlert(
+                        "Mark as Incomplete",
+                        "Are you sure you want to mark this task as incomplete? This will change the completion date and may affect your statistics.",
+                        "OK",
+                        "Cancel");
+
+                    if (!confirm) return; // User cancelled
+                }
+
                 await _dataService.ToggleTaskCompletionAsync(taskId);
 
                 // Find the task in either collection and move it to the appropriate one
                 var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == taskId);
-                var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
+                taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
 
                 if (taskInPending != null)
                 {
