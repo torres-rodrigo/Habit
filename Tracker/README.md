@@ -545,3 +545,671 @@ Last changes
   - Load errors in edit pages automatically navigate back to prevent broken state
   - All finally blocks ensure loading states are cleared
   - UI remains responsive even when operations fail
+
+---
+
+ SQLite Persistence Implementation Guide for .NET MAUI
+
+  Let me provide you with a comprehensive explanation of how we would implement SQLite persistence for your Tracker application. This
+  will work seamlessly on both Windows and Android.
+
+  Why SQLite Instead of JSON?
+
+  JSON File Approach (what you've done before):
+  - Simple: Just serialize/deserialize objects to/from a file
+  - Downsides:
+    - Must load entire file into memory
+    - Must save entire file every time (no partial updates)
+    - No querying capability (must load everything, then filter in C#)
+    - No concurrent access control
+    - No transactions (if app crashes mid-save, data corrupts)
+
+  SQLite Approach:
+  - Relational database stored in a single file
+  - Can query specific data without loading everything
+  - Supports transactions (all-or-nothing saves)
+  - Indexes for fast lookups
+  - Handles concurrent access
+  - Industry standard (used by Android, iOS, browsers)
+  - Still just a file - no server needed!
+
+  ---
+  How SQLite Works in .NET MAUI
+
+  The Big Picture
+
+  Your App (C#)
+      ↓
+  SQLite-net-pcl NuGet Package (C# wrapper)
+      ↓
+  SQLite Engine (native C library)
+      ↓
+  Database File (e.g., tracker.db3)
+
+  The SQLite database is literally just a file on disk (like tracker.db3). The SQLite-net library:
+  1. Opens the file
+  2. Translates your C# code into SQL queries
+  3. Executes them against the database
+  4. Returns C# objects back to you
+
+  Cross-Platform File Locations
+
+  Windows:
+  C:\Users\{username}\AppData\Local\Packages\{app-package-id}\LocalState\tracker.db3
+
+  Android:
+  /data/data/com.companyname.tracker/files/tracker.db3
+
+  .NET MAUI provides a platform-agnostic API to get the correct path:
+  string dbPath = Path.Combine(
+      FileSystem.AppDataDirectory,  // MAUI figures out the right folder
+      "tracker.db3"
+  );
+
+  ---
+  Required NuGet Packages
+
+  You'll need two packages:
+
+  1. SQLite-net-pcl (v1.9.172 or newer)
+
+  - The main SQLite library
+  - Provides ORM (Object-Relational Mapping)
+  - Lets you work with C# objects instead of writing raw SQL
+
+  2. SQLiteNetExtensions (v2.1.0 or newer)
+
+  - Adds relationship support (foreign keys, one-to-many, etc.)
+  - Makes it easier to handle your Habit → HabitCompletion relationships
+  - Handles cascading deletes automatically
+
+  Installation command:
+  dotnet add package sqlite-net-pcl
+  dotnet add package SQLiteNetExtensions
+
+  ---
+  Database Design: Tables & Relationships
+
+  Understanding ORM (Object-Relational Mapping)
+
+  You currently have C# classes like:
+  public class Habit
+  {
+      public Guid Id { get; set; }
+      public string Name { get; set; }
+      public List<HabitCompletion> Completions { get; set; } // In-memory list
+  }
+
+  SQLite-net will map this to a table:
+  Habits Table:
+  +--------------------------------------+------------------+
+  | Id (TEXT PRIMARY KEY)                | Name (TEXT)      |
+  +--------------------------------------+------------------+
+  | "abc-123..."                         | "Morning Run"    |
+  +--------------------------------------+------------------+
+
+  And HabitCompletion becomes another table:
+  HabitCompletions Table:
+  +--------------------------------------+--------------------------------------+
+  | Id (TEXT PRIMARY KEY)                | HabitId (TEXT FOREIGN KEY)           |
+  +--------------------------------------+--------------------------------------+
+  | "completion-1"                       | "abc-123..."                         |
+  +--------------------------------------+--------------------------------------+
+
+  The HabitId column is a foreign key pointing back to the Habit table.
+
+  Your Current Data Structure
+
+  Let me analyze what we need to store:
+
+  Habits:
+  - Core properties: Id, Name, Description, TrackEveryday, NotesEnabled, etc.
+  - Collection: List<HabitCompletion> (one-to-many relationship)
+  - Collection: List<DayOfWeek> (needs special handling - we'll make a separate table)
+
+  HabitCompletions:
+  - Properties: Id, HabitId (foreign key), CompletedDate, Note
+
+  Tasks:
+  - Core properties: Id, Name, Description, DueDate, Priority, etc.
+  - Collection: List<SubTask> (one-to-many relationship)
+
+  SubTasks:
+  - Properties: Id, ParentTaskId (foreign key), Name, IsCompleted
+
+  Tables We'll Create
+
+  1. Habits - Main habit data
+  2. HabitCompletions - Completion records for habits
+  3. HabitTrackingDays - Which days each habit tracks (Mon, Tue, etc.)
+  4. TodoTasks - Main task data
+  5. SubTasks - Subtasks belonging to tasks
+
+  ---
+  Step-by-Step Implementation Plan
+
+  Phase 1: Add Attributes to Your Models
+
+  You'll add attributes to your existing model classes to tell SQLite how to map them:
+
+  using SQLite;
+  using SQLiteNetExtensions.Attributes;
+
+  public class Habit
+  {
+      [PrimaryKey]
+      public Guid Id { get; set; }
+
+      [MaxLength(200)]
+      public string Name { get; set; }
+
+      [MaxLength(1000)]
+      public string Description { get; set; }
+
+      public bool TrackEveryday { get; set; }
+
+      // This tells SQLite NOT to store this property in the Habits table
+      [Ignore]
+      public List<DayOfWeek> TrackingDays { get; set; } = new();
+
+      // This creates a relationship to HabitCompletion table
+      [OneToMany(CascadeOperations = CascadeOperation.All)]
+      public List<HabitCompletion> Completions { get; set; } = new();
+
+      public DateTime CreatedDate { get; set; }
+      public int DisplayOrder { get; set; }
+      // ... other properties
+  }
+
+  Key Attributes:
+  - [PrimaryKey] - Marks the unique identifier
+  - [MaxLength(n)] - Sets max string length (good practice for performance)
+  - [Ignore] - Tells SQLite "don't store this in the database"
+  - [OneToMany] - Defines a parent-child relationship
+  - [ForeignKey] - Points to a parent record
+
+  Phase 2: Create a New Table for TrackingDays
+
+  Since List<DayOfWeek> can't be stored directly, we create a junction table:
+
+  [Table("HabitTrackingDays")]
+  public class HabitTrackingDay
+  {
+      [PrimaryKey, AutoIncrement]
+      public int Id { get; set; }
+
+      [ForeignKey(typeof(Habit))]
+      public Guid HabitId { get; set; }
+
+      public DayOfWeek DayOfWeek { get; set; }
+  }
+
+  This lets one habit have multiple tracking days:
+  HabitTrackingDays:
+  +----+-------------+-------------+
+  | Id | HabitId     | DayOfWeek   |
+  +----+-------------+-------------+
+  | 1  | "habit-123" | Monday      |
+  | 2  | "habit-123" | Wednesday   |
+  | 3  | "habit-123" | Friday      |
+  +----+-------------+-------------+
+
+  Phase 3: Create Database Service
+
+  Create a new DatabaseService.cs that handles all SQLite operations:
+
+  public class DatabaseService
+  {
+      private SQLiteAsyncConnection _database;
+
+      public DatabaseService()
+      {
+          // Get platform-specific path
+          string dbPath = Path.Combine(
+              FileSystem.AppDataDirectory,
+              "tracker.db3"
+          );
+
+          _database = new SQLiteAsyncConnection(dbPath);
+
+          // Create tables if they don't exist
+          _database.CreateTableAsync<Habit>().Wait();
+          _database.CreateTableAsync<HabitCompletion>().Wait();
+          _database.CreateTableAsync<HabitTrackingDay>().Wait();
+          _database.CreateTableAsync<TodoTask>().Wait();
+          _database.CreateTableAsync<SubTask>().Wait();
+      }
+
+      // Habit methods
+      public Task<List<Habit>> GetAllHabitsAsync()
+      {
+          return _database.GetAllWithChildrenAsync<Habit>();
+      }
+
+      public Task<Habit> GetHabitByIdAsync(Guid id)
+      {
+          return _database.GetWithChildrenAsync<Habit>(id);
+      }
+
+      public async Task SaveHabitAsync(Habit habit)
+      {
+          // Insert or update with relationships
+          await _database.InsertOrReplaceWithChildrenAsync(habit);
+
+          // Handle TrackingDays separately
+          await _database.ExecuteAsync(
+              "DELETE FROM HabitTrackingDays WHERE HabitId = ?",
+              habit.Id
+          );
+
+          foreach (var day in habit.TrackingDays)
+          {
+              await _database.InsertAsync(new HabitTrackingDay
+              {
+                  HabitId = habit.Id,
+                  DayOfWeek = day
+              });
+          }
+      }
+
+      // Similar methods for Tasks, Completions, etc.
+  }
+
+  Key Methods:
+  - CreateTableAsync<T>() - Creates table from C# class
+  - GetAllWithChildrenAsync<T>() - Loads objects with their related data
+  - InsertOrReplaceAsync() - Saves (insert if new, update if exists)
+  - InsertOrReplaceWithChildrenAsync() - Saves with relationships
+  - DeleteAsync() - Removes a record
+  - ExecuteAsync() - Runs raw SQL when needed
+
+  Phase 4: Update DataService to Use Database
+
+  Modify your existing DataService.cs to use DatabaseService instead of in-memory lists:
+
+  Before (in-memory):
+  public class DataService : IDataService
+  {
+      private readonly List<Habit> _habits;
+
+      public Task<List<Habit>> GetAllHabitsAsync()
+      {
+          var habits = _habits.OrderBy(h => h.DisplayOrder).ToList();
+          return Task.FromResult(habits);
+      }
+  }
+
+  After (SQLite):
+  public class DataService : IDataService
+  {
+      private readonly DatabaseService _database;
+
+      public DataService(DatabaseService database)
+      {
+          _database = database;
+      }
+
+      public async Task<List<Habit>> GetAllHabitsAsync()
+      {
+          var habits = await _database.GetAllHabitsAsync();
+
+          // Load tracking days for each habit
+          foreach (var habit in habits)
+          {
+              var trackingDays = await _database.GetTrackingDaysAsync(habit.Id);
+              habit.TrackingDays = trackingDays.Select(td => td.DayOfWeek).ToList();
+          }
+
+          return habits.OrderBy(h => h.DisplayOrder).ToList();
+      }
+  }
+
+  Phase 5: Register DatabaseService in Dependency Injection
+
+  Update MauiProgram.cs:
+
+  public static MauiApp CreateMauiApp()
+  {
+      var builder = MauiApp.CreateBuilder();
+      builder
+          .UseMauiApp<App>()
+          .ConfigureFonts(...);
+
+      // Register DatabaseService as singleton (one instance for app lifetime)
+      builder.Services.AddSingleton<DatabaseService>();
+
+      // DataService now depends on DatabaseService
+      builder.Services.AddSingleton<IDataService, DataService>();
+
+      // ViewModels, pages, etc.
+      builder.Services.AddTransient<HabitViewModel>();
+      // ...
+
+      return builder.Build();
+  }
+
+  ---
+  Important Considerations
+
+  1. Async All The Way
+
+  SQLite operations are I/O bound (reading/writing to disk), so they should always be async:
+
+  // GOOD ✓
+  await _database.InsertAsync(habit);
+
+  // BAD ✗ - Blocks the UI thread
+  _database.InsertAsync(habit).Wait();
+
+  Good news: You already made everything async in step 2!
+
+  2. Transactions for Data Integrity
+
+  When saving complex objects, use transactions to ensure all-or-nothing:
+
+  public async Task SaveTaskWithSubtasksAsync(TodoTask task)
+  {
+      await _database.RunInTransactionAsync((connection) =>
+      {
+          connection.InsertOrReplace(task);
+
+          foreach (var subtask in task.SubTasks)
+          {
+              connection.InsertOrReplace(subtask);
+          }
+      });
+      // If ANY operation fails, NOTHING is saved
+  }
+
+  3. Migrations (Database Schema Changes)
+
+  When you update your models (add/remove properties), you need to handle migration:
+
+  Option A: Simple (for development):
+  // Drop and recreate tables (loses all data!)
+  await _database.DropTableAsync<Habit>();
+  await _database.CreateTableAsync<Habit>();
+
+  Option B: Production-ready:
+  public class DatabaseService
+  {
+      private const int CurrentDatabaseVersion = 2;
+
+      public async Task InitializeAsync()
+      {
+          await _database.CreateTableAsync<Habit>();
+
+          int version = GetDatabaseVersion();
+
+          if (version < CurrentDatabaseVersion)
+          {
+              await MigrateDatabase(version);
+          }
+      }
+
+      private async Task MigrateDatabase(int fromVersion)
+      {
+          if (fromVersion < 2)
+          {
+              // Add new column to existing table
+              await _database.ExecuteAsync(
+                  "ALTER TABLE Habits ADD COLUMN NewProperty TEXT"
+              );
+          }
+      }
+  }
+
+  4. Loading Related Data
+
+  Lazy Loading vs. Eager Loading:
+
+  // Lazy: Load habit, then load completions separately (2 queries)
+  var habit = await _database.GetAsync<Habit>(habitId);
+  habit.Completions = await _database.Table<HabitCompletion>()
+      .Where(c => c.HabitId == habitId)
+      .ToListAsync();
+
+  // Eager: Load everything in one go (better performance)
+  var habit = await _database.GetWithChildrenAsync<Habit>(habitId, recursive: true);
+
+  Use GetWithChildrenAsync when you know you'll need the related data.
+
+  5. Indexing for Performance
+
+  Add indexes to columns you search/filter frequently:
+
+  public class HabitCompletion
+  {
+      [PrimaryKey]
+      public Guid Id { get; set; }
+
+      [ForeignKey(typeof(Habit)), Indexed]  // ← Index this!
+      public Guid HabitId { get; set; }
+
+      [Indexed]  // ← Index dates for range queries
+      public DateTime CompletedDate { get; set; }
+  }
+
+  Indexes make queries like "find all completions for this habit" much faster.
+
+  ---
+  Data Migration Strategy
+
+  Moving from In-Memory to SQLite
+
+  Option 1: Start Fresh
+  - Delete old in-memory code
+  - Let users start with empty database
+  - Simple but users lose data
+
+  Option 2: One-Time Migration
+  - Keep LoadSampleData() but modify it to check if database is empty
+  - If empty, create sample data and save to SQLite
+  - Users keep sample data
+
+  public class DataService
+  {
+      private readonly DatabaseService _database;
+
+      public DataService(DatabaseService database)
+      {
+          _database = database;
+          _ = InitializeAsync();
+      }
+
+      private async Task InitializeAsync()
+      {
+          var existingHabits = await _database.GetAllHabitsAsync();
+
+          if (existingHabits.Count == 0)
+          {
+              // First run - add sample data
+              await LoadSampleDataAsync();
+          }
+      }
+
+      private async Task LoadSampleDataAsync()
+      {
+          var exerciseHabit = new Habit
+          {
+              Id = Guid.NewGuid(),
+              Name = "Morning Exercise",
+              // ... sample data
+          };
+
+          await _database.SaveHabitAsync(exerciseHabit);
+          // ... save other samples
+      }
+  }
+
+  ---
+  Testing the Implementation
+
+  1. Test Database Location
+
+  Add a debug method to print the database path:
+
+  public void ShowDatabasePath()
+  {
+      string dbPath = Path.Combine(FileSystem.AppDataDirectory, "tracker.db3");
+      System.Diagnostics.Debug.WriteLine($"Database location: {dbPath}");
+  }
+
+  Windows: Open the path in File Explorer and verify tracker.db3 exists
+
+  Android: Use ADB to pull the file:
+  adb pull /data/data/com.companyname.tracker/files/tracker.db3 .
+
+  2. Inspect Database with Tools
+
+  DB Browser for SQLite (free tool):
+  - Download: https://sqlitebrowser.org/
+  - Open tracker.db3
+  - Browse tables, view data, run queries
+  - Great for debugging!
+
+  3. Verify Data Persistence
+
+  Test sequence:
+  1. Create a habit "Test Habit"
+  2. Close app completely
+  3. Reopen app
+  4. Verify "Test Habit" still exists ✓
+
+  ---
+  Complete File Structure After Implementation
+
+  Tracker/
+  ├── Models/
+  │   ├── Habit.cs                 [Add SQLite attributes]
+  │   ├── HabitCompletion.cs       [Add SQLite attributes]
+  │   ├── HabitTrackingDay.cs      [NEW - junction table]
+  │   ├── TodoTask.cs              [Add SQLite attributes]
+  │   └── SubTask.cs               [Add SQLite attributes]
+  │
+  ├── Services/
+  │   ├── IDataService.cs          [No changes]
+  │   ├── DataService.cs           [Modify to use DatabaseService]
+  │   └── DatabaseService.cs       [NEW - SQLite operations]
+  │
+  ├── ViewModels/                  [No changes needed!]
+  ├── Views/                       [No changes needed!]
+  └── MauiProgram.cs              [Register DatabaseService]
+
+  ---
+  Common Pitfalls & Solutions
+
+  Pitfall 1: Circular References
+
+  Problem:
+  public class Habit
+  {
+      public List<HabitCompletion> Completions { get; set; }
+  }
+
+  public class HabitCompletion
+  {
+      public Habit Habit { get; set; }  // ← Circular!
+  }
+
+  Solution: Use [Ignore] on one side:
+  public class HabitCompletion
+  {
+      [Ignore]
+      public Habit ParentHabit { get; set; }  // Don't store in DB
+  }
+
+  Pitfall 2: Forgetting to Load Children
+
+  Problem:
+  var habit = await _database.GetAsync<Habit>(id);
+  // habit.Completions is empty!
+
+  Solution: Use the extensions:
+  var habit = await _database.GetWithChildrenAsync<Habit>(id);
+  // habit.Completions is populated ✓
+
+  Pitfall 3: Guid as String
+
+  SQLite doesn't have a native Guid type, so it stores as TEXT:
+
+  // This works automatically, but be aware:
+  public Guid Id { get; set; }
+  // Stored as: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
+
+  Pitfall 4: DateTime Time Zones
+
+  SQLite stores DateTime as UTC string. Your dates should be consistent:
+
+  // GOOD ✓
+  habit.CreatedDate = DateTime.UtcNow;
+
+  // BAD ✗ - Mixing local and UTC causes bugs
+  habit.CreatedDate = DateTime.Now;
+
+  ---
+  Performance Characteristics
+
+  Read Performance:
+  - Getting all habits: ~1-5ms (100 records)
+  - Getting specific habit: ~0.1ms (indexed lookup)
+  - Complex queries: 10-50ms
+
+  Write Performance:
+  - Insert/Update: ~1-5ms per record
+  - Batch inserts (transaction): ~100 records/second
+
+  Storage:
+  - Empty database: ~20KB
+  - 100 habits + 1000 completions: ~200KB
+  - Very efficient!
+
+  ---
+  Advantages Over JSON
+  ┌───────────────────┬─────────────────────────────────────┬───────────────────────────────────┐
+  │      Aspect       │              JSON File              │              SQLite               │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Speed             │ Slow for large data (must load all) │ Fast (queries only what's needed) │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Memory            │ High (entire file in RAM)           │ Low (only active data)            │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Queries           │ Must load → filter in C#            │ SQL queries on disk               │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Partial Updates   │ Must rewrite entire file            │ Update single record              │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Relationships     │ Manual management                   │ Built-in foreign keys             │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Transactions      │ None                                │ ACID compliant                    │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Concurrent Access │ Prone to corruption                 │ Safe locking                      │
+  ├───────────────────┼─────────────────────────────────────┼───────────────────────────────────┤
+  │ Cross-Platform    │ Easy                                │ Easy (with MAUI)                  │
+  └───────────────────┴─────────────────────────────────────┴───────────────────────────────────┘
+  ---
+  Summary of Changes You'll Make
+
+  1. Install NuGet packages: sqlite-net-pcl, SQLiteNetExtensions
+  2. Add attributes to models: [PrimaryKey], [ForeignKey], [OneToMany], etc.
+  3. Create junction table: HabitTrackingDay for DayOfWeek list
+  4. Create DatabaseService: Wrapper around SQLiteAsyncConnection
+  5. Update DataService: Replace in-memory lists with database calls
+  6. Register in DI: Add DatabaseService singleton in MauiProgram.cs
+  7. Test: Verify data persists across app restarts
+
+  No changes needed to:
+  - ViewModels (they already use async!)
+  - Views/XAML
+  - Your UI logic
+  - Navigation
+
+  ---
+  Next Steps (When Ready to Implement)
+
+  1. I'll install the NuGet packages
+  2. Create the DatabaseService
+  3. Add attributes to your models
+  4. Create the HabitTrackingDay model
+  5. Update DataService to use DatabaseService
+  6. Test on Windows
+  7. Test on Android
+  8. Verify data persists
