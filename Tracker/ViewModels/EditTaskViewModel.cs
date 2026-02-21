@@ -17,6 +17,7 @@ public class EditTaskViewModel : BaseViewModel
     private string _selectedPriority = "None";
     private bool _hasReminders;
     private TimeSpan _reminderTime = new TimeSpan(9, 0, 0);
+    private bool _autoCompleteWithSubtasks;
     private bool _isSaving;
 
     public string? TaskId
@@ -72,6 +73,12 @@ public class EditTaskViewModel : BaseViewModel
         set => SetProperty(ref _reminderTime, value);
     }
 
+    public bool AutoCompleteWithSubtasks
+    {
+        get => _autoCompleteWithSubtasks;
+        set => SetProperty(ref _autoCompleteWithSubtasks, value);
+    }
+
     public ObservableCollection<string> Priorities { get; } = new() { "None", "● Low", "⬡ Medium", "▼ High" };
     public ObservableCollection<SubtaskItem> Subtasks { get; } = new();
 
@@ -116,6 +123,7 @@ public class EditTaskViewModel : BaseViewModel
                 HasDueDate = task.DueDate.HasValue;
                 DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
                 SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
+                AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks;
 
                 Subtasks.Clear();
                 foreach (var subtask in task.SubTasks)
@@ -195,6 +203,7 @@ public class EditTaskViewModel : BaseViewModel
                 DisplayOrder = existingTask?.DisplayOrder ?? 0,
                 HasReminders = existingTask?.HasReminders ?? false,
                 ReminderTime = existingTask?.ReminderTime,
+                AutoCompleteWithSubtasks = AutoCompleteWithSubtasks,
                 SubTasks = subtaskList
             };
 

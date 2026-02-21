@@ -217,24 +217,44 @@ namespace Tracker.ViewModels
             {
                 await _dataService.ToggleSubTaskCompletionAsync(args.taskId, args.subTaskId);
 
-                // Find and update only the affected task
-                var task = PendingTasks.FirstOrDefault(t => t.Id == args.taskId)
-                          ?? CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
+                // Get the updated task to check if it was auto-completed
+                var updatedTask = await _dataService.GetTaskByIdAsync(args.taskId);
+                if (updatedTask == null) return;
 
-                if (task != null)
+                // Find the task in either collection
+                var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == args.taskId);
+                var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
+
+                // Check if the parent task's completion status changed (auto-complete triggered)
+                if (taskInPending != null && updatedTask.IsCompleted)
                 {
-                    var updatedTask = await _dataService.GetTaskByIdAsync(args.taskId);
-                    if (updatedTask != null)
+                    // Task was auto-completed - move to completed collection
+                    PendingTasks.Remove(taskInPending);
+                    CompletedTasks.Add(updatedTask);
+                }
+                else if (taskInPending != null)
+                {
+                    // Task is still pending - just update the subtask
+                    var subTask = taskInPending.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                    if (subTask != null)
                     {
-                        // Update the subtask in the existing task object
-                        var subTask = task.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                        if (subTask != null)
+                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                        if (updatedSubTask != null)
                         {
-                            var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                            if (updatedSubTask != null)
-                            {
-                                subTask.IsCompleted = updatedSubTask.IsCompleted;
-                            }
+                            subTask.IsCompleted = updatedSubTask.IsCompleted;
+                        }
+                    }
+                }
+                else if (taskInCompleted != null)
+                {
+                    // Task is in completed - just update the subtask
+                    var subTask = taskInCompleted.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                    if (subTask != null)
+                    {
+                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                        if (updatedSubTask != null)
+                        {
+                            subTask.IsCompleted = updatedSubTask.IsCompleted;
                         }
                     }
                 }

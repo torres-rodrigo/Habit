@@ -471,6 +471,8 @@ add timestamps of completion time can be an option
 
 order for tasks completed show be most recently completed to the top
 
+---
+
 MAGIC 8 ball program 
 
 

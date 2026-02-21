@@ -57,6 +57,17 @@
                         SelectedItem="{Binding SelectedPriority}"/>
             </VerticalStackLayout>
 
+            <!-- Auto-complete with Subtasks -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Auto-complete" FontAttributes="Bold" FontSize="16"/>
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"/>
+                    <Label Text="Mark task as complete when all subtasks are done"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
             <!-- Subtasks -->
             <VerticalStackLayout Spacing="10">
                 <Label Text="Subtasks" FontAttributes="Bold" FontSize="16"/>

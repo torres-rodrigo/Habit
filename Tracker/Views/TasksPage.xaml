@@ -108,8 +108,9 @@
                                                         <DataTemplate x:DataType="models:SubTask">
                                                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="3" Margin="0,1">
                                                                 <CheckBox Grid.Column="0"
-                                                                        IsChecked="{Binding IsCompleted}"
-                                                                        Color="{StaticResource Primary}"/>
+                                                                        IsChecked="{Binding IsCompleted, Mode=OneWay}"
+                                                                        Color="{StaticResource Primary}"
+                                                                        CheckedChanged="OnSubTaskCheckChanged"/>
                                                                 <Label Grid.Column="1"
                                                                      Text="{Binding Name}"
                                                                      FontSize="13"
@@ -240,7 +241,7 @@
                                                         <DataTemplate x:DataType="models:SubTask">
                                                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="3" Margin="0,1">
                                                                 <CheckBox Grid.Column="0"
-                                                                        IsChecked="{Binding IsCompleted}"
+                                                                        IsChecked="{Binding IsCompleted, Mode=OneWay}"
                                                                         Color="{StaticResource Secondary}"
                                                                         IsEnabled="False"/>
                                                                 <Label Grid.Column="1"

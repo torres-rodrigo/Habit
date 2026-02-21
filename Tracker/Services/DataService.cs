@@ -286,8 +286,8 @@ namespace Tracker.Services
             {
                 subTask.IsCompleted = !subTask.IsCompleted;
 
-                // Auto-complete parent task if all subtasks are completed
-                if (task.AllSubTasksCompleted && !task.IsCompleted)
+                // Auto-complete parent task if toggle is enabled and all subtasks are done
+                if (task.AutoCompleteWithSubtasks && task.SubTaskCompletionPercentage == 100 && !task.IsCompleted)
                 {
                     task.IsCompleted = true;
                     task.CompletedDate = DateTime.Now;
