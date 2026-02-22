@@ -260,30 +260,30 @@
                                                             CommandParameter="{Binding Id}"/>
                                     </Frame.GestureRecognizers>
                                     
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                        <!-- Checkbox -->
-                                        <Frame Grid.Column="0"
-                                               CornerRadius="15"
-                                               WidthRequest="30"
-                                               HeightRequest="30"
-                                               Padding="0"
-                                               BorderColor="{StaticResource Secondary}"
-                                               BackgroundColor="{StaticResource Secondary}"
-                                               HasShadow="False">
-                                            <Frame.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
-                                                                    CommandParameter="{Binding Id}"/>
-                                            </Frame.GestureRecognizers>
-                                            <Label Text="✓" 
-                                                   FontSize="16"
-                                                   TextColor="White"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center"/>
-                                        </Frame>
-
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                         <!-- Task Content -->
-                                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="5">
                                             <HorizontalStackLayout Spacing="8">
+                                                <!-- Round Checkbox -->
+                                                <Frame CornerRadius="15"
+                                                       WidthRequest="30"
+                                                       HeightRequest="30"
+                                                       Padding="0"
+                                                       BorderColor="{StaticResource Secondary}"
+                                                       BackgroundColor="{StaticResource Secondary}"
+                                                       HasShadow="False"
+                                                       VerticalOptions="Center">
+                                                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
+                                                                            CommandParameter="{Binding Id}"/>
+                                                    </Frame.GestureRecognizers>
+                                                    <Label Text="✓"
+                                                           FontSize="16"
+                                                           TextColor="White"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center"/>
+                                                </Frame>
+
                                                 <!-- Priority Icon -->
                                                 <Grid WidthRequest="12" HeightRequest="12" VerticalOptions="Center"
                                                       IsVisible="{Binding Priority, Converter={StaticResource PriorityToVisibilityConverter}}">
@@ -329,13 +329,15 @@
                                                                 <CheckBox Grid.Column="0"
                                                                         IsChecked="{Binding IsCompleted, Mode=OneWay}"
                                                                         Color="{StaticResource Secondary}"
-                                                                        IsEnabled="False"/>
+                                                                        IsEnabled="False"
+                                                                        Margin="-10,0,0,-12"/>
                                                                 <Label Grid.Column="1"
                                                                      Text="{Binding Name}"
                                                                      FontSize="13"
                                                                      TextColor="{StaticResource Gray500}"
                                                                      VerticalOptions="Center"
-                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"/>
+                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"
+                                                                     Margin="-10,0,0,-12"/>
                                                             </Grid>
                                                         </DataTemplate>
                                                     </CollectionView.ItemTemplate>
