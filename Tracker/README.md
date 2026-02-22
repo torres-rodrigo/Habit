@@ -432,6 +432,10 @@ Notifications/reminders
 
 quick double click should cause like a failed case insted of success
 
+Search functionality to sort in tabs
+
+Negative habit toggle red border just during creation or editing
+
 This should already be solved for android, windows doesnt work
 Move tab selection to bottom and center
 On the statisctics tab have a filter for all time, and current year
@@ -453,6 +457,7 @@ Filters
 manage case where habit frequency changes so as to not break statistics
 
 reucrring tasks
+
 
 ---
 
