@@ -142,10 +142,13 @@
                                                              IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Triangle}"/>
                                                 </Grid>
                                                 
-                                                <Label Text="{Binding Name}" 
-                                                       FontSize="16" 
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="16"
                                                        FontAttributes="Bold"
-                                                       VerticalOptions="Center"/>
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1"/>
                                             </HorizontalStackLayout>
                                             <Label Text="{Binding Description}" 
                                                    FontSize="14"
@@ -186,7 +189,9 @@
                                                                      TextColor="{StaticResource Gray600}"
                                                                      VerticalOptions="Center"
                                                                      TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"
-                                                                     Margin="-10,0,0,-12"/>
+                                                                     Margin="-10,0,0,-12"
+                                                                     LineBreakMode="TailTruncation"
+                                                                     MaxLines="1"/>
                                                             </Grid>
                                                         </DataTemplate>
                                                     </CollectionView.ItemTemplate>
@@ -303,12 +308,15 @@
                                                              IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Triangle}"/>
                                                 </Grid>
                                                 
-                                                <Label Text="{Binding Name}" 
-                                                       FontSize="16" 
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="16"
                                                        FontAttributes="Bold"
                                                        TextDecorations="Strikethrough"
                                                        TextColor="{StaticResource Gray600}"
-                                                       VerticalOptions="Center"/>
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1"/>
                                             </HorizontalStackLayout>
                                             <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy}'}"
                                                    FontSize="12"
@@ -336,7 +344,9 @@
                                                                      TextColor="{StaticResource Gray500}"
                                                                      VerticalOptions="Center"
                                                                      TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"
-                                                                     Margin="-10,0,0,-12"/>
+                                                                     Margin="-10,0,0,-12"
+                                                                     LineBreakMode="TailTruncation"
+                                                                     MaxLines="1"/>
                                                             </Grid>
                                                         </DataTemplate>
                                                     </CollectionView.ItemTemplate>

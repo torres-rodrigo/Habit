@@ -427,17 +427,17 @@ PERSONAL TODO
 collapsable sections done in tasks page
 
 tasks/subtasks epsilon completions for long names
+add timestamps of completion time can be an option
+
 
 Test in android
-
-completed tasks completed checkbox location
 
 Notifications/reminders
 
 quick double click should cause like a failed case insted of success
 
+This should already be solved for android, windows doesnt work
 Move tab selection to bottom and center
-Have tab sections be collapsable
 On the statisctics tab have a filter for all time, and current year
 
 Add way to add note for the current day in the card for the habit
@@ -455,12 +455,6 @@ Filters
 - Statistics should have an all time and current year
 
 manage case where habit frequency changes so as to not break statistics
-
-slightly reduce the size of the subtask checkbox
-reduce spacing between subtasks
-put a limit to the lenght of the name of a subtask
-
-add timestamps of completion time can be an option
 
 reucrring tasks
 
