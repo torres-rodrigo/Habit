@@ -8,7 +8,7 @@
     <Grid RowDefinitions="*,Auto">
         <!-- Scrollable Content -->
         <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="20" Spacing="20">
+            <VerticalStackLayout Padding="20" Spacing="10">
             
             <!-- Task Name -->
             <VerticalStackLayout Spacing="5">
@@ -24,49 +24,61 @@
                         HeightRequest="100"/>
             </VerticalStackLayout>
 
-            <!-- Due Date -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Due Date" FontAttributes="Bold" FontSize="16"/>
-                
-                <HorizontalStackLayout Spacing="10">
-                    <Switch IsToggled="{Binding HasDueDate}"/>
-                    <Label Text="Set Due Date" VerticalOptions="Center"/>
-                </HorizontalStackLayout>
+            <!-- Toggles and Pickers Row -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="15">
+                <!-- Due Date Column -->
+                <VerticalStackLayout Grid.Column="0" Spacing="5">
+                    <Label Text="Due Date" FontAttributes="Bold" FontSize="14"/>
+                    <HorizontalStackLayout Spacing="0">
+                        <Switch IsToggled="{Binding HasDueDate}"
+                                VerticalOptions="Center"
+                                Margin="0,0,5,0"/>
+                        <DatePicker Date="{Binding DueDate}"
+                                  Format="dd/MM/yyyy"
+                                  IsEnabled="{Binding HasDueDate}"
+                                  VerticalOptions="Center"
+                                  WidthRequest="120"
+                                  Margin="-75,0,0,0"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
 
-                <DatePicker Date="{Binding DueDate}"
-                          Format="dd/MM/yyyy"
-                          IsVisible="{Binding HasDueDate}"/>
-            </VerticalStackLayout>
+                <!-- Reminders Column -->
+                <VerticalStackLayout Grid.Column="1" Spacing="5">
+                    <Label Text="Reminders" FontAttributes="Bold" FontSize="14"/>
+                    <HorizontalStackLayout Spacing="0">
+                        <Switch IsToggled="{Binding HasReminders}"
+                                VerticalOptions="Center"/>
+                        <TimePicker Time="{Binding ReminderTime}"
+                                  Format="HH:mm"
+                                  IsEnabled="{Binding HasReminders}"
+                                  VerticalOptions="Center"
+                                  HorizontalOptions="Center"
+                                  FontSize="12"
+                                  Margin="-75,0,0,-15"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
 
-            <!-- Reminders -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
-                
-                <HorizontalStackLayout Spacing="10">
-                    <Switch IsToggled="{Binding HasReminders}"/>
-                    <Label Text="Enable Reminders" VerticalOptions="Center"/>
-                </HorizontalStackLayout>
-
-                <TimePicker Time="{Binding ReminderTime}" 
-                          IsVisible="{Binding HasReminders}"/>
-            </VerticalStackLayout>
+                <!-- Auto-complete Column -->
+                <VerticalStackLayout Grid.Column="2" Spacing="5">
+                    <Label Text="Auto-complete" FontAttributes="Bold" FontSize="14"/>
+                    <HorizontalStackLayout Spacing="0">
+                        <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"
+                                VerticalOptions="Center"/>
+                        <Label Text="Completes task if all subtasks are completed"
+                               FontSize="11"
+                               LineBreakMode="WordWrap"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"
+                               Margin="-75,0,0,0"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
 
             <!-- Priority -->
             <VerticalStackLayout Spacing="10">
                 <Label Text="Priority" FontAttributes="Bold" FontSize="16"/>
                 <Picker ItemsSource="{Binding Priorities}"
                         SelectedItem="{Binding SelectedPriority}"/>
-            </VerticalStackLayout>
-
-            <!-- Auto-complete with Subtasks -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Auto-complete" FontAttributes="Bold" FontSize="16"/>
-                <HorizontalStackLayout Spacing="10">
-                    <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"/>
-                    <Label Text="Mark task as complete when all subtasks are done"
-                           VerticalOptions="Center"
-                           LineBreakMode="WordWrap"/>
-                </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <!-- Subtasks -->
@@ -103,20 +115,20 @@
     </ScrollView>
     
     <!-- Fixed Buttons at Bottom -->
-    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="15" BackgroundColor="{StaticResource OffBlack}">
+    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="10" BackgroundColor="{StaticResource OffBlack}">
         <Button Grid.Column="0" 
                 Text="Cancel"
                 Command="{Binding CancelCommand}"
                 BackgroundColor="{StaticResource Gray300}"
                 TextColor="{StaticResource Gray900}"
-                WidthRequest="150"
+                WidthRequest="100"
                 HorizontalOptions="Center"/>
         <Button Grid.Column="1" 
                 Text="Save"
                 Command="{Binding SaveCommand}"
                 BackgroundColor="{StaticResource Primary}"
                 TextColor="White"
-                WidthRequest="150"
+                WidthRequest="100"
                 HorizontalOptions="Center"/>
     </Grid>
 </Grid>
