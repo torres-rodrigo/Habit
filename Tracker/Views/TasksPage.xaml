@@ -109,8 +109,8 @@
                                             <HorizontalStackLayout Spacing="8">
                                                 <!-- Square Checkbox -->
                                                 <Frame CornerRadius="5"
-                                                       WidthRequest="20"
-                                                       HeightRequest="20"
+                                                       WidthRequest="25"
+                                                       HeightRequest="25"
                                                        Padding="0"
                                                        BorderColor="{StaticResource Primary}"
                                                        BackgroundColor="White"
@@ -154,7 +154,7 @@
                                                    LineBreakMode="TailTruncation"
                                                    IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
                                             <Label Text="{Binding DueDate, StringFormat='Due: {0:MMM dd, yyyy}'}"
-                                                   FontSize="12"
+                                                   FontSize="13"
                                                    TextColor="{StaticResource Tertiary}"
                                                    IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}"/>
 
@@ -181,14 +181,15 @@
                                                                      FontSize="13"
                                                                      TextColor="{StaticResource Gray600}"
                                                                      VerticalOptions="Center"
-                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"/>
+                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"
+                                                                     Margin="-10,0,0,0"/>
                                                             </Grid>
                                                         </DataTemplate>
                                                     </CollectionView.ItemTemplate>
                                                 </CollectionView>
                                                 
                                                 <!-- Subtask Progress -->
-                                                <Label FontSize="12"
+                                                <Label FontSize="13"
                                                        TextColor="{StaticResource Gray500}"
                                                        Margin="0,5,0,0">
                                                     <Label.FormattedText>

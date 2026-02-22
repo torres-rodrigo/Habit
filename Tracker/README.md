@@ -457,14 +457,8 @@ Filters
 manage case where habit frequency changes so as to not break statistics
 
 slightly reduce the size of the subtask checkbox
-reducing spacing between sub task check box and text
 reduce spacing between subtasks
 put a limit to the lenght of the name of a subtask
-Have a maximum of 5 or seven subtasks that display if more scorll
-When there is enough subtasks to scroll then completing a subtasks sends it to the bottom so incomplete sub tasks
-show up first
-If screen size allows it have the big list of subtaks be displayed side by side
-    For sub tasks touching the text or the checkbox should have the same effect
 
 add timestamps of completion time can be an option
 
