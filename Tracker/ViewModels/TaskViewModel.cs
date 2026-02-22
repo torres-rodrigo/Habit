@@ -17,6 +17,7 @@ namespace Tracker.ViewModels
         private bool _showCustomDatePopup = false;
         private bool _isLoading;
         private bool _isDatePeriodFilterEnabled;
+        private bool _sortByDueDate = false;
         private string _customDateDisplayText = string.Empty;
         private DateTime? _customStartDate;
         private DateTime? _customEndDate;
@@ -123,6 +124,18 @@ namespace Tracker.ViewModels
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
+        }
+
+        public bool SortByDueDate
+        {
+            get => _sortByDueDate;
+            set
+            {
+                if (SetProperty(ref _sortByDueDate, value))
+                {
+                    _ = ApplyFiltersAsync();
+                }
+            }
         }
 
         public ICommand AddTaskCommand { get; }
@@ -234,6 +247,21 @@ namespace Tracker.ViewModels
                         CompletedTasks.Add(task);
                     else
                         PendingTasks.Add(task);
+                }
+
+                // Sort pending tasks by due date if toggle is enabled
+                if (SortByDueDate)
+                {
+                    var sortedPending = PendingTasks
+                        .OrderBy(t => t.DueDate.HasValue ? 0 : 1)
+                        .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+                        .ToList();
+
+                    PendingTasks.Clear();
+                    foreach (var task in sortedPending)
+                    {
+                        PendingTasks.Add(task);
+                    }
                 }
             }
             catch (Exception ex)

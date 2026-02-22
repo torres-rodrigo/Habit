@@ -50,6 +50,14 @@
                             <TapGestureRecognizer Tapped="OnCustomDateTextTapped"/>
                         </Label.GestureRecognizers>
                     </Label>
+
+                    <!-- Due Date Toggle -->
+                    <Label Text="Sort by Due Date"
+                           VerticalOptions="Center"
+                           FontSize="14"
+                           Margin="20,0,0,0"/>
+                    <Switch IsToggled="{Binding SortByDueDate}"
+                            VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
                 <!-- TODO Section -->
