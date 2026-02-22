@@ -33,7 +33,8 @@
                     <Label Text="Set Due Date" VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
-                <DatePicker Date="{Binding DueDate}" 
+                <DatePicker Date="{Binding DueDate}"
+                          Format="dd/MM/yyyy"
                           IsVisible="{Binding HasDueDate}"/>
             </VerticalStackLayout>
 
