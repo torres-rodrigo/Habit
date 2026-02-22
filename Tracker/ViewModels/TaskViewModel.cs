@@ -381,6 +381,21 @@ namespace Tracker.ViewModels
 
         private async void OnEditTask(Guid taskId)
         {
+            // Check if task is completed
+            var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
+
+            if (taskInCompleted != null)
+            {
+                // Task is completed - ask for confirmation
+                var confirm = await Shell.Current.DisplayAlert(
+                    "Edit Completed Task",
+                    "This task is already completed. Are you sure you want to edit it? This may affect your statistics.",
+                    "Edit",
+                    "Cancel");
+
+                if (!confirm) return; // User cancelled
+            }
+
             // Navigate to edit task page
             await Shell.Current.GoToAsync($"//tasks/edittask?id={taskId}");
         }

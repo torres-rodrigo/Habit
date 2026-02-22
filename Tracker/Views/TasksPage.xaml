@@ -144,7 +144,14 @@
                                                    FontSize="12"
                                                    TextColor="{StaticResource Tertiary}"
                                                    IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}"/>
-                                            
+
+                                            <!-- Overdue Indicator -->
+                                            <Label Text="OVERDUE"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Red"
+                                                   IsVisible="{Binding IsOverdue}"/>
+
                                             <!-- Subtasks -->
                                             <VerticalStackLayout Spacing="5"
                                                                IsVisible="{Binding SubTasks.Count, Converter={StaticResource CountToBoolConverter}}">
