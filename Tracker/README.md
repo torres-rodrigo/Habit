@@ -424,9 +424,7 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-fix edit task ui order
-
-collapsable sections
+collapsable sections done in tasks page
 
 tasks/subtasks epsilon completions for long names
 

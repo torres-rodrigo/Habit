@@ -21,6 +21,8 @@ namespace Tracker.ViewModels
         private string _customDateDisplayText = string.Empty;
         private DateTime? _customStartDate;
         private DateTime? _customEndDate;
+        private bool _isTodoCollapsed = false;
+        private bool _isCompletedCollapsed = false;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
@@ -138,6 +140,18 @@ namespace Tracker.ViewModels
             }
         }
 
+        public bool IsTodoCollapsed
+        {
+            get => _isTodoCollapsed;
+            set => SetProperty(ref _isTodoCollapsed, value);
+        }
+
+        public bool IsCompletedCollapsed
+        {
+            get => _isCompletedCollapsed;
+            set => SetProperty(ref _isCompletedCollapsed, value);
+        }
+
         public ICommand AddTaskCommand { get; }
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
@@ -146,6 +160,8 @@ namespace Tracker.ViewModels
         public ICommand CloseOverlayCommand { get; }
         public ICommand NavigateToHabitCommand { get; }
         public ICommand NavigateToTaskCommand { get; }
+        public ICommand ToggleTodoCollapseCommand { get; }
+        public ICommand ToggleCompletedCollapseCommand { get; }
 
         public TaskViewModel(IDataService dataService)
         {
@@ -191,6 +207,8 @@ namespace Tracker.ViewModels
             CloseOverlayCommand = new Command(() => ShowOverlay = false);
             NavigateToHabitCommand = new Command(OnNavigateToHabit);
             NavigateToTaskCommand = new Command(OnNavigateToTask);
+            ToggleTodoCollapseCommand = new Command(() => IsTodoCollapsed = !IsTodoCollapsed);
+            ToggleCompletedCollapseCommand = new Command(() => IsCompletedCollapsed = !IsCompletedCollapsed);
 
             // Subscribe to custom date selection messages
 #pragma warning disable CS0618 // Type or member is obsolete

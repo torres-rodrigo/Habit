@@ -22,6 +22,7 @@
             <converters:PriorityToVisibilityConverter x:Key="PriorityToVisibilityConverter" />
             <converters:PriorityToColorConverter x:Key="PriorityToColorConverter" />
             <converters:PriorityToShapeConverter x:Key="PriorityToShapeConverter" />
+            <converters:BoolToCollapseIconConverter x:Key="BoolToCollapseIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

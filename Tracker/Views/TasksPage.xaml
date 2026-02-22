@@ -69,12 +69,25 @@
 
                 <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="TODO" 
-                           FontSize="22" 
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"/>
+                    <HorizontalStackLayout Spacing="10">
+                        <Label FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}"
+                               VerticalOptions="Center">
+                            <Label.Text>
+                                <MultiBinding StringFormat="{}{0} TODO">
+                                    <Binding Path="IsTodoCollapsed" Converter="{StaticResource BoolToCollapseIconConverter}" />
+                                </MultiBinding>
+                            </Label.Text>
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleTodoCollapseCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
 
-                    <CollectionView ItemsSource="{Binding PendingTasks}" SelectionMode="None">
+                    <CollectionView ItemsSource="{Binding PendingTasks}"
+                                    SelectionMode="None"
+                                    IsVisible="{Binding IsTodoCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
                         </CollectionView.ItemsLayout>
@@ -207,12 +220,25 @@
 
                 <!-- Completed Section -->
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Completed" 
-                           FontSize="22" 
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource Secondary}"/>
+                    <HorizontalStackLayout Spacing="10">
+                        <Label FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Secondary}"
+                               VerticalOptions="Center">
+                            <Label.Text>
+                                <MultiBinding StringFormat="{}{0} Completed">
+                                    <Binding Path="IsCompletedCollapsed" Converter="{StaticResource BoolToCollapseIconConverter}" />
+                                </MultiBinding>
+                            </Label.Text>
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleCompletedCollapseCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
 
-                    <CollectionView ItemsSource="{Binding CompletedTasks}" SelectionMode="None">
+                    <CollectionView ItemsSource="{Binding CompletedTasks}"
+                                    SelectionMode="None"
+                                    IsVisible="{Binding IsCompletedCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
                         </CollectionView.ItemsLayout>
