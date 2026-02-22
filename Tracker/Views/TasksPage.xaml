@@ -318,7 +318,7 @@
                                                        LineBreakMode="TailTruncation"
                                                        MaxLines="1"/>
                                             </HorizontalStackLayout>
-                                            <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy}'}"
+                                            <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy HH:mm}'}"
                                                    FontSize="12"
                                                    TextColor="{StaticResource Gray500}"/>
                                             

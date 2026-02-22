@@ -426,10 +426,6 @@ PERSONAL TODO
 
 collapsable sections done in tasks page
 
-tasks/subtasks epsilon completions for long names
-add timestamps of completion time can be an option
-
-
 Test in android
 
 Notifications/reminders
