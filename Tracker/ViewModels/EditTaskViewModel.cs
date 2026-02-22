@@ -13,7 +13,7 @@ public class EditTaskViewModel : BaseViewModel
     private string _taskName = string.Empty;
     private string _description = string.Empty;
     private bool _hasDueDate;
-    private DateTime _dueDate = DateTime.Today.AddDays(7);
+    private DateTime _dueDate = DateTime.Today;
     private string _selectedPriority = "None";
     private bool _hasReminders;
     private TimeSpan _reminderTime = new TimeSpan(9, 0, 0);
@@ -121,7 +121,7 @@ public class EditTaskViewModel : BaseViewModel
                 TaskName = task.Name;
                 Description = task.Description ?? string.Empty;
                 HasDueDate = task.DueDate.HasValue;
-                DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
+                DueDate = task.DueDate ?? DateTime.Today;
                 SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
                 AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks;
 
