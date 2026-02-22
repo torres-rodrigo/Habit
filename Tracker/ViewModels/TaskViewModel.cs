@@ -14,8 +14,12 @@ namespace Tracker.ViewModels
         private DateTypeOption _selectedDateTypeFilter;
         private DatePeriodOption _selectedDatePeriodFilter;
         private bool _showOverlay;
+        private bool _showCustomDatePopup = false;
         private bool _isLoading;
         private bool _isDatePeriodFilterEnabled;
+        private string _customDateDisplayText = string.Empty;
+        private DateTime? _customStartDate;
+        private DateTime? _customEndDate;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
@@ -44,6 +48,24 @@ namespace Tracker.ViewModels
                 {
                     // Enable/disable date period filter based on selection
                     IsDatePeriodFilterEnabled = value?.Name != "NA";
+
+                    // Clear custom date display and custom date range only when N/A is selected
+                    if (value?.Name == "NA")
+                    {
+                        CustomDateDisplayText = string.Empty;
+                        _customStartDate = null;
+                        _customEndDate = null;
+                    }
+                    else
+                    {
+                        // If switching from N/A to Created/Completed and Period is Custom but no date is set, show popup
+                        if (SelectedDatePeriodFilter?.Name == "Custom" &&
+                            string.IsNullOrEmpty(CustomDateDisplayText))
+                        {
+                            _ = ShowCustomDateModalAsync();
+                        }
+                    }
+
                     _ = ApplyFiltersAsync();
                 }
             }
@@ -62,15 +84,39 @@ namespace Tracker.ViewModels
             {
                 if (SetProperty(ref _selectedDatePeriodFilter, value))
                 {
-                    _ = ApplyFiltersAsync();
+                    // Show custom date modal if Custom is selected
+                    if (value?.Name == "Custom")
+                    {
+                        _ = ShowCustomDateModalAsync();
+                    }
+                    else
+                    {
+                        // Clear custom date display and custom date range when switching to non-custom period
+                        CustomDateDisplayText = string.Empty;
+                        _customStartDate = null;
+                        _customEndDate = null;
+                        _ = ApplyFiltersAsync();
+                    }
                 }
             }
+        }
+
+        public string CustomDateDisplayText
+        {
+            get => _customDateDisplayText;
+            set => SetProperty(ref _customDateDisplayText, value);
         }
 
         public bool ShowOverlay
         {
             get => _showOverlay;
             set => SetProperty(ref _showOverlay, value);
+        }
+
+        public bool ShowCustomDatePopup
+        {
+            get => _showCustomDatePopup;
+            set => SetProperty(ref _showCustomDatePopup, value);
         }
 
         public bool IsLoading
@@ -119,7 +165,8 @@ namespace Tracker.ViewModels
                 new() { Name = "CurrentYear", DisplayName = "Current Year" },
                 new() { Name = "CurrentMonth", DisplayName = "Current Month" },
                 new() { Name = "CurrentWeek", DisplayName = "Current Week" },
-                new() { Name = "Today", DisplayName = "Today" }
+                new() { Name = "Today", DisplayName = "Today" },
+                new() { Name = "Custom", DisplayName = "Custom" }
             };
             _selectedDatePeriodFilter = DatePeriodFilterOptions[2]; // Default to Current Month
 
@@ -131,6 +178,23 @@ namespace Tracker.ViewModels
             CloseOverlayCommand = new Command(() => ShowOverlay = false);
             NavigateToHabitCommand = new Command(OnNavigateToHabit);
             NavigateToTaskCommand = new Command(OnNavigateToTask);
+
+            // Subscribe to custom date selection messages
+#pragma warning disable CS0618 // Type or member is obsolete
+            MessagingCenter.Subscribe<CustomDateViewModel, CustomDateResult>(this, "CustomDateSelected", (sender, result) =>
+            {
+                SetCustomDateRange(result.StartDate, result.EndDate, result.DisplayText);
+                ShowCustomDatePopup = false;
+            });
+
+            MessagingCenter.Subscribe<CustomDateViewModel>(this, "CustomDateCancelled", (sender) =>
+            {
+                // Revert to previous selection (Current Month)
+                _selectedDatePeriodFilter = DatePeriodFilterOptions[2];
+                OnPropertyChanged(nameof(SelectedDatePeriodFilter));
+                ShowCustomDatePopup = false;
+            });
+#pragma warning restore CS0618 // Type or member is obsolete
 
             _ = LoadTasksAsync();
         }
@@ -182,6 +246,20 @@ namespace Tracker.ViewModels
             }
         }
 
+        private async Task ShowCustomDateModalAsync()
+        {
+            ShowCustomDatePopup = true;
+            await Task.CompletedTask;
+        }
+
+        public void SetCustomDateRange(DateTime startDate, DateTime endDate, string displayText)
+        {
+            _customStartDate = startDate;
+            _customEndDate = endDate;
+            CustomDateDisplayText = displayText;
+            _ = ApplyFiltersAsync();
+        }
+
         private IEnumerable<TodoTask> ApplyDateFilter(IEnumerable<TodoTask> tasks)
         {
             // If N/A is selected, don't apply any date filtering
@@ -224,6 +302,17 @@ namespace Tracker.ViewModels
                 case "CurrentYear":
                     startDate = new DateTime(today.Year, 1, 1);
                     endDate = new DateTime(today.Year, 12, 31, 23, 59, 59);
+                    break;
+                case "Custom":
+                    if (_customStartDate.HasValue && _customEndDate.HasValue)
+                    {
+                        startDate = _customStartDate.Value;
+                        endDate = _customEndDate.Value;
+                    }
+                    else
+                    {
+                        return tasks; // No custom date set, show all
+                    }
                     break;
                 default:
                     return tasks; // No filter

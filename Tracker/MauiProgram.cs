@@ -32,6 +32,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<EditHabitViewModel>();
 		builder.Services.AddTransient<EditTaskViewModel>();
 		builder.Services.AddTransient<SelectItemTypeViewModel>();
+		builder.Services.AddTransient<CustomDateViewModel>();
 
 		// Register Views
 		builder.Services.AddTransient<StatisticsPage>();
@@ -40,6 +41,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<EditHabitPage>();
 		builder.Services.AddTransient<EditTaskPage>();
 		builder.Services.AddTransient<SelectItemTypePage>();
+		builder.Services.AddTransient<CustomDatePopup>();
 
 		return builder.Build();
 	}

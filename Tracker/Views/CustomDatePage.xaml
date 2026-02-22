@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Grid xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+      x:Class="Tracker.Views.CustomDatePopup"
+      xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
+      x:DataType="viewmodels:CustomDateViewModel"
+      BackgroundColor="#80000000">
+
+    <!-- Popup Container -->
+    <Frame BackgroundColor="{StaticResource OffBlack}"
+           Padding="20"
+           CornerRadius="10"
+           WidthRequest="500"
+           MaximumHeightRequest="600"
+           HorizontalOptions="Center"
+           VerticalOptions="Center">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,0,0,20">
+                <Label Text="Select a custom date range"
+                       FontSize="18"
+                       FontAttributes="Bold"/>
+                <Label Text="Choose one option. Once selected, other options will be disabled."
+                       FontSize="14"
+                       TextColor="{StaticResource Gray600}"/>
+            </VerticalStackLayout>
+
+            <!-- Content -->
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- Year Option -->
+                    <VerticalStackLayout Spacing="10" IsEnabled="{Binding IsYearEnabled}">
+                        <Label Text="Year" FontAttributes="Bold" FontSize="16"/>
+                        <HorizontalStackLayout Spacing="10">
+                            <Entry Placeholder="Enter year (e.g., 2024)"
+                                   Text="{Binding YearText}"
+                                   Keyboard="Numeric"
+                                   WidthRequest="200"/>
+                            <Button Text="Clear"
+                                    Command="{Binding ClearYearCommand}"
+                                    BackgroundColor="{StaticResource Gray300}"
+                                    TextColor="{StaticResource Gray900}"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Month Option -->
+                    <VerticalStackLayout Spacing="10" IsEnabled="{Binding IsMonthEnabled}">
+                        <Label Text="Month" FontAttributes="Bold" FontSize="16"/>
+                        <HorizontalStackLayout Spacing="10">
+                            <Button Text="Select Month"
+                                    Clicked="OnMonthPickerClicked"
+                                    WidthRequest="200"/>
+                            <Button Text="Clear"
+                                    Command="{Binding ClearMonthCommand}"
+                                    BackgroundColor="{StaticResource Gray300}"
+                                    TextColor="{StaticResource Gray900}"/>
+                        </HorizontalStackLayout>
+                        <Label Text="{Binding SelectedMonth, StringFormat='{0:MMMM yyyy}'}"
+                               FontSize="12"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               IsVisible="{Binding SelectedMonth, Converter={StaticResource NullToBoolConverter}}"/>
+                    </VerticalStackLayout>
+
+                    <!-- Week Option -->
+                    <VerticalStackLayout Spacing="10" IsEnabled="{Binding IsWeekEnabled}">
+                        <Label Text="Week" FontAttributes="Bold" FontSize="16"/>
+                        <HorizontalStackLayout Spacing="10">
+                            <Button Text="Select Week Start"
+                                    Clicked="OnWeekPickerClicked"
+                                    WidthRequest="200"/>
+                            <Button Text="Clear"
+                                    Command="{Binding ClearWeekCommand}"
+                                    BackgroundColor="{StaticResource Gray300}"
+                                    TextColor="{StaticResource Gray900}"/>
+                        </HorizontalStackLayout>
+                        <Label Text="{Binding SelectedWeekStart, StringFormat='Week of {0:MMMM dd, yyyy}'}"
+                               FontSize="12"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               IsVisible="{Binding SelectedWeekStart, Converter={StaticResource NullToBoolConverter}}"/>
+                    </VerticalStackLayout>
+
+                    <!-- Day Option -->
+                    <VerticalStackLayout Spacing="10" IsEnabled="{Binding IsDayEnabled}">
+                        <Label Text="Day" FontAttributes="Bold" FontSize="16"/>
+                        <HorizontalStackLayout Spacing="10">
+                            <Button Text="Select Day"
+                                    Clicked="OnDayPickerClicked"
+                                    WidthRequest="200"/>
+                            <Button Text="Clear"
+                                    Command="{Binding ClearDayCommand}"
+                                    BackgroundColor="{StaticResource Gray300}"
+                                    TextColor="{StaticResource Gray900}"/>
+                        </HorizontalStackLayout>
+                        <Label Text="{Binding SelectedDay, StringFormat='{0:dd/MM/yyyy}'}"
+                               FontSize="12"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               IsVisible="{Binding SelectedDay, Converter={StaticResource NullToBoolConverter}}"/>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- Action Buttons -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20,0,0">
+                <Button Grid.Column="0"
+                        Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{StaticResource Gray300}"
+                        TextColor="{StaticResource Gray900}"/>
+                <Button Grid.Column="1"
+                        Text="Confirm"
+                        Command="{Binding ConfirmCommand}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"/>
+            </Grid>
+        </Grid>
+    </Frame>
+</Grid>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:Tracker.ViewModels"
              xmlns:models="clr-namespace:Tracker.Models"
+             xmlns:views="clr-namespace:Tracker.Views"
              x:Class="Tracker.Views.TasksPage"
              x:DataType="viewmodels:TaskViewModel"
              Shell.NavBarIsVisible="False">
@@ -37,6 +38,18 @@
                             SelectedItem="{Binding SelectedPriorityFilter}"
                             ItemDisplayBinding="{Binding DisplayName}"
                             WidthRequest="120"/>
+
+                    <!-- Custom Date Display -->
+                    <Label Text="{Binding CustomDateDisplayText}"
+                           VerticalOptions="Center"
+                           FontSize="14"
+                           TextColor="{StaticResource Primary}"
+                           FontAttributes="Bold"
+                           IsVisible="{Binding CustomDateDisplayText, Converter={StaticResource StringToBoolConverter}}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCustomDateTextTapped"/>
+                        </Label.GestureRecognizers>
+                    </Label>
                 </HorizontalStackLayout>
 
                 <!-- TODO Section -->
@@ -459,5 +472,9 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <!-- Custom Date Popup -->
+        <views:CustomDatePopup x:Name="CustomDatePopupControl"
+                               IsVisible="False"/>
     </Grid>
 </ContentPage>

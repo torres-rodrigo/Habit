@@ -6,19 +6,49 @@ namespace Tracker.Views;
 public partial class TasksPage : ContentPage
 {
     private readonly TaskViewModel _viewModel;
+    private readonly CustomDateViewModel _customDateViewModel;
     private bool _isTogglingSubTask = false;
 
-    public TasksPage(TaskViewModel viewModel)
+    public TasksPage(TaskViewModel viewModel, CustomDateViewModel customDateViewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _customDateViewModel = customDateViewModel;
         BindingContext = _viewModel;
+
+        // Set the BindingContext for the custom date popup
+        CustomDatePopupControl.BindingContext = customDateViewModel;
+
+        // Manually bind the popup visibility to the ViewModel property
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TaskViewModel.ShowCustomDatePopup))
+            {
+                CustomDatePopupControl.IsVisible = _viewModel.ShowCustomDatePopup;
+
+                // Reset selections when popup opens
+                if (_viewModel.ShowCustomDatePopup)
+                {
+                    _customDateViewModel.ResetAllSelections();
+                }
+            }
+        };
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // Ensure popup is hidden on startup
+        CustomDatePopupControl.IsVisible = false;
+
         await _viewModel.RefreshAsync();
+    }
+
+    private void OnCustomDateTextTapped(object sender, EventArgs e)
+    {
+        // Open the custom date popup when the display text is tapped
+        _viewModel.ShowCustomDatePopup = true;
     }
 
     private void OnSubTaskCheckChanged(object sender, CheckedChangedEventArgs e)
