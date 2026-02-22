@@ -13,52 +13,59 @@
             <VerticalStackLayout Padding="20" Spacing="20">
 
                 <!-- All Filters in One Line -->
-                <HorizontalStackLayout Spacing="10" HorizontalOptions="Start">
-                    <Label Text="Filter"
-                           VerticalOptions="Center"
-                           FontSize="14"/>
-                    <Picker ItemsSource="{Binding DateTypeFilterOptions}"
-                            SelectedItem="{Binding SelectedDateTypeFilter}"
-                            ItemDisplayBinding="{Binding DisplayName}"
-                            WidthRequest="120"/>
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                    <!-- Left Section: Date Filters -->
+                    <HorizontalStackLayout Grid.Column="0" Spacing="10" HorizontalOptions="Start">
+                        <Label Text="Filter"
+                               VerticalOptions="Center"
+                               FontSize="14"/>
+                        <Picker ItemsSource="{Binding DateTypeFilterOptions}"
+                                SelectedItem="{Binding SelectedDateTypeFilter}"
+                                ItemDisplayBinding="{Binding DisplayName}"
+                                WidthRequest="120"/>
 
-                    <Label Text="by"
-                           VerticalOptions="Center"
-                           FontSize="14"/>
-                    <Picker ItemsSource="{Binding DatePeriodFilterOptions}"
-                            SelectedItem="{Binding SelectedDatePeriodFilter}"
-                            ItemDisplayBinding="{Binding DisplayName}"
-                            IsEnabled="{Binding IsDatePeriodFilterEnabled}"
-                            WidthRequest="140"/>
+                        <Label Text="by"
+                               VerticalOptions="Center"
+                               FontSize="14"/>
+                        <Picker ItemsSource="{Binding DatePeriodFilterOptions}"
+                                SelectedItem="{Binding SelectedDatePeriodFilter}"
+                                ItemDisplayBinding="{Binding DisplayName}"
+                                IsEnabled="{Binding IsDatePeriodFilterEnabled}"
+                                WidthRequest="140"/>
 
-                    <Label Text="Priority ⚡"
-                           VerticalOptions="Center"
-                           FontSize="14"/>
-                    <Picker ItemsSource="{Binding PriorityFilterOptions}"
-                            SelectedItem="{Binding SelectedPriorityFilter}"
-                            ItemDisplayBinding="{Binding DisplayName}"
-                            WidthRequest="120"/>
+                        <!-- Custom Date Display -->
+                        <Label Text="{Binding CustomDateDisplayText}"
+                               VerticalOptions="Center"
+                               FontSize="14"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               IsVisible="{Binding CustomDateDisplayText, Converter={StaticResource StringToBoolConverter}}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCustomDateTextTapped"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
 
-                    <!-- Custom Date Display -->
-                    <Label Text="{Binding CustomDateDisplayText}"
-                           VerticalOptions="Center"
-                           FontSize="14"
-                           TextColor="{StaticResource Primary}"
-                           FontAttributes="Bold"
-                           IsVisible="{Binding CustomDateDisplayText, Converter={StaticResource StringToBoolConverter}}">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCustomDateTextTapped"/>
-                        </Label.GestureRecognizers>
-                    </Label>
+                    <!-- Center Section: Priority Filter -->
+                    <HorizontalStackLayout Grid.Column="1" Spacing="10" HorizontalOptions="Center">
+                        <Label Text="Priority ⚡"
+                               VerticalOptions="Center"
+                               FontSize="14"/>
+                        <Picker ItemsSource="{Binding PriorityFilterOptions}"
+                                SelectedItem="{Binding SelectedPriorityFilter}"
+                                ItemDisplayBinding="{Binding DisplayName}"
+                                WidthRequest="120"/>
+                    </HorizontalStackLayout>
 
-                    <!-- Due Date Toggle -->
-                    <Label Text="Sort by Due Date"
-                           VerticalOptions="Center"
-                           FontSize="14"
-                           Margin="20,0,0,0"/>
-                    <Switch IsToggled="{Binding SortByDueDate}"
-                            VerticalOptions="Center"/>
-                </HorizontalStackLayout>
+                    <!-- Right Section: Due Date Toggle -->
+                    <HorizontalStackLayout Grid.Column="2" Spacing="10" HorizontalOptions="End">
+                        <Label Text="Sort by Due Date"
+                               VerticalOptions="Center"
+                               FontSize="14"/>
+                        <Switch IsToggled="{Binding SortByDueDate}"
+                                VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Grid>
 
                 <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
