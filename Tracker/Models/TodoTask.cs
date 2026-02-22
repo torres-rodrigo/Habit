@@ -40,6 +40,7 @@ namespace Tracker.Models
         public bool AllSubTasksCompleted => SubTasks.Count > 0 && SubTasks.All(st => st.IsCompleted);
         public bool CompletedOnTime => CompletedDate.HasValue && DueDate.HasValue && CompletedDate.Value <= DueDate.Value;
         public bool CompletedAfterDeadline => CompletedDate.HasValue && DueDate.HasValue && CompletedDate.Value > DueDate.Value;
+        public bool IsOverdue => DueDate.HasValue && DueDate.Value.Date < DateTime.Today && !IsCompleted;
         
         // Subtask completion tracking
         public int CompletedSubTasksCount => SubTasks.Count(st => st.IsCompleted);

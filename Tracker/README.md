@@ -446,16 +446,6 @@ THere should be a toggle to show or hide completed habits
 Filters
 - Statistics should have an all time and current year
 
-- Tasks should have an all time, current year, current month, current week, current day
-  (this is to see what you completed in this time)
-  Seperate priority filter
-  Due date
-
-  Clicking a completed task should ask the user if they are sure they want to mark it as incomplete
-  Are you sure you want to edit a completed task
-
-  Out of date comment for taks
-
 slightly reduce the size of the subtask checkbox
 reducing spacing between sub task check box and text
 reduce spacing between subtasks
