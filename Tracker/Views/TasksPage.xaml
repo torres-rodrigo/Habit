@@ -273,8 +273,8 @@
                                                        WidthRequest="30"
                                                        HeightRequest="30"
                                                        Padding="0"
-                                                       BorderColor="{StaticResource Secondary}"
-                                                       BackgroundColor="{StaticResource Secondary}"
+                                                       BorderColor="Green"
+                                                       BackgroundColor="Green"
                                                        HasShadow="False"
                                                        VerticalOptions="Center">
                                                     <Frame.GestureRecognizers>
@@ -337,7 +337,7 @@
                                                                         IsChecked="{Binding IsCompleted, Mode=OneWay}"
                                                                         Color="{StaticResource Secondary}"
                                                                         IsEnabled="False"
-                                                                        Margin="-10,0,0,-12"/>
+                                                                        Margin="0,0,0,-12"/>
                                                                 <Label Grid.Column="1"
                                                                      Text="{Binding Name}"
                                                                      FontSize="13"
