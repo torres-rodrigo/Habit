@@ -424,6 +424,16 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
+fix edit task ui order
+
+collapsable sections
+
+tasks/subtasks epsilon completions for long names
+
+Test in android
+
+completed tasks completed checkbox location
+
 Notifications/reminders
 
 quick double click should cause like a failed case insted of success
@@ -446,6 +456,8 @@ THere should be a toggle to show or hide completed habits
 Filters
 - Statistics should have an all time and current year
 
+manage case where habit frequency changes so as to not break statistics
+
 slightly reduce the size of the subtask checkbox
 reducing spacing between sub task check box and text
 reduce spacing between subtasks
@@ -457,8 +469,6 @@ If screen size allows it have the big list of subtaks be displayed side by side
     For sub tasks touching the text or the checkbox should have the same effect
 
 add timestamps of completion time can be an option
-
-order for tasks completed show be most recently completed to the top
 
 reucrring tasks
 

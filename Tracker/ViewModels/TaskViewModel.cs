@@ -263,6 +263,17 @@ namespace Tracker.ViewModels
                         PendingTasks.Add(task);
                     }
                 }
+
+                // Sort completed tasks by completion date (most recent first)
+                var sortedCompleted = CompletedTasks
+                    .OrderByDescending(t => t.CompletedDate ?? DateTime.MinValue)
+                    .ToList();
+
+                CompletedTasks.Clear();
+                foreach (var task in sortedCompleted)
+                {
+                    CompletedTasks.Add(task);
+                }
             }
             catch (Exception ex)
             {
@@ -460,7 +471,7 @@ namespace Tracker.ViewModels
                     if (updatedTask != null)
                     {
                         PendingTasks.Remove(taskInPending);
-                        CompletedTasks.Add(updatedTask);
+                        CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
                     }
                 }
                 else if (taskInCompleted != null)
@@ -499,7 +510,7 @@ namespace Tracker.ViewModels
                 {
                     // Task was auto-completed - move to completed collection
                     PendingTasks.Remove(taskInPending);
-                    CompletedTasks.Add(updatedTask);
+                    CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
                 }
                 else if (taskInPending != null)
                 {
