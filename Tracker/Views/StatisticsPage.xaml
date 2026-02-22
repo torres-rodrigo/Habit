@@ -11,12 +11,22 @@
         <VerticalStackLayout Padding="20" Spacing="5">
 
             <!-- Task Statistics Section -->
-            <Label Text="Task Statistics"
-                   FontSize="22"
+            <Label FontSize="22"
                    FontAttributes="Bold"
-                   TextColor="#FF8C00"/>
+                   TextColor="#FF8C00"
+                   VerticalOptions="Center">
+                <Label.Text>
+                    <MultiBinding StringFormat="{}{0} Task Statistics">
+                        <Binding Path="IsTaskStatisticsCollapsed" Converter="{StaticResource BoolToCollapseIconConverter}" />
+                    </MultiBinding>
+                </Label.Text>
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleTaskStatisticsCollapseCommand}"/>
+                </Label.GestureRecognizers>
+            </Label>
 
-            <Frame CornerRadius="10" BorderColor="#FF8C00" HasShadow="True">
+            <Frame CornerRadius="10" BorderColor="#FF8C00" HasShadow="True"
+                   IsVisible="{Binding IsTaskStatisticsCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                 <VerticalStackLayout Spacing="10">
                     
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
@@ -61,12 +71,22 @@
             </Frame>
 
             <!-- Habit Statistics Section -->
-            <Label Text="Habit Statistics"
-                   FontSize="22"
+            <Label FontSize="22"
                    FontAttributes="Bold"
-                   TextColor="#FF8C00"/>
+                   TextColor="#FF8C00"
+                   VerticalOptions="Center">
+                <Label.Text>
+                    <MultiBinding StringFormat="{}{0} Habit Statistics">
+                        <Binding Path="IsHabitStatisticsCollapsed" Converter="{StaticResource BoolToCollapseIconConverter}" />
+                    </MultiBinding>
+                </Label.Text>
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleHabitStatisticsCollapseCommand}"/>
+                </Label.GestureRecognizers>
+            </Label>
 
-            <CollectionView ItemsSource="{Binding HabitStatistics}" SelectionMode="None">
+            <CollectionView ItemsSource="{Binding HabitStatistics}" SelectionMode="None"
+                            IsVisible="{Binding IsHabitStatisticsCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
                 </CollectionView.ItemsLayout>

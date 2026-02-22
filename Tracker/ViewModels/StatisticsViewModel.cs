@@ -9,6 +9,8 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private bool _isLoading;
+        private bool _isTaskStatisticsCollapsed = false;
+        private bool _isHabitStatisticsCollapsed = false;
 
         public ObservableCollection<HabitStatistics> HabitStatistics { get; set; }
         public TaskStatistics TaskStatistics { get; set; } = null!;
@@ -19,10 +21,27 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isLoading, value);
         }
 
+        public bool IsTaskStatisticsCollapsed
+        {
+            get => _isTaskStatisticsCollapsed;
+            set => SetProperty(ref _isTaskStatisticsCollapsed, value);
+        }
+
+        public bool IsHabitStatisticsCollapsed
+        {
+            get => _isHabitStatisticsCollapsed;
+            set => SetProperty(ref _isHabitStatisticsCollapsed, value);
+        }
+
+        public ICommand ToggleTaskStatisticsCollapseCommand { get; }
+        public ICommand ToggleHabitStatisticsCollapseCommand { get; }
+
         public StatisticsViewModel(IDataService dataService)
         {
             _dataService = dataService;
             HabitStatistics = new ObservableCollection<HabitStatistics>();
+            ToggleTaskStatisticsCollapseCommand = new Command(() => IsTaskStatisticsCollapsed = !IsTaskStatisticsCollapsed);
+            ToggleHabitStatisticsCollapseCommand = new Command(() => IsHabitStatisticsCollapsed = !IsHabitStatisticsCollapsed);
             _ = LoadStatisticsAsync();
         }
 
