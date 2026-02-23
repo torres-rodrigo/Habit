@@ -31,7 +31,7 @@
                                 SelectedItem="{Binding SelectedDatePeriodFilter}"
                                 ItemDisplayBinding="{Binding DisplayName}"
                                 IsEnabled="{Binding IsDatePeriodFilterEnabled}"
-                                WidthRequest="140"/>
+                                WidthRequest="150"/>
 
                         <!-- Custom Date Display -->
                         <Label Text="{Binding CustomDateDisplayText}"

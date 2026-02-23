@@ -458,6 +458,11 @@ manage case where habit frequency changes so as to not break statistics
 
 reucrring tasks
 
+for tasks statistics display 
+year completed that year / total that year
+
+Incomplete task toggle
+
 
 ---
 

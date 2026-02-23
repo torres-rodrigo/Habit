@@ -21,7 +21,7 @@
                 <Label Text="Description" FontAttributes="Bold"/>
                 <Editor Text="{Binding Description}" 
                         Placeholder="Enter description (optional)"
-                        HeightRequest="100"/>
+                        HeightRequest="250"/>
             </VerticalStackLayout>
 
             <!-- Toggles and Pickers Row -->
