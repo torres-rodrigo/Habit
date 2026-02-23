@@ -348,48 +348,260 @@ namespace Tracker.Services
 
         #endregion
 
-        #region Task Operations (Stubs)
+        #region Task Operations
 
         public async Task<List<TodoTask>> GetAllTasksAsync()
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var taskDbs = await _database.Table<TaskDb>()
+                .OrderBy(t => t.DisplayOrder)
+                .ToListAsync();
+
+            var tasks = new List<TodoTask>();
+            foreach (var taskDb in taskDbs)
+            {
+                var task = await MapToTaskAsync(taskDb);
+                tasks.Add(task);
+            }
+
+            return tasks;
         }
 
         public async Task<TodoTask?> GetTaskByIdAsync(Guid id)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var taskDb = await _database.Table<TaskDb>()
+                .Where(t => t.Id == id.ToString())
+                .FirstOrDefaultAsync();
+
+            if (taskDb == null)
+                return null;
+
+            return await MapToTaskAsync(taskDb);
         }
 
         public async Task SaveTaskAsync(TodoTask task)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var taskId = task.Id.ToString();
+            var existing = await _database.Table<TaskDb>()
+                .Where(t => t.Id == taskId)
+                .FirstOrDefaultAsync();
+
+            var taskDb = MapToTaskDb(task);
+
+            // Set DisplayOrder only for new tasks
+            if (existing == null)
+            {
+                var maxOrder = await _database.Table<TaskDb>()
+                    .OrderByDescending(t => t.DisplayOrder)
+                    .FirstOrDefaultAsync();
+                taskDb.DisplayOrder = maxOrder?.DisplayOrder + 1 ?? 0;
+            }
+            else
+            {
+                taskDb.DisplayOrder = existing.DisplayOrder;
+            }
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                // Save or update task
+                if (existing != null)
+                {
+                    conn.Update(taskDb);
+                }
+                else
+                {
+                    conn.Insert(taskDb);
+                }
+
+                // Update subtasks (delete all + insert new)
+                conn.Execute("DELETE FROM SubTasks WHERE ParentTaskId = ?", taskId);
+                foreach (var subTask in task.SubTasks)
+                {
+                    conn.Insert(new SubTaskDb
+                    {
+                        Id = subTask.Id.ToString(),
+                        ParentTaskId = taskId,
+                        Name = subTask.Name,
+                        IsCompleted = subTask.IsCompleted,
+                        DisplayOrder = subTask.DisplayOrder
+                    });
+                }
+            });
         }
 
         public async Task DeleteTaskAsync(Guid id)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var taskId = id.ToString();
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                // Cascade delete subtasks
+                conn.Execute("DELETE FROM SubTasks WHERE ParentTaskId = ?", taskId);
+
+                // Delete task
+                conn.Execute("DELETE FROM Tasks WHERE Id = ?", taskId);
+            });
         }
 
         public async Task UpdateTaskOrderAsync(List<TodoTask> tasks)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                for (int i = 0; i < tasks.Count; i++)
+                {
+                    tasks[i].DisplayOrder = i;
+                    conn.Execute(
+                        "UPDATE Tasks SET DisplayOrder = ? WHERE Id = ?",
+                        i,
+                        tasks[i].Id.ToString());
+                }
+            });
         }
 
         public async Task ToggleTaskCompletionAsync(Guid taskId)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var task = await GetTaskByIdAsync(taskId);
+            if (task == null) return;
+
+            task.IsCompleted = !task.IsCompleted;
+            task.CompletedDate = task.IsCompleted ? DateTime.Now : null;
+
+            var taskDb = MapToTaskDb(task);
+            await _database.UpdateAsync(taskDb);
         }
 
         public async Task ToggleSubTaskCompletionAsync(Guid taskId, Guid subTaskId)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var task = await GetTaskByIdAsync(taskId);
+            if (task == null) return;
+
+            var subTask = task.SubTasks.FirstOrDefault(st => st.Id == subTaskId);
+            if (subTask == null) return;
+
+            subTask.IsCompleted = !subTask.IsCompleted;
+
+            var subTaskIdStr = subTaskId.ToString();
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                // Update subtask
+                conn.Execute(
+                    "UPDATE SubTasks SET IsCompleted = ? WHERE Id = ?",
+                    subTask.IsCompleted ? 1 : 0,
+                    subTaskIdStr);
+
+                // Auto-complete parent task if enabled and all subtasks are done
+                if (task.AutoCompleteWithSubtasks && task.SubTaskCompletionPercentage == 100 && !task.IsCompleted)
+                {
+                    task.IsCompleted = true;
+                    task.CompletedDate = DateTime.Now;
+
+                    conn.Execute(
+                        "UPDATE Tasks SET IsCompleted = ?, CompletedDateUtc = ? WHERE Id = ?",
+                        1,
+                        task.CompletedDate.Value.ToUniversalTime().ToString("o"),
+                        taskId.ToString());
+                }
+            });
+        }
+
+        #endregion
+
+        #region Task Mapping Methods
+
+        /// <summary>
+        /// Maps domain TodoTask model to database TaskDb model
+        /// </summary>
+        private TaskDb MapToTaskDb(TodoTask task)
+        {
+            return new TaskDb
+            {
+                Id = task.Id.ToString(),
+                Name = task.Name,
+                Description = task.Description,
+                CreatedDateUtc = task.CreatedDate.ToUniversalTime().ToString("o"),
+                DueDateUtc = task.DueDate?.ToUniversalTime().ToString("o"),
+                Priority = task.Priority,
+                CompletedDateUtc = task.CompletedDate?.ToUniversalTime().ToString("o"),
+                IsCompleted = task.IsCompleted,
+                HasReminders = task.HasReminders,
+                ReminderTimeTicks = task.ReminderTime?.Ticks,
+                DisplayOrder = task.DisplayOrder,
+                AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks
+            };
+        }
+
+        /// <summary>
+        /// Maps database TaskDb model to domain TodoTask model
+        /// Loads related subtasks and restores parent references
+        /// </summary>
+        private async Task<TodoTask> MapToTaskAsync(TaskDb taskDb)
+        {
+            var task = new TodoTask
+            {
+                Id = Guid.Parse(taskDb.Id),
+                Name = taskDb.Name,
+                Description = taskDb.Description,
+                CreatedDate = DateTime.Parse(taskDb.CreatedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                DueDate = string.IsNullOrEmpty(taskDb.DueDateUtc)
+                    ? null
+                    : DateTime.Parse(taskDb.DueDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                Priority = taskDb.Priority,
+                CompletedDate = string.IsNullOrEmpty(taskDb.CompletedDateUtc)
+                    ? null
+                    : DateTime.Parse(taskDb.CompletedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                IsCompleted = taskDb.IsCompleted,
+                HasReminders = taskDb.HasReminders,
+                ReminderTime = taskDb.ReminderTimeTicks.HasValue
+                    ? TimeSpan.FromTicks(taskDb.ReminderTimeTicks.Value)
+                    : null,
+                DisplayOrder = taskDb.DisplayOrder,
+                AutoCompleteWithSubtasks = taskDb.AutoCompleteWithSubtasks
+            };
+
+            // Load subtasks
+            var subTaskDbs = await _database.Table<SubTaskDb>()
+                .Where(st => st.ParentTaskId == taskDb.Id)
+                .OrderBy(st => st.DisplayOrder)
+                .ToListAsync();
+
+            task.SubTasks = subTaskDbs.Select(st => MapToSubTask(st, task)).ToList();
+
+            return task;
+        }
+
+        /// <summary>
+        /// Maps database SubTaskDb model to domain SubTask model
+        /// CRITICAL: Always sets parent task reference for INotifyPropertyChanged
+        /// </summary>
+        private SubTask MapToSubTask(SubTaskDb subTaskDb, TodoTask parentTask)
+        {
+            var subTask = new SubTask
+            {
+                Id = Guid.Parse(subTaskDb.Id),
+                ParentTaskId = Guid.Parse(subTaskDb.ParentTaskId),
+                Name = subTaskDb.Name,
+                IsCompleted = subTaskDb.IsCompleted,
+                DisplayOrder = subTaskDb.DisplayOrder
+            };
+
+            // CRITICAL: Must call SetParentTask for INotifyPropertyChanged to work
+            subTask.SetParentTask(parentTask);
+
+            return subTask;
         }
 
         #endregion
