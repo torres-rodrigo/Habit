@@ -23,7 +23,9 @@ public static class MauiProgram
 #endif
 
 		// Register Services
-		builder.Services.AddSingleton<IDataService, DataService>();
+		builder.Services.AddSingleton<IDataService, DatabaseService>();
+		// For testing with in-memory data, use:
+		// builder.Services.AddSingleton<IDataService, InMemoryDataService>();
 
 		// Register ViewModels
 		builder.Services.AddTransient<StatisticsViewModel>();

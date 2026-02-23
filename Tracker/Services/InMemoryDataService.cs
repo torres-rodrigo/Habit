@@ -31,12 +31,12 @@ namespace Tracker.Services
         Task<TaskStatistics> GetTaskStatisticsAsync();
     }
 
-    public class DataService : IDataService
+    public class InMemoryDataService : IDataService
     {
         private readonly List<Habit> _habits;
         private readonly List<TodoTask> _tasks;
 
-        public DataService()
+        public InMemoryDataService()
         {
             _habits = new();
             _tasks = new();

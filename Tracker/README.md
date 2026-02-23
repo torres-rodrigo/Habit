@@ -1203,3 +1203,411 @@ Performance is paramount and the most important metric.
 All code changes you make should maintain the same behavior as the original code.
 The new code changes cannot cause new warnings to show up.
 Before making code changes understand what the purpouse of the original file is doing, if needed read related files to get the full context
+
+---
+
+# SQLite Persistence Implementation Plan for Tracker
+
+  ## Overview
+
+  This plan adds SQLite persistence to the Tracker application using 8 atomic, testable commits. Each commit is independently
+  reviewable and won't break the application. The implementation requires **zero changes** to ViewModels or Views.
+
+  ## Architecture Decision
+
+  **Direct DatabaseService implementing IDataService** (not Repository Pattern)
+
+  **Rationale:**
+  - Simple data model (2 main entities)
+  - IDataService interface must remain unchanged
+  - Easier migration path (single DI line change)
+  - Fewer layers = easier maintenance
+  - Still testable (InMemoryDataService preserved)
+
+  ## Implementation Phases
+
+  ### Phase 1: Setup & Infrastructure (Commits 1-2)
+
+  **Goal:** Add dependencies and database initialization without breaking existing functionality.
+
+  #### Commit 1: Add SQLite dependencies and database models
+  - **Files Created:** `Tracker/Services/DatabaseModels.cs`
+  - **Files Modified:** `Tracker/Tracker.csproj`
+  - **Key Changes:**
+  - Add NuGet packages: `sqlite-net-pcl`, `SQLitePCLRaw.bundle_green`
+  - Define 6 database table classes with SQLite attributes:
+  - `HabitDb` - main habit data (UTC dates, DisplayOrder)
+  - `HabitTrackingDayDb` - junction table for TrackingDays (indexed)
+  - `HabitCompletionDb` - completion records (indexed by HabitId + Date)
+  - `TaskDb` - main task data (UTC dates, DisplayOrder)
+  - `SubTaskDb` - subtasks (indexed by ParentTaskId)
+  - `DatabaseInfoDb` - version tracking
+  - Use string for Guid storage (SQLite limitation)
+  - Use ISO 8601 strings for DateTime (UTC)
+  - Use ticks (long) for TimeSpan
+  - **Verification:** `dotnet build` succeeds
+
+  #### Commit 2: Create database initialization infrastructure
+  - **Files Created:** `Tracker/Services/DatabaseService.cs` (skeleton)
+  - **Key Changes:**
+  - Async initialization pattern (no `.Wait()`)
+  - Task-based initialization: `_initializationTask = InitializeDatabaseAsync()`
+  - Create all tables in `InitializeDatabaseAsync()`
+  - Create indexes for performance
+  - Version tracking with migration hooks
+  - Stub implementations for IDataService (throws NotImplementedException)
+  - **Pattern:**
+  ```csharp
+  private readonly Task _initializationTask;
+  public DatabaseService() => _initializationTask = InitializeDatabaseAsync();
+  private async Task EnsureInitializedAsync() => await _initializationTask;
+  ```
+  - **Verification:** `dotnet build` succeeds, database file created
+
+  ### Phase 2: Core Database Service (Commits 3-5)
+
+  **Goal:** Implement all IDataService methods with proper SQLite operations.
+
+  #### Commit 3: Implement Habit operations
+  - **Files Modified:** `Tracker/Services/DatabaseService.cs`
+  - **Methods Implemented:**
+  - `GetAllHabitsAsync()` - load with completions & tracking days
+  - `GetHabitByIdAsync()` - single habit with relationships
+  - `SaveHabitAsync()` - transaction-based save with full replacement
+  - `DeleteHabitAsync()` - cascade delete
+  - `UpdateHabitOrderAsync()` - batch DisplayOrder update
+  - `ToggleHabitCompletionAsync()` - add/remove completion
+  - `IsHabitCompletedOnDateAsync()` - check completion
+  - **Key Patterns:**
+  - UTC storage, local time retrieval
+  - Transaction support for multi-table operations
+  - Junction table pattern for TrackingDays (delete + insert)
+  - Mapping methods: `MapToHabitDb()`, `MapToHabitAsync()`
+  - DisplayOrder only set on new items
+  - **Verification:** Habit CRUD operations work, data persists
+
+  #### Commit 4: Implement Task and SubTask operations
+  - **Files Modified:** `Tracker/Services/DatabaseService.cs`
+  - **Methods Implemented:**
+  - `GetAllTasksAsync()` - load with subtasks, restore parent refs
+  - `GetTaskByIdAsync()` - single task with subtasks
+  - `SaveTaskAsync()` - transaction with subtask replacement
+  - `DeleteTaskAsync()` - cascade delete
+  - `UpdateTaskOrderAsync()` - batch update
+  - `ToggleTaskCompletionAsync()` - toggle with date tracking
+  - `ToggleSubTaskCompletionAsync()` - toggle + auto-complete logic
+  - **Critical:** Always call `subTask.SetParentTask(task)` after loading
+  - **Key Patterns:**
+  - Parent reference restoration: `MapToSubTask(db, parentTask)`
+  - Auto-complete logic in transaction
+  - Full subtask replacement on save
+  - **Verification:** Task CRUD works, subtask parent refs work, auto-complete works
+
+  #### Commit 5: Implement Statistics operations
+  - **Files Modified:** `Tracker/Services/DatabaseService.cs`
+  - **Methods Implemented:**
+  - `GetHabitStatisticsAsync()` - copy from DataService
+  - `GetAllHabitStatisticsAsync()` - iterate all habits
+  - `GetTaskStatisticsAsync()` - copy from DataService
+  - Helper methods: streaks, should track, days in period
+  - **Key Pattern:** Statistics computed on-demand, NOT stored
+  - **Verification:** Statistics page displays correctly
+
+  ### Phase 3: Migration & Integration (Commits 6-7)
+
+  **Goal:** Add sample data seeding and switch to production use.
+
+  #### Commit 6: Add migration support and sample data seeding
+  - **Files Modified:** `Tracker/Services/DatabaseService.cs`
+  - **Key Changes:**
+  - Detect first run (Version key missing in DatabaseInfo)
+  - `SeedSampleDataAsync()` - same data as current DataService
+  - Only seed if database is empty (habit count = 0)
+  - Add backup/export methods for safety
+  - Migration framework for future schema changes
+  - **Sample Data:**
+  - 2 habits (Morning Exercise, Reading)
+  - 7 completions on first habit
+  - 2 tasks (with subtasks, one completed)
+  - **Verification:** Fresh install shows sample data
+
+  #### Commit 7: Switch to DatabaseService in production
+  - **Files Modified:**
+  - `Tracker/MauiProgram.cs` - change DI registration
+  - `Tracker/Services/DataService.cs` - rename to `InMemoryDataService.cs`
+  - **Changes:**
+  ```csharp
+  // MauiProgram.cs - single line change
+  builder.Services.AddSingleton<IDataService, DatabaseService>();
+
+  // For testing, switch to:
+  // builder.Services.AddSingleton<IDataService, InMemoryDataService>();
+  ```
+  - **Verification:**
+  - App works identically to before
+  - Data persists across app restarts
+  - All tabs functional
+
+  ### Phase 4: Testing & Documentation (Commit 8)
+
+  **Goal:** Add tests and update documentation.
+
+  #### Commit 8: Add tests and update documentation
+  - **Files Created:**
+  - `Tracker.Tests/Tracker.Tests.csproj`
+  - `Tracker.Tests/DatabaseServiceTests.cs`
+  - `Tracker.Tests/HabitOperationsTests.cs`
+  - `Tracker.Tests/TaskOperationsTests.cs`
+  - **Files Modified:**
+  - `tracker.sln` - add test project
+  - `Tracker/README.md` - document database, backup, testing
+  - **Test Coverage:**
+  - Database initialization
+  - CRUD operations (habits, tasks, subtasks)
+  - UTC conversion
+  - Transaction rollback
+  - Parent reference restoration
+  - DisplayOrder assignment
+  - Sample data seeding
+  - **Verification:** All tests pass
+
+  ## Critical Implementation Details
+
+  ### DateTime Handling
+
+  **Storage (always UTC):**
+  ```csharp
+  CreatedDateUtc = habit.CreatedDate.ToUniversalTime().ToString("o")
+  CompletedDateUtc = date.Date.ToString("yyyy-MM-dd") // date-only
+  ReminderTime = timespan.Ticks.ToString()
+  ```
+
+  **Retrieval (convert to local):**
+  ```csharp
+  CreatedDate = DateTime.Parse(db.CreatedDateUtc, null,
+  DateTimeStyles.RoundtripKind).ToLocalTime()
+  ```
+
+  ### Transaction Pattern
+
+  **Use for:**
+  - Multi-table saves (Habit + TrackingDays + Completions)
+  - Cascade deletes
+  - Auto-complete with parent update
+
+  ```csharp
+  await _database.RunInTransactionAsync(async (conn) =>
+  {
+  await conn.UpdateAsync(record);
+  await conn.DeleteAsync(childRecord);
+  });
+  ```
+
+  ### Junction Table Pattern
+
+  **Save (delete + insert):**
+  ```csharp
+  await conn.ExecuteAsync("DELETE FROM HabitTrackingDays WHERE HabitId = ?", id);
+  foreach (var day in habit.TrackingDays)
+  {
+  await conn.InsertAsync(new HabitTrackingDayDb
+  {
+  HabitId = id,
+  DayOfWeek = (int)day
+  });
+  }
+  ```
+
+  **Load (efficient query):**
+  ```csharp
+  var days = await _database.Table<HabitTrackingDayDb>()
+  .Where(t => t.HabitId == id)
+  .ToListAsync();
+  habit.TrackingDays = days.Select(d => (DayOfWeek)d.DayOfWeek).ToList();
+  ```
+
+  ### Parent Reference Restoration
+
+  **Critical for SubTask INotifyPropertyChanged:**
+  ```csharp
+  private SubTask MapToSubTask(SubTaskDb db, TodoTask parent)
+  {
+  var subTask = new SubTask { /* properties */ };
+  subTask.SetParentTask(parent); // MUST call this!
+  return subTask;
+  }
+  ```
+
+  **Always call after loading in:**
+  - `GetTaskByIdAsync()`
+  - `GetAllTasksAsync()`
+
+  ### Async Initialization (No .Wait())
+
+  ```csharp
+  private readonly Task _initializationTask;
+
+  public DatabaseService()
+  {
+  _initializationTask = InitializeDatabaseAsync();
+  }
+
+  private async Task EnsureInitializedAsync()
+  {
+  await _initializationTask;
+  }
+
+  // Every public method:
+  public async Task<Habit> GetHabitAsync(Guid id)
+  {
+  await EnsureInitializedAsync(); // First line
+  // ... rest
+  }
+  ```
+
+  ## Migration Strategy
+
+  ### First Run
+  1. Check `DatabaseInfo` table for "Version" key
+  2. If missing → new database, seed sample data
+  3. If present → existing database, check version number
+
+  ### Sample Data
+  - Only load if `Habits` table is empty
+  - Use same data as `InMemoryDataService`
+  - Inserted via normal Save methods (ensures consistency)
+
+  ### Future Schema Changes
+  ```csharp
+  private async Task MigrateDatabaseAsync(int from, int to)
+  {
+  // Backup first (not shown)
+
+  if (from == 1 && to >= 2)
+  {
+  await _database.ExecuteAsync("ALTER TABLE Habits ADD COLUMN Field TEXT");
+  }
+
+  // Update version
+  await _database.ExecuteAsync(
+  "UPDATE DatabaseInfo SET Value = ? WHERE Key = 'Version'", to);
+  }
+  ```
+
+  ## Potential Pitfalls & Solutions
+
+  | Pitfall | Problem | Solution |
+  |---------|---------|----------|
+  | `.Wait()` in constructor | Deadlocks in async contexts | Task field + `EnsureInitializedAsync()` |
+  | DateTime timezone bugs | Completions off by one day | Always UTC storage, local retrieval, `.Date` for dates |
+  | Lost parent references | SubTask property changes don't notify parent | Always `SetParentTask()` after loading |
+  | DisplayOrder conflicts | Duplicate orders on manual setting | Use `UpdateHabitOrderAsync()` for reordering |
+  | Migration failures | User loses data | Auto-backup before migration, rollback on error |
+
+  ## Testing Approach
+
+  ### Unit Tests
+  - Test DatabaseService with temp database
+  - Test mapping methods (UTC conversion)
+  - Test transaction scenarios
+  - Test parent reference restoration
+
+  ### Integration Tests
+  - Complete workflows (create → complete → view stats)
+  - Migration scenarios
+  - Backup/restore
+
+  ### Manual Verification
+  1. Fresh install → sample data appears
+  2. Create habit → persists after restart
+  3. Complete habit → shows in statistics
+  4. Create task with subtasks → parent reference works
+  5. Toggle subtask → auto-complete works
+  6. Reorder items → order persists
+  7. Delete items → cascade works
+
+  ## Critical Files
+
+  | File | Purpose | Changes |
+  |------|---------|---------|
+  | `Tracker/Services/DatabaseService.cs` | New file | Core database operations, implements IDataService |
+  | `Tracker/Services/DatabaseModels.cs` | New file | SQLite schema definitions |
+  | `Tracker/MauiProgram.cs` | Modified | DI registration (1 line change) |
+  | `Tracker/Services/DataService.cs` | Renamed | Becomes `InMemoryDataService.cs` for testing |
+  | `Tracker/Tracker.csproj` | Modified | Add SQLite NuGet packages |
+
+  ## Database Schema
+
+  ```
+  Habits
+  ├── Id (TEXT, PK)
+  ├── Name, Description
+  ├── TrackEveryday (INTEGER/BOOL)
+  ├── CreatedDateUtc, DeadlineUtc (TEXT, ISO 8601)
+  ├── ReminderTime (TEXT, ticks)
+  ├── DisplayOrder (INTEGER)
+
+  HabitTrackingDays (junction)
+  ├── Id (INTEGER, PK, AUTOINCREMENT)
+  ├── HabitId (TEXT, FK, INDEXED)
+  ├── DayOfWeek (INTEGER, 0-6)
+
+  HabitCompletions
+  ├── Id (TEXT, PK)
+  ├── HabitId (TEXT, FK, INDEXED)
+  ├── CompletedDateUtc (TEXT, INDEXED)
+  ├── Note (TEXT)
+
+  Tasks
+  ├── Id (TEXT, PK)
+  ├── Name, Description
+  ├── CreatedDateUtc, DueDateUtc, CompletedDateUtc (TEXT)
+  ├── Priority (TEXT)
+  ├── IsCompleted (INTEGER/BOOL)
+  ├── AutoCompleteWithSubtasks (INTEGER/BOOL)
+  ├── DisplayOrder (INTEGER)
+
+  SubTasks
+  ├── Id (TEXT, PK)
+  ├── ParentTaskId (TEXT, FK, INDEXED)
+  ├── Name (TEXT)
+  ├── IsCompleted (INTEGER/BOOL)
+  ├── DisplayOrder (INTEGER)
+
+  DatabaseInfo
+  ├── Key (TEXT, PK)
+  ├── Value (TEXT)
+  ```
+
+  ## Final Architecture
+
+  ```
+  ViewModels (unchanged)
+  ↓ (inject IDataService)
+  DatabaseService (new)
+  ├── SQLiteAsyncConnection
+  ├── Async initialization
+  ├── Transaction support
+  ├── UTC DateTime handling
+  ├── Mapping logic
+  └── Statistics computation
+  ↓
+  SQLite Database (tracker.db3)
+  ├── 6 tables
+  ├── Indexes
+  └── Version tracking
+  ```
+
+  ## Success Criteria
+
+  ✅ All ViewModels work without changes
+  ✅ All Views work without changes
+  ✅ Data persists across app restarts
+  ✅ Statistics calculations identical
+  ✅ Sample data on first run
+  ✅ No `.Wait()` or blocking calls
+  ✅ UTC DateTime handling correct
+  ✅ Parent references restored
+  ✅ Transactions protect data integrity
+  ✅ Tests verify all operations
+  ✅ InMemoryDataService preserved for testing
