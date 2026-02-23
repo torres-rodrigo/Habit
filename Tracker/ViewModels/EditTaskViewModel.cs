@@ -90,7 +90,13 @@ public class EditTaskViewModel : BaseViewModel
     public bool IsSaving
     {
         get => _isSaving;
-        set => SetProperty(ref _isSaving, value);
+        set
+        {
+            if (SetProperty(ref _isSaving, value))
+            {
+                ((Command)SaveCommand).ChangeCanExecute();
+            }
+        }
     }
 
     public EditTaskViewModel(IDataService dataService)
@@ -100,7 +106,7 @@ public class EditTaskViewModel : BaseViewModel
 
         AddSubtaskCommand = new Command(AddSubtask);
         RemoveSubtaskCommand = new Command<SubtaskItem>(RemoveSubtask);
-        SaveCommand = new Command(async () => await SaveTaskAsync());
+        SaveCommand = new Command(async () => await SaveTaskAsync(), () => !IsSaving);
         CancelCommand = new Command(async () => await Cancel());
     }
 
@@ -171,12 +177,17 @@ public class EditTaskViewModel : BaseViewModel
         try
         {
             IsSaving = true;
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Starting to save task: {TaskName}");
+
             var taskId = string.IsNullOrEmpty(TaskId) || !Guid.TryParse(TaskId, out var parsedId)
                 ? Guid.NewGuid()
                 : parsedId;
 
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Task ID: {taskId}");
+
             // Get existing task to preserve properties like DisplayOrder, CreatedDate, etc.
             var existingTask = string.IsNullOrEmpty(TaskId) ? null : await _dataService.GetTaskByIdAsync(taskId);
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Existing task: {existingTask?.Name ?? "null"}");
 
             var subtaskList = Subtasks
                 .Where(s => !string.IsNullOrWhiteSpace(s.Name))
@@ -189,6 +200,8 @@ public class EditTaskViewModel : BaseViewModel
                     DisplayOrder = index
                 })
                 .ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Subtasks count: {subtaskList.Count}");
 
             var task = new TodoTask
             {
@@ -207,12 +220,18 @@ public class EditTaskViewModel : BaseViewModel
                 SubTasks = subtaskList
             };
 
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Calling SaveTaskAsync on data service");
             await _dataService.SaveTaskAsync(task);
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] SaveTaskAsync completed successfully");
+
             await Shell.Current.GoToAsync("..");
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Navigation completed");
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", $"Failed to save task: {ex.Message}", "OK");
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] ERROR: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[EditTaskViewModel] Stack trace: {ex.StackTrace}");
+            await Shell.Current.DisplayAlert("Error", $"Failed to save task: {ex.Message}\n\nStack trace: {ex.StackTrace}", "OK");
         }
         finally
         {
