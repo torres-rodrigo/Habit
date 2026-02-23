@@ -14,6 +14,8 @@ namespace Tracker.Models
         public int MonthlyTarget { get; set; }
         public int YearlyCompletions { get; set; }
         public int YearlyTarget { get; set; }
+        public int AllTimeCompletions { get; set; }
+        public int AllTimeExpected { get; set; }
         public int CurrentStreak { get; set; }
         public int LongestStreak { get; set; }
         public double CompletionRate { get; set; }
@@ -21,6 +23,7 @@ namespace Tracker.Models
         public double WeeklyProgress => WeeklyTarget > 0 ? (double)WeeklyCompletions / WeeklyTarget : 0;
         public double MonthlyProgress => MonthlyTarget > 0 ? (double)MonthlyCompletions / MonthlyTarget : 0;
         public double YearlyProgress => YearlyTarget > 0 ? (double)YearlyCompletions / YearlyTarget : 0;
+        public double AllTimeProgress => AllTimeExpected > 0 ? (double)AllTimeCompletions / AllTimeExpected : 0;
     }
 
     public class TaskStatistics

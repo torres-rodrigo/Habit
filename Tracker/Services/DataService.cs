@@ -320,6 +320,19 @@ namespace Tracker.Services
             var currentStreak = CalculateCurrentStreak(habit);
             var longestStreak = CalculateLongestStreak(habit);
 
+            // Calculate all-time expected completions
+            var allTimeExpected = 0;
+            var date = habit.CreatedDate.Date;
+            while (date <= today)
+            {
+                if (ShouldTrackOnDay(habit, date))
+                {
+                    allTimeExpected++;
+                }
+                date = date.AddDays(1);
+            }
+
+            var allTimeCompletions = habit.Completions.Count;
             var totalDays = (today - habit.CreatedDate).Days + 1;
             var completionRate = totalDays > 0 ? (double)habit.Completions.Count / totalDays * 100 : 0;
 
@@ -335,6 +348,8 @@ namespace Tracker.Services
                 MonthlyTarget = monthlyTarget,
                 YearlyCompletions = yearlyCompletions,
                 YearlyTarget = yearlyTarget,
+                AllTimeCompletions = allTimeCompletions,
+                AllTimeExpected = allTimeExpected,
                 CurrentStreak = currentStreak,
                 LongestStreak = longestStreak,
                 CompletionRate = Math.Round(completionRate, 1)
