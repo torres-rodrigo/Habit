@@ -336,6 +336,51 @@ namespace Tracker.Services
             var totalDays = (today - habit.CreatedDate).Days + 1;
             var completionRate = totalDays > 0 ? (double)habit.Completions.Count / totalDays * 100 : 0;
 
+            // Calculate yearly breakdown for all years prior to current year
+            var yearlyBreakdown = new List<YearlyHabitStatistics>();
+            var createdYear = habit.CreatedDate.Year;
+            var currentYear = today.Year;
+
+            for (int year = createdYear; year < currentYear; year++)
+            {
+                var yearStartDate = new DateTime(year, 1, 1);
+                var yearEndDate = new DateTime(year, 12, 31);
+
+                // Adjust start date if habit was created mid-year
+                if (year == createdYear)
+                {
+                    yearStartDate = habit.CreatedDate.Date;
+                }
+
+                // Count completions for this year
+                var completedDays = habit.Completions.Count(c => c.CompletedDate.Year == year);
+
+                // Calculate expected days for this year
+                var expectedDays = 0;
+                var currentDate = yearStartDate;
+                while (currentDate <= yearEndDate)
+                {
+                    if (ShouldTrackOnDay(habit, currentDate))
+                    {
+                        expectedDays++;
+                    }
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                var yearCompletionRate = expectedDays > 0 ? Math.Round((double)completedDays / expectedDays * 100, 1) : 0;
+
+                yearlyBreakdown.Add(new YearlyHabitStatistics
+                {
+                    Year = year,
+                    CompletedDays = completedDays,
+                    ExpectedDays = expectedDays,
+                    CompletionRate = yearCompletionRate
+                });
+            }
+
+            // Order by year descending (most recent first)
+            yearlyBreakdown = yearlyBreakdown.OrderByDescending(y => y.Year).ToList();
+
             return new HabitStatistics
             {
                 HabitId = habitId,
@@ -352,7 +397,8 @@ namespace Tracker.Services
                 AllTimeExpected = allTimeExpected,
                 CurrentStreak = currentStreak,
                 LongestStreak = longestStreak,
-                CompletionRate = Math.Round(completionRate, 1)
+                CompletionRate = Math.Round(completionRate, 1),
+                YearlyBreakdown = yearlyBreakdown
             };
         }
 

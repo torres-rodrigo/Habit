@@ -19,11 +19,21 @@ namespace Tracker.Models
         public int CurrentStreak { get; set; }
         public int LongestStreak { get; set; }
         public double CompletionRate { get; set; }
+        public List<YearlyHabitStatistics> YearlyBreakdown { get; set; } = new();
 
         public double WeeklyProgress => WeeklyTarget > 0 ? (double)WeeklyCompletions / WeeklyTarget : 0;
         public double MonthlyProgress => MonthlyTarget > 0 ? (double)MonthlyCompletions / MonthlyTarget : 0;
         public double YearlyProgress => YearlyTarget > 0 ? (double)YearlyCompletions / YearlyTarget : 0;
         public double AllTimeProgress => AllTimeExpected > 0 ? (double)AllTimeCompletions / AllTimeExpected : 0;
+    }
+
+    public class YearlyHabitStatistics
+    {
+        public int Year { get; set; }
+        public int CompletedDays { get; set; }
+        public int ExpectedDays { get; set; }
+        public double CompletionRate { get; set; }
+        public double Progress => ExpectedDays > 0 ? (double)CompletedDays / ExpectedDays : 0;
     }
 
     public class TaskStatistics
