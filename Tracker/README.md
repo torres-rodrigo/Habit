@@ -461,9 +461,6 @@ reucrring tasks
 for tasks statistics display 
 year completed that year / total that year
 
-Incomplete task toggle
-
-
 ---
 
 MAGIC 8 ball program 

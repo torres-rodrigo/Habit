@@ -185,8 +185,8 @@ namespace Tracker.ViewModels
                 new() { Name = "Created", DisplayName = "Created" },
                 new() { Name = "Completed", DisplayName = "Completed" }
             };
-            _selectedDateTypeFilter = DateTypeFilterOptions[0]; // Default to N/A
-            _isDatePeriodFilterEnabled = false; // Disabled by default
+            _selectedDateTypeFilter = DateTypeFilterOptions[1]; // Default to Created
+            _isDatePeriodFilterEnabled = true; // Enabled by default
 
             DatePeriodFilterOptions = new ObservableCollection<DatePeriodOption>
             {
@@ -197,7 +197,7 @@ namespace Tracker.ViewModels
                 new() { Name = "Today", DisplayName = "Today" },
                 new() { Name = "Custom", DisplayName = "Custom" }
             };
-            _selectedDatePeriodFilter = DatePeriodFilterOptions[2]; // Default to Current Month
+            _selectedDatePeriodFilter = DatePeriodFilterOptions[1]; // Default to Current Year
 
             AddTaskCommand = new Command(OnAddTask);
             EditTaskCommand = new Command<Guid>(OnEditTask);
@@ -220,8 +220,8 @@ namespace Tracker.ViewModels
 
             MessagingCenter.Subscribe<CustomDateViewModel>(this, "CustomDateCancelled", (sender) =>
             {
-                // Revert to previous selection (Current Month)
-                _selectedDatePeriodFilter = DatePeriodFilterOptions[2];
+                // Revert to previous selection (Current Year)
+                _selectedDatePeriodFilter = DatePeriodFilterOptions[1];
                 OnPropertyChanged(nameof(SelectedDatePeriodFilter));
                 ShowCustomDatePopup = false;
             });
