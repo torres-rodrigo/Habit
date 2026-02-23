@@ -102,48 +102,248 @@ namespace Tracker.Services
                 toVersion.ToString());
         }
 
-        #region Habit Operations (Stubs)
+        #region Habit Operations
 
         public async Task<List<Habit>> GetAllHabitsAsync()
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitDbs = await _database.Table<HabitDb>()
+                .OrderBy(h => h.DisplayOrder)
+                .ToListAsync();
+
+            var habits = new List<Habit>();
+            foreach (var habitDb in habitDbs)
+            {
+                var habit = await MapToHabitAsync(habitDb);
+                habits.Add(habit);
+            }
+
+            return habits;
         }
 
         public async Task<Habit?> GetHabitByIdAsync(Guid id)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitDb = await _database.Table<HabitDb>()
+                .Where(h => h.Id == id.ToString())
+                .FirstOrDefaultAsync();
+
+            if (habitDb == null)
+                return null;
+
+            return await MapToHabitAsync(habitDb);
         }
 
         public async Task SaveHabitAsync(Habit habit)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitId = habit.Id.ToString();
+            var existing = await _database.Table<HabitDb>()
+                .Where(h => h.Id == habitId)
+                .FirstOrDefaultAsync();
+
+            var habitDb = MapToHabitDb(habit);
+
+            // Set DisplayOrder only for new habits
+            if (existing == null)
+            {
+                var maxOrder = await _database.Table<HabitDb>()
+                    .OrderByDescending(h => h.DisplayOrder)
+                    .FirstOrDefaultAsync();
+                habitDb.DisplayOrder = maxOrder?.DisplayOrder + 1 ?? 0;
+            }
+            else
+            {
+                habitDb.DisplayOrder = existing.DisplayOrder;
+            }
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                // Save or update habit
+                if (existing != null)
+                {
+                    conn.Update(habitDb);
+                }
+                else
+                {
+                    conn.Insert(habitDb);
+                }
+
+                // Update tracking days (delete all + insert new)
+                conn.Execute("DELETE FROM HabitTrackingDays WHERE HabitId = ?", habitId);
+                foreach (var day in habit.TrackingDays)
+                {
+                    conn.Insert(new HabitTrackingDayDb
+                    {
+                        HabitId = habitId,
+                        DayOfWeek = (int)day
+                    });
+                }
+
+                // Update completions (delete all + insert new)
+                conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
+                foreach (var completion in habit.Completions)
+                {
+                    conn.Insert(new HabitCompletionDb
+                    {
+                        Id = completion.Id.ToString(),
+                        HabitId = habitId,
+                        CompletedDateUtc = completion.CompletedDate.Date.ToString("yyyy-MM-dd"),
+                        Note = completion.Note
+                    });
+                }
+            });
         }
 
         public async Task DeleteHabitAsync(Guid id)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitId = id.ToString();
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                // Cascade delete tracking days
+                conn.Execute("DELETE FROM HabitTrackingDays WHERE HabitId = ?", habitId);
+
+                // Cascade delete completions
+                conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
+
+                // Delete habit
+                conn.Execute("DELETE FROM Habits WHERE Id = ?", habitId);
+            });
         }
 
         public async Task UpdateHabitOrderAsync(List<Habit> habits)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            await _database.RunInTransactionAsync((conn) =>
+            {
+                for (int i = 0; i < habits.Count; i++)
+                {
+                    habits[i].DisplayOrder = i;
+                    conn.Execute(
+                        "UPDATE Habits SET DisplayOrder = ? WHERE Id = ?",
+                        i,
+                        habits[i].Id.ToString());
+                }
+            });
         }
 
         public async Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitIdStr = habitId.ToString();
+            var dateOnly = date.Date.ToString("yyyy-MM-dd");
+
+            var existing = await _database.Table<HabitCompletionDb>()
+                .Where(c => c.HabitId == habitIdStr && c.CompletedDateUtc == dateOnly)
+                .FirstOrDefaultAsync();
+
+            if (existing != null)
+            {
+                // Remove completion
+                await _database.DeleteAsync(existing);
+            }
+            else
+            {
+                // Add completion
+                await _database.InsertAsync(new HabitCompletionDb
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    HabitId = habitIdStr,
+                    CompletedDateUtc = dateOnly,
+                    Note = note
+                });
+            }
         }
 
         public async Task<bool> IsHabitCompletedOnDateAsync(Guid habitId, DateTime date)
         {
             await EnsureInitializedAsync();
-            throw new NotImplementedException();
+
+            var habitIdStr = habitId.ToString();
+            var dateOnly = date.Date.ToString("yyyy-MM-dd");
+
+            var completion = await _database.Table<HabitCompletionDb>()
+                .Where(c => c.HabitId == habitIdStr && c.CompletedDateUtc == dateOnly)
+                .FirstOrDefaultAsync();
+
+            return completion != null;
+        }
+
+        #endregion
+
+        #region Habit Mapping Methods
+
+        /// <summary>
+        /// Maps domain Habit model to database HabitDb model
+        /// </summary>
+        private HabitDb MapToHabitDb(Habit habit)
+        {
+            return new HabitDb
+            {
+                Id = habit.Id.ToString(),
+                Name = habit.Name,
+                Description = habit.Description,
+                TrackEveryday = habit.TrackEveryday,
+                CreatedDateUtc = habit.CreatedDate.ToUniversalTime().ToString("o"),
+                DeadlineUtc = habit.Deadline?.ToUniversalTime().ToString("o"),
+                HasReminders = habit.HasReminders,
+                ReminderTimeTicks = habit.ReminderTime?.Ticks,
+                NotesEnabled = habit.NotesEnabled,
+                DisplayOrder = habit.DisplayOrder
+            };
+        }
+
+        /// <summary>
+        /// Maps database HabitDb model to domain Habit model
+        /// Loads related tracking days and completions
+        /// </summary>
+        private async Task<Habit> MapToHabitAsync(HabitDb habitDb)
+        {
+            var habit = new Habit
+            {
+                Id = Guid.Parse(habitDb.Id),
+                Name = habitDb.Name,
+                Description = habitDb.Description,
+                TrackEveryday = habitDb.TrackEveryday,
+                CreatedDate = DateTime.Parse(habitDb.CreatedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                Deadline = string.IsNullOrEmpty(habitDb.DeadlineUtc)
+                    ? null
+                    : DateTime.Parse(habitDb.DeadlineUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                HasReminders = habitDb.HasReminders,
+                ReminderTime = habitDb.ReminderTimeTicks.HasValue
+                    ? TimeSpan.FromTicks(habitDb.ReminderTimeTicks.Value)
+                    : null,
+                NotesEnabled = habitDb.NotesEnabled,
+                DisplayOrder = habitDb.DisplayOrder
+            };
+
+            // Load tracking days
+            var trackingDays = await _database.Table<HabitTrackingDayDb>()
+                .Where(t => t.HabitId == habitDb.Id)
+                .ToListAsync();
+            habit.TrackingDays = trackingDays.Select(d => (DayOfWeek)d.DayOfWeek).ToList();
+
+            // Load completions
+            var completions = await _database.Table<HabitCompletionDb>()
+                .Where(c => c.HabitId == habitDb.Id)
+                .ToListAsync();
+            habit.Completions = completions.Select(c => new HabitCompletion
+            {
+                Id = Guid.Parse(c.Id),
+                HabitId = Guid.Parse(c.HabitId),
+                CompletedDate = DateTime.Parse(c.CompletedDateUtc),
+                Note = c.Note
+            }).ToList();
+
+            return habit;
         }
 
         #endregion
