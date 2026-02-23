@@ -34,5 +34,17 @@ namespace Tracker.Models
         public double CompletionRate { get; set; }
         public double OnTimeRate { get; set; }
         public double LateRate { get; set; }
+        public List<YearlyTaskStatistics> YearlyBreakdown { get; set; } = new();
+        public double Progress => TotalTasks > 0 ? (double)CompletedTasks / TotalTasks : 0;
+    }
+
+    public class YearlyTaskStatistics
+    {
+        public int Year { get; set; }
+        public int TotalTasks { get; set; }
+        public int CompletedTasks { get; set; }
+        public int CompletedOverdue { get; set; }
+        public double CompletionRate { get; set; }
+        public double Progress => TotalTasks > 0 ? (double)CompletedTasks / TotalTasks : 0;
     }
 }

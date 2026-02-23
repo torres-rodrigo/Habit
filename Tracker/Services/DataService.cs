@@ -371,6 +371,20 @@ namespace Tracker.Services
             var onTimeRate = tasksWithDeadlines > 0 ? (double)completedOnTime / tasksWithDeadlines * 100 : 0;
             var lateRate = tasksWithDeadlines > 0 ? (double)completedAfterDeadline / tasksWithDeadlines * 100 : 0;
 
+            // Calculate yearly breakdown
+            var yearlyBreakdown = _tasks
+                .GroupBy(t => t.CreatedDate.Year)
+                .OrderByDescending(g => g.Key)
+                .Select(g => new YearlyTaskStatistics
+                {
+                    Year = g.Key,
+                    TotalTasks = g.Count(),
+                    CompletedTasks = g.Count(t => t.IsCompleted),
+                    CompletedOverdue = g.Count(t => t.CompletedAfterDeadline),
+                    CompletionRate = g.Count() > 0 ? Math.Round((double)g.Count(t => t.IsCompleted) / g.Count() * 100, 1) : 0
+                })
+                .ToList();
+
             var statistics = new TaskStatistics
             {
                 TotalTasks = totalTasks,
@@ -381,7 +395,8 @@ namespace Tracker.Services
                 TasksWithDeadlines = tasksWithDeadlines,
                 CompletionRate = Math.Round(completionRate, 1),
                 OnTimeRate = Math.Round(onTimeRate, 1),
-                LateRate = Math.Round(lateRate, 1)
+                LateRate = Math.Round(lateRate, 1),
+                YearlyBreakdown = yearlyBreakdown
             };
 
             return Task.FromResult(statistics);

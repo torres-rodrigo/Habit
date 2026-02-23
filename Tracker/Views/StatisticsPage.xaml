@@ -28,22 +28,40 @@
             <Frame CornerRadius="10" BorderColor="#FF8C00" HasShadow="True"
                    IsVisible="{Binding IsTaskStatisticsCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                 <VerticalStackLayout Spacing="10">
-                    
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                        <Label Grid.Row="0" Grid.Column="0" Text="Total Tasks:" FontAttributes="Bold"/>
-                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TaskStatistics.TotalTasks}" HorizontalOptions="End"/>
-                        
-                        <Label Grid.Row="1" Grid.Column="0" Text="Completed:" FontAttributes="Bold"/>
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TaskStatistics.CompletedTasks}" HorizontalOptions="End"/>
-                        
-                        <Label Grid.Row="2" Grid.Column="0" Text="Pending:" FontAttributes="Bold"/>
-                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding TaskStatistics.PendingTasks}" HorizontalOptions="End"/>
-                        
-                        <Label Grid.Row="3" Grid.Column="0" Text="Completion Rate:" FontAttributes="Bold"/>
-                        <Label Grid.Row="3" Grid.Column="1" Text="{Binding TaskStatistics.CompletionRate, StringFormat='{0:F1}%'}" HorizontalOptions="End"/>
-                    </Grid>
 
-                    <BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,10"/>
+                    <!-- All time Section -->
+                    <Label Text="All time"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#FF8C00"/>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                        <Label Grid.Column="0"
+                               Text="Total Tasks:"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"/>
+                        <ProgressBar Grid.Column="1"
+                                   Progress="{Binding TaskStatistics.Progress}"
+                                   ProgressColor="#FF8C00"
+                                   VerticalOptions="Center"/>
+                        <Label Grid.Column="2"
+                               HorizontalOptions="End"
+                               VerticalOptions="Center">
+                            <Label.Text>
+                                <MultiBinding StringFormat="{}{0}/{1}">
+                                    <Binding Path="TaskStatistics.CompletedTasks" />
+                                    <Binding Path="TaskStatistics.TotalTasks" />
+                                </MultiBinding>
+                            </Label.Text>
+                        </Label>
+                        <Label Grid.Column="3"
+                               Text="{Binding TaskStatistics.CompletionRate, StringFormat='({0:F0}%)'}"
+                               TextColor="#FF8C00"
+                               FontAttributes="Bold"
+                               HorizontalOptions="End"
+                               VerticalOptions="Center"
+                               Margin="5,0,0,0"/>
+                    </Grid>
 
                     <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
                         <Label Grid.Row="0" Grid.Column="0" Text="Tasks w/ Deadlines:" FontAttributes="Bold"/>
@@ -58,7 +76,7 @@
                                HorizontalOptions="End"
                                Margin="5,0,0,0"/>
 
-                        <Label Grid.Row="2" Grid.Column="0" Text="Completed Late:" FontAttributes="Bold"/>
+                        <Label Grid.Row="2" Grid.Column="0" Text="Completed Overdue:" FontAttributes="Bold"/>
                         <Label Grid.Row="2" Grid.Column="1" Text="{Binding TaskStatistics.CompletedAfterDeadline}" HorizontalOptions="End"/>
                         <Label Grid.Row="2" Grid.Column="2"
                                Text="{Binding TaskStatistics.LateRate, StringFormat='({0:F0}%)'}"
@@ -67,6 +85,61 @@
                                HorizontalOptions="End"
                                Margin="5,0,0,0"/>
                     </Grid>
+
+                    <!-- Yearly Breakdown -->
+                    <BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,10"/>
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding TaskStatistics.YearlyBreakdown}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:YearlyTaskStatistics">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="{Binding Year}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="#FF8C00"/>
+
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="Progress:"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"/>
+                                        <ProgressBar Grid.Column="1"
+                                                   Progress="{Binding Progress}"
+                                                   ProgressColor="#FF8C00"
+                                                   VerticalOptions="Center"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalOptions="End"
+                                               VerticalOptions="Center">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0}/{1}">
+                                                    <Binding Path="CompletedTasks" />
+                                                    <Binding Path="TotalTasks" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        <Label Grid.Column="3"
+                                               Text="{Binding CompletionRate, StringFormat='({0:F0}%)'}"
+                                               TextColor="#FF8C00"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="End"
+                                               VerticalOptions="Center"
+                                               Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="Completed Overdue:"
+                                               FontAttributes="Bold"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding CompletedOverdue}"
+                                               HorizontalOptions="End"/>
+                                    </Grid>
+
+                                    <BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,10,0,0"/>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Frame>
 

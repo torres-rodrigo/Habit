@@ -424,7 +424,7 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-collapsable sections done in tasks page
+collapsable sections done in tasks page and statitics
 
 Test in android
 
