@@ -424,15 +424,13 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
+Persistance
+
 collapsable sections done in tasks page and statitics
 
 Test in android
 
 Notifications/reminders
-
-quick double click should cause like a failed case insted of success
-
-Search functionality to sort in tabs
 
 Negative habit toggle red border just during creation or editing
 
@@ -443,23 +441,14 @@ On the statisctics tab have a filter for all time, and current year
 Add way to add note for the current day in the card for the habit
 it should have a revert to revert to the way the card was pre save
 it should have a save button
+Mark days as complete from the calander
 
 Do a proper display page and fix the edit page
-
-Persistance
 
 HABITS THAT END SHOULD HAVE A SECTION COMPLETED HABITS
 THere should be a toggle to show or hide completed habits
 
-Filters
-- Statistics should have an all time and current year
-
 manage case where habit frequency changes so as to not break statistics
-
-reucrring tasks
-
-for tasks statistics display 
-year completed that year / total that year
 
 ---
 
