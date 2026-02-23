@@ -218,8 +218,9 @@ namespace Tracker.Services
         {
             await EnsureInitializedAsync();
 
+            var idString = id.ToString();
             var habitDb = await _database.Table<HabitDb>()
-                .Where(h => h.Id == id.ToString())
+                .Where(h => h.Id == idString)
                 .FirstOrDefaultAsync();
 
             if (habitDb == null)
@@ -464,8 +465,9 @@ namespace Tracker.Services
         {
             await EnsureInitializedAsync();
 
+            var idString = id.ToString();
             var taskDb = await _database.Table<TaskDb>()
-                .Where(t => t.Id == id.ToString())
+                .Where(t => t.Id == idString)
                 .FirstOrDefaultAsync();
 
             if (taskDb == null)
