@@ -67,12 +67,15 @@ namespace Tracker.Services
 
             if (versionInfo == null)
             {
-                // New database - set version
+                // New database - set version and seed sample data
                 await _database.InsertAsync(new DatabaseInfoDb
                 {
                     Key = "Version",
                     Value = CurrentDatabaseVersion.ToString()
                 });
+
+                // Seed sample data on first run
+                await SeedSampleDataAsync();
             }
             else if (int.TryParse(versionInfo.Value, out var version))
             {
@@ -100,6 +103,95 @@ namespace Tracker.Services
             await _database.ExecuteAsync(
                 "UPDATE DatabaseInfo SET Value = ? WHERE Key = 'Version'",
                 toVersion.ToString());
+        }
+
+        /// <summary>
+        /// Seeds sample data for new installations
+        /// Only runs if database is empty
+        /// </summary>
+        private async Task SeedSampleDataAsync()
+        {
+            // Check if database already has data
+            var habitCount = await _database.Table<HabitDb>().CountAsync();
+            if (habitCount > 0)
+                return;
+
+            // Sample habits
+            var exerciseHabit = new Habit
+            {
+                Name = "Morning Exercise",
+                Description = "30 minutes of exercise",
+                TrackEveryday = true,
+                NotesEnabled = true,
+                DisplayOrder = 0,
+                HasReminders = true,
+                ReminderTime = new TimeSpan(7, 0, 0)
+            };
+
+            var readingHabit = new Habit
+            {
+                Name = "Reading",
+                Description = "Read for 20 minutes",
+                TrackEveryday = false,
+                TrackingDays = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
+                NotesEnabled = false,
+                DisplayOrder = 1,
+                HasReminders = true,
+                ReminderTime = new TimeSpan(20, 0, 0)
+            };
+
+            await SaveHabitAsync(exerciseHabit);
+            await SaveHabitAsync(readingHabit);
+
+            // Add some sample completions to the exercise habit
+            var today = DateTime.Today;
+            for (int i = 0; i < 7; i++)
+            {
+                var date = today.AddDays(-i);
+                if (i % 2 == 0)
+                {
+                    await ToggleHabitCompletionAsync(
+                        exerciseHabit.Id,
+                        date,
+                        i == 0 ? "Felt great today!" : null);
+                }
+            }
+
+            // Sample tasks
+            var task1 = new TodoTask
+            {
+                Name = "Complete project report",
+                Description = "Finish the Q1 report",
+                DueDate = DateTime.Today.AddDays(3),
+                HasReminders = true,
+                ReminderTime = new TimeSpan(9, 0, 0),
+                DisplayOrder = 0,
+                SubTasks = new List<SubTask>
+                {
+                    new SubTask { Name = "Gather data", IsCompleted = true, DisplayOrder = 0 },
+                    new SubTask { Name = "Write summary", IsCompleted = false, DisplayOrder = 1 },
+                    new SubTask { Name = "Review and submit", IsCompleted = false, DisplayOrder = 2 }
+                }
+            };
+
+            var task2 = new TodoTask
+            {
+                Name = "Buy groceries",
+                Description = "Weekly shopping",
+                IsCompleted = true,
+                CompletedDate = DateTime.Today.AddDays(-1),
+                DisplayOrder = 1
+            };
+
+            // Set parent references for subtasks
+            foreach (var subTask in task1.SubTasks)
+            {
+                subTask.ParentTaskId = task1.Id;
+                subTask.SetParentTask(task1);
+            }
+
+            await SaveTaskAsync(task1);
+            await SaveTaskAsync(task2);
         }
 
         #region Habit Operations
