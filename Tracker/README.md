@@ -216,10 +216,10 @@ Modal popup for selecting whether to create a Habit or Task.
 
 ### Services (`Services/`)
 
-#### `DataService.cs`
-Centralized data management service implementing IDataService interface.
-- **Data Storage**: In-memory lists for Habits and TodoTasks (no persistence yet)
-- **Habit Methods**: 
+#### `DatabaseService.cs` ✨ NEW
+SQLite-based data persistence service implementing IDataService interface.
+- **Data Storage**: SQLite database (`tracker.db3`) with full persistence across app restarts
+- **Habit Methods**:
   - GetAllHabits, GetHabitById, SaveHabit (create/update), DeleteHabit
   - ToggleHabitCompletion, IsHabitCompletedOnDate
   - CalculateHabitStatistics (computes streaks and completion rates)
@@ -227,9 +227,22 @@ Centralized data management service implementing IDataService interface.
   - GetAllTasks, GetTaskById, SaveTask (create/update), DeleteTask
   - ToggleTaskCompletion (auto-completes when all subtasks done)
   - CalculateTaskStatistics
-- **Initialization**: CreateSampleData method populates initial demo data
-- **Purpose**: Single source of truth for all data operations and business logic
+- **Features**:
+  - Async initialization pattern (no blocking calls)
+  - Transaction support for data integrity
+  - UTC DateTime handling with local time conversion
+  - Automatic sample data seeding on first run
+  - Database version tracking and migration framework
+- **Purpose**: Production data service with reliable persistence
 - **Registration**: Registered as singleton in MauiProgram.cs
+- **See**: [DATABASE.md](../DATABASE.md) for complete implementation details
+
+#### `InMemoryDataService.cs`
+In-memory data management service for testing and development.
+- **Data Storage**: In-memory lists (no persistence)
+- **Purpose**: Fast testing without database overhead
+- **Usage**: Switch to this in MauiProgram.cs for development/testing
+- **Registration**: Available but not registered by default
 
 ### Converters (`Converters/`)
 
@@ -350,6 +363,10 @@ Platform-specific code and resources for Windows, Android, iOS, and MacCatalyst.
 - [x] MVVM architecture with ViewModels
 - [x] Data service for business logic
 - [x] Value converters for UI binding
+- [x] **SQLite persistence with full data durability** ✨
+- [x] **Async database operations with transaction support** ✨
+- [x] **Automatic sample data seeding** ✨
+- [x] **Database version tracking and migration framework** ✨
 
 ### 🚧 Features to Implement
 - [ ] Add/Edit Habit page with full configuration
@@ -357,10 +374,9 @@ Platform-specific code and resources for Windows, Android, iOS, and MacCatalyst.
 - [ ] Calendar view for habit details
 - [ ] Long-press context menu (Edit, Delete, Sort)
 - [ ] Drag-and-drop reordering
-- [ ] Persistent storage (SQLite)
 - [ ] Notification system for reminders
 - [ ] Notes functionality for habits
-- [ ] Export/import data
+- [ ] Export/import data (database backup)
 - [ ] Dark mode theme
 - [ ] Cloud sync support
 
