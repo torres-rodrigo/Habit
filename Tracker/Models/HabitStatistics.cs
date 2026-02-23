@@ -48,6 +48,7 @@ namespace Tracker.Models
         public int CompletedTasks { get; set; }
         public int CompletedOverdue { get; set; }
         public double CompletionRate { get; set; }
+        public double CompletedOverdueRate { get; set; }
         public double Progress => TotalTasks > 0 ? (double)CompletedTasks / TotalTasks : 0;
     }
 }

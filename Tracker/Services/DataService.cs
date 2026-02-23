@@ -396,7 +396,8 @@ namespace Tracker.Services
                     TotalTasks = g.Count(),
                     CompletedTasks = g.Count(t => t.IsCompleted),
                     CompletedOverdue = g.Count(t => t.CompletedAfterDeadline),
-                    CompletionRate = g.Count() > 0 ? Math.Round((double)g.Count(t => t.IsCompleted) / g.Count() * 100, 1) : 0
+                    CompletionRate = g.Count() > 0 ? Math.Round((double)g.Count(t => t.IsCompleted) / g.Count() * 100, 1) : 0,
+                    CompletedOverdueRate = g.Count() > 0 ? Math.Round((double)g.Count(t => t.CompletedAfterDeadline) / g.Count() * 100, 1) : 0
                 })
                 .ToList();
 
