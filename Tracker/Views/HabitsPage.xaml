@@ -316,7 +316,7 @@
                                                                 CommandParameter="{Binding Id}"/>
                                         </Frame.GestureRecognizers>
 
-                                        <VerticalStackLayout Spacing="12">
+                                        <VerticalStackLayout Spacing="8">
                                             <Label Text="{Binding Name}"
                                                    FontSize="20"
                                                    FontAttributes="Bold"
@@ -336,7 +336,7 @@
 
                                             <HorizontalStackLayout Spacing="8"
                                                                   HorizontalOptions="End"
-                                                                  Margin="0,0,10,0">
+                                                                  Margin="0,-5,10,0">
                                                 <controls:CircularProgressView
                                                     Progress="{Binding WeeklyCompletionDecimal}"
                                                     ProgressColor="{Binding HabitColor}"
@@ -353,7 +353,8 @@
                                             </HorizontalStackLayout>
 
                                             <CollectionView ItemsSource="{Binding WeekDays}"
-                                                          SelectionMode="None">
+                                                          SelectionMode="None"
+                                                          Margin="0,-30,0,0">
                                                 <CollectionView.ItemsLayout>
                                                     <GridItemsLayout Orientation="Horizontal" Span="1" />
                                                 </CollectionView.ItemsLayout>
