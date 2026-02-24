@@ -92,12 +92,6 @@ namespace Tracker.Services
         /// </summary>
         private async Task MigrateDatabaseAsync(int fromVersion, int toVersion)
         {
-            // Migration from version 1 to 2: Add IsNegativeHabit column
-            if (fromVersion == 1 && toVersion >= 2)
-            {
-                await _database.ExecuteAsync("ALTER TABLE Habits ADD COLUMN IsNegativeHabit INTEGER NOT NULL DEFAULT 0");
-            }
-
             // Update version
             await _database.ExecuteAsync(
                 "UPDATE DatabaseInfo SET Value = ? WHERE Key = 'Version'",
