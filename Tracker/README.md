@@ -440,6 +440,13 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO 
 
+Stats all untracked habits go in one card untracked
+They get separated by year, make card yellow and go to the bottom
+Make sub sections for habits Active, Completed Untracked
+Active organge,
+Completed Green,
+Untracked yellow
+
 Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this

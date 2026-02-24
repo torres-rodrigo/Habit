@@ -100,6 +100,20 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isNegativeHabit, value);
         }
 
+        private bool _isTracked = true;
+        public bool IsTracked
+        {
+            get => _isTracked;
+            set
+            {
+                if (SetProperty(ref _isTracked, value))
+                {
+                    OnPropertyChanged(nameof(UntrackTrackButtonText));
+                    OnPropertyChanged(nameof(UntrackTrackButtonColor));
+                }
+            }
+        }
+
         public ObservableCollection<DayOfWeekItem> DaysOfWeek { get; set; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -113,6 +127,8 @@ namespace Tracker.ViewModels
         }
 
         public bool IsEditingExistingHabit => _habitId != Guid.Empty;
+        public string UntrackTrackButtonText => IsTracked ? "Untrack" : "Track";
+        public string UntrackTrackButtonColor => IsTracked ? "#FFC107" : "Green";
 
         public EditHabitViewModel(IDataService dataService)
         {
@@ -154,6 +170,7 @@ namespace Tracker.ViewModels
                     ReminderTime = habit.ReminderTime;
                     NotesEnabled = habit.NotesEnabled;
                     IsNegativeHabit = habit.IsNegativeHabit;
+                    IsTracked = habit.IsTracked;
 
                     foreach (var item in DaysOfWeek)
                     {
@@ -198,6 +215,7 @@ namespace Tracker.ViewModels
                 habit.ReminderTime = HasReminders ? ReminderTime : null;
                 habit.NotesEnabled = NotesEnabled;
                 habit.IsNegativeHabit = IsNegativeHabit;
+                habit.IsTracked = IsTracked;
 
                 habit.TrackingDays.Clear();
                 foreach (var item in DaysOfWeek.Where(d => d.IsSelected))
@@ -220,8 +238,35 @@ namespace Tracker.ViewModels
 
         private async Task OnUntrackTrackAsync()
         {
-            // TODO: Implement untrack/track behavior
-            await Shell.Current.DisplayAlert("Info", "Untrack/Track functionality will be implemented", "OK");
+            try
+            {
+                // Only validate when editing an existing habit
+                if (_habitId != Guid.Empty)
+                {
+                    var habit = await _dataService.GetHabitByIdAsync(_habitId);
+                    if (habit == null) return;
+
+                    // Check if habit is completed (past deadline)
+                    bool isCompleted = habit.Deadline.HasValue && habit.Deadline.Value.Date < DateTime.Now.Date;
+
+                    // Prevent untracking completed habits
+                    if (isCompleted && IsTracked)
+                    {
+                        await Shell.Current.DisplayAlert(
+                            "Cannot Untrack Completed Habit",
+                            "Completed habits cannot be untracked. Please change the deadline to make it active first.",
+                            "OK");
+                        return;
+                    }
+                }
+
+                // Toggle the tracked state (will be saved when user clicks Save)
+                IsTracked = !IsTracked;
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle track status: {ex.Message}", "OK");
+            }
         }
 
         private async Task OnDeleteAsync()

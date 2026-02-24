@@ -13,13 +13,15 @@ namespace Tracker.ViewModels
         private readonly IDataService _dataService;
         private bool _showOverlay;
         private bool _isLoading;
-        private bool _showCompleted;
+        private bool _showArchived;
         private bool _activeHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
         private bool _completedHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
+        private bool _untrackedHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
 
         public ObservableCollection<HabitCardViewModel> Habits { get; set; }
         public ObservableCollection<HabitCardViewModel> ActiveHabits { get; set; }
         public ObservableCollection<HabitCardViewModel> CompletedHabits { get; set; }
+        public ObservableCollection<HabitCardViewModel> UntrackedHabits { get; set; }
 
         public ICommand AddHabitCommand { get; }
         public ICommand EditHabitCommand { get; }
@@ -30,6 +32,7 @@ namespace Tracker.ViewModels
         public ICommand NavigateToTaskCommand { get; }
         public ICommand ToggleActiveHabitsSectionCommand { get; }
         public ICommand ToggleCompletedHabitsSectionCommand { get; }
+        public ICommand ToggleUntrackedHabitsSectionCommand { get; }
 
         public bool ShowOverlay
         {
@@ -43,12 +46,12 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isLoading, value);
         }
 
-        public bool ShowCompleted
+        public bool ShowArchived
         {
-            get => _showCompleted;
+            get => _showArchived;
             set
             {
-                if (SetProperty(ref _showCompleted, value))
+                if (SetProperty(ref _showArchived, value))
                 {
                     OrganizeHabits();
                 }
@@ -67,7 +70,14 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _completedHabitsExpanded, value);
         }
 
+        public bool UntrackedHabitsExpanded
+        {
+            get => _untrackedHabitsExpanded;
+            set => SetProperty(ref _untrackedHabitsExpanded, value);
+        }
+
         public bool HasCompletedHabits => CompletedHabits.Count > 0;
+        public bool HasUntrackedHabits => UntrackedHabits.Count > 0;
 
         public HabitViewModel(IDataService dataService)
         {
@@ -75,6 +85,7 @@ namespace Tracker.ViewModels
             Habits = new ObservableCollection<HabitCardViewModel>();
             ActiveHabits = new ObservableCollection<HabitCardViewModel>();
             CompletedHabits = new ObservableCollection<HabitCardViewModel>();
+            UntrackedHabits = new ObservableCollection<HabitCardViewModel>();
 
             AddHabitCommand = new Command(OnAddHabit);
             EditHabitCommand = new Command<Guid>(async (id) => await OnEditHabit(id));
@@ -85,6 +96,7 @@ namespace Tracker.ViewModels
             NavigateToTaskCommand = new Command(OnNavigateToTask);
             ToggleActiveHabitsSectionCommand = new Command(() => ActiveHabitsExpanded = !ActiveHabitsExpanded);
             ToggleCompletedHabitsSectionCommand = new Command(() => CompletedHabitsExpanded = !CompletedHabitsExpanded);
+            ToggleUntrackedHabitsSectionCommand = new Command(() => UntrackedHabitsExpanded = !UntrackedHabitsExpanded);
 
             _ = LoadHabitsAsync();
         }
@@ -118,18 +130,23 @@ namespace Tracker.ViewModels
         {
             ActiveHabits.Clear();
             CompletedHabits.Clear();
+            UntrackedHabits.Clear();
 
             var now = DateTime.Now;
 
             foreach (var habit in Habits)
             {
-                // A habit is completed if it has a deadline that has passed
-                var isCompleted = habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date;
-
-                if (isCompleted)
+                // Untracked habits go to their own section (frozen, don't become completed)
+                if (!habit.IsTracked)
+                {
+                    UntrackedHabits.Add(habit);
+                }
+                // A tracked habit is completed if it has a deadline that has passed
+                else if (habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date)
                 {
                     CompletedHabits.Add(habit);
                 }
+                // Active tracked habits
                 else
                 {
                     ActiveHabits.Add(habit);
@@ -137,6 +154,7 @@ namespace Tracker.ViewModels
             }
 
             OnPropertyChanged(nameof(HasCompletedHabits));
+            OnPropertyChanged(nameof(HasUntrackedHabits));
         }
 
         private void OnAddHabit()
@@ -159,21 +177,36 @@ namespace Tracker.ViewModels
 
         private async Task OnEditHabit(Guid habitId)
         {
-            // Find the habit to check if it's completed
+            // Find the habit to check if it's completed or untracked
             var habitCard = Habits.FirstOrDefault(h => h.Id == habitId)
                 ?? ActiveHabits.FirstOrDefault(h => h.Id == habitId)
-                ?? CompletedHabits.FirstOrDefault(h => h.Id == habitId);
+                ?? CompletedHabits.FirstOrDefault(h => h.Id == habitId)
+                ?? UntrackedHabits.FirstOrDefault(h => h.Id == habitId);
 
-            if (habitCard != null && habitCard.IsCompleted)
+            if (habitCard != null)
             {
-                // Show confirmation modal for completed habits
-                var confirm = await Shell.Current.DisplayAlert(
-                    "Edit Completed Habit",
-                    "This habit is already completed. Are you sure you want to edit it? This may affect your statistics.",
-                    "Edit",
-                    "Cancel");
+                // Show confirmation modal for untracked habits
+                if (!habitCard.IsTracked)
+                {
+                    var confirm = await Shell.Current.DisplayAlert(
+                        "Edit Untracked Habit",
+                        "This habit is untracked. Are you sure you want to edit it?",
+                        "Edit",
+                        "Cancel");
 
-                if (!confirm) return;
+                    if (!confirm) return;
+                }
+                // Show confirmation modal for completed habits
+                else if (habitCard.IsCompleted)
+                {
+                    var confirm = await Shell.Current.DisplayAlert(
+                        "Edit Completed Habit",
+                        "This habit is already completed. Are you sure you want to edit it? This may affect your statistics.",
+                        "Edit",
+                        "Cancel");
+
+                    if (!confirm) return;
+                }
             }
 
             // Navigate to edit habit page
@@ -213,15 +246,25 @@ namespace Tracker.ViewModels
             if (dayCompletion == null || !dayCompletion.ShouldTrack)
                 return;
 
-            // Check if the habit is completed (past deadline)
+            // Check if the habit is completed (past deadline) or untracked
             var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
                 ?? ActiveHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
-                ?? CompletedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+                ?? CompletedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
+                ?? UntrackedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
 
-            if (habitCard != null && habitCard.IsCompleted)
+            if (habitCard != null)
             {
+                // Prevent toggling for untracked habits
+                if (!habitCard.IsTracked)
+                {
+                    return;
+                }
+
                 // Prevent toggling for completed habits
-                return;
+                if (habitCard.IsCompleted)
+                {
+                    return;
+                }
             }
 
             try
@@ -255,7 +298,15 @@ namespace Tracker.ViewModels
         public string Name => _habit.Name;
         public string Description => _habit.Description;
         public bool IsNegativeHabit => _habit.IsNegativeHabit;
-        public string HabitColor => IsNegativeHabit ? "Red" : "Green";
+        public bool IsTracked => _habit.IsTracked;
+        public string HabitColor
+        {
+            get
+            {
+                if (!IsTracked) return "#FFC107"; // Yellow for untracked
+                return IsNegativeHabit ? "Red" : "Green";
+            }
+        }
         public DateTime? Deadline => _habit.Deadline;
         public bool IsCompleted => Deadline.HasValue && Deadline.Value.Date < DateTime.Now.Date;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }

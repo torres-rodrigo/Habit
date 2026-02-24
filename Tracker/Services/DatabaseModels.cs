@@ -21,6 +21,7 @@ namespace Tracker.Services
         public long? ReminderTimeTicks { get; set; } // TimeSpan stored as ticks
         public bool NotesEnabled { get; set; }
         public bool IsNegativeHabit { get; set; }
+        public bool IsTracked { get; set; } = true;
         public int DisplayOrder { get; set; }
     }
 

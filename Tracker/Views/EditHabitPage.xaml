@@ -99,9 +99,9 @@
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                     <!-- Untrack/Track Button -->
                     <Button Grid.Column="0"
-                            Text="Untrack / Track"
+                            Text="{Binding UntrackTrackButtonText}"
                             Command="{Binding UntrackTrackCommand}"
-                            BackgroundColor="{StaticResource Secondary}"
+                            BackgroundColor="{Binding UntrackTrackButtonColor}"
                             TextColor="White"
                             WidthRequest="200"/>
 
