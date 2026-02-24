@@ -78,7 +78,7 @@
             <!-- Subtasks -->
             <VerticalStackLayout Spacing="10">
                 <Label Text="Subtasks" FontAttributes="Bold" FontSize="16"/>
-                
+
                 <CollectionView ItemsSource="{Binding Subtasks}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodels:SubtaskItem">
@@ -99,11 +99,20 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Button Text="+ Add Subtask" 
+                <Button Text="+ Add Subtask"
                         Command="{Binding AddSubtaskCommand}"
                         BackgroundColor="{StaticResource Primary}"
                         TextColor="White"
                         Margin="0,10,0,0"/>
+            </VerticalStackLayout>
+
+            <!-- Action Buttons (only visible when editing) -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding IsEditingExistingTask}">
+                <Button Text="🗑️ Delete"
+                        Command="{Binding DeleteCommand}"
+                        BackgroundColor="Red"
+                        TextColor="White"
+                        HorizontalOptions="Fill"/>
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

@@ -86,6 +86,7 @@ public class EditTaskViewModel : BaseViewModel
     public ICommand RemoveSubtaskCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
+    public ICommand DeleteCommand { get; }
 
     public bool IsSaving
     {
@@ -99,6 +100,8 @@ public class EditTaskViewModel : BaseViewModel
         }
     }
 
+    public bool IsEditingExistingTask => !string.IsNullOrEmpty(TaskId) && Guid.TryParse(TaskId, out _);
+
     public EditTaskViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -108,6 +111,7 @@ public class EditTaskViewModel : BaseViewModel
         RemoveSubtaskCommand = new Command<SubtaskItem>(RemoveSubtask);
         SaveCommand = new Command(async () => await SaveTaskAsync(), () => !IsSaving);
         CancelCommand = new Command(async () => await Cancel());
+        DeleteCommand = new Command(async () => await OnDeleteAsync());
     }
 
     private async Task LoadTaskAsync()
@@ -115,6 +119,7 @@ public class EditTaskViewModel : BaseViewModel
         if (string.IsNullOrEmpty(TaskId) || !Guid.TryParse(TaskId, out var taskGuid))
         {
             Title = "New Task";
+            OnPropertyChanged(nameof(IsEditingExistingTask));
             return;
         }
 
@@ -141,6 +146,8 @@ public class EditTaskViewModel : BaseViewModel
                         IsCompleted = subtask.IsCompleted
                     });
                 }
+
+                OnPropertyChanged(nameof(IsEditingExistingTask));
             }
         }
         catch (Exception ex)
@@ -236,6 +243,29 @@ public class EditTaskViewModel : BaseViewModel
         finally
         {
             IsSaving = false;
+        }
+    }
+
+    private async Task OnDeleteAsync()
+    {
+        if (!Guid.TryParse(TaskId, out var taskGuid)) return;
+
+        try
+        {
+            var confirm = await Shell.Current.DisplayAlert(
+                "Delete Task",
+                "Are you sure you want to permanently delete this task? This action cannot be undone.",
+                "Delete",
+                "Cancel");
+
+            if (!confirm) return;
+
+            await _dataService.DeleteTaskAsync(taskGuid);
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error", $"Failed to delete task: {ex.Message}", "OK");
         }
     }
 
