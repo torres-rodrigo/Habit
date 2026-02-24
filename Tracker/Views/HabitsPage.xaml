@@ -76,12 +76,15 @@
                                                 <VerticalStackLayout Spacing="5" Margin="0,0,5,0">
                                                     <Grid HeightRequest="25" HorizontalOptions="Center">
                                                         <!-- Color dot indicator for today -->
-                                                        <Ellipse Fill="{Binding HabitColor}"
-                                                                 WidthRequest="10"
+                                                        <Ellipse WidthRequest="10"
                                                                  HeightRequest="10"
                                                                  HorizontalOptions="Center"
                                                                  VerticalOptions="Start"
-                                                                 IsVisible="{Binding IsToday}"/>
+                                                                 IsVisible="{Binding IsToday}">
+                                                            <Ellipse.Fill>
+                                                                <SolidColorBrush Color="{Binding HabitColor}"/>
+                                                            </Ellipse.Fill>
+                                                        </Ellipse>
                                                         <Label Text="{Binding DayName}"
                                                                FontSize="12"
                                                                HorizontalOptions="Center"
