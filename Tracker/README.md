@@ -440,36 +440,40 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-Persistance looks pretty good so far.
+Add description to habit cards
 
 Pin task. New section, cap at 5. put button on the card to pin/unpin
+
+completed habits function not working have to clarify that completed habits should not be shown by default
+only when toggle is enabled
+
+Fix edit pages
+
 Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
+If habit is not enabled for today send to bottom, toggle for this
 
-completed habits function not working
-
-Untrack habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
+Untrack/resume habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
 deleted habits, deletes all information from task or habit. should be a button on the edit page with confirmation dialog
 
-Test in android
+probably going to have to move toggles and filtes to hamburguer menu
 
 Notifications/reminders
 
-This should already be solved for android, windows doesnt work
+feature to export notes for a habit into a text file, options for all or multi select, in stats tab
+feature to export the database file for backup or transfer to another device, in stats tab
+
+manage case where habit frequency changes so as to not break statistics
+
+Test in android
+
 Move tab selection to bottom and center
-On the statistics tab have a filter for all time, and current year
+This should already be solved for android, windows doesnt work
 
 Add way to add note for the current day in the card for the habit
 it should have a revert to revert to the way the card was pre save
 it should have a save button
 Mark days as complete from the calendar
-
-Do a proper display page and fix the edit page
-
-manage case where habit frequency changes so as to not break statistics
-
-feature to extract notes for a habit into a text file, options for all or multi select
-feature to export the database file for backup or transfer to another device
 
 ---
 
