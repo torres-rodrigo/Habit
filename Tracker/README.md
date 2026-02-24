@@ -442,9 +442,6 @@ PERSONAL TODO
 
 Pin task. New section, cap at 5. put button on the card to pin/unpin
 
-completed habits function not working have to clarify that completed habits should not be shown by default
-only when toggle is enabled
-
 Fix edit pages
 
 Reorder for habits

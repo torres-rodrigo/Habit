@@ -22,7 +22,7 @@
                 </HorizontalStackLayout>
 
                 <!-- Single List View (when ShowCompleted is OFF) -->
-                <CollectionView ItemsSource="{Binding Habits}"
+                <CollectionView ItemsSource="{Binding ActiveHabits}"
                               SelectionMode="None"
                               IsVisible="{Binding ShowCompleted, Converter={StaticResource InvertedBoolConverter}}">
                     <CollectionView.ItemsLayout>
