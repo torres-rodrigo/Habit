@@ -15,6 +15,7 @@ namespace Tracker.Models
         public bool HasReminders { get; set; }
         public TimeSpan? ReminderTime { get; set; }
         public bool NotesEnabled { get; set; }
+        public bool IsNegativeHabit { get; set; }
         public int DisplayOrder { get; set; }
         public List<HabitCompletion> Completions { get; set; } = new();
     }

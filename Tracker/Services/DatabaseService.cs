@@ -17,7 +17,7 @@ namespace Tracker.Services
     {
         private readonly SQLiteAsyncConnection _database;
         private readonly Task _initializationTask;
-        private const int CurrentDatabaseVersion = 1;
+        private const int CurrentDatabaseVersion = 2;
 
         public DatabaseService()
         {
@@ -92,12 +92,11 @@ namespace Tracker.Services
         /// </summary>
         private async Task MigrateDatabaseAsync(int fromVersion, int toVersion)
         {
-            // Placeholder for future migrations
-            // Example:
-            // if (fromVersion == 1 && toVersion >= 2)
-            // {
-            //     await _database.ExecuteAsync("ALTER TABLE Habits ADD COLUMN NewField TEXT");
-            // }
+            // Migration from version 1 to 2: Add IsNegativeHabit column
+            if (fromVersion == 1 && toVersion >= 2)
+            {
+                await _database.ExecuteAsync("ALTER TABLE Habits ADD COLUMN IsNegativeHabit INTEGER NOT NULL DEFAULT 0");
+            }
 
             // Update version
             await _database.ExecuteAsync(
@@ -390,6 +389,7 @@ namespace Tracker.Services
                 HasReminders = habit.HasReminders,
                 ReminderTimeTicks = habit.ReminderTime?.Ticks,
                 NotesEnabled = habit.NotesEnabled,
+                IsNegativeHabit = habit.IsNegativeHabit,
                 DisplayOrder = habit.DisplayOrder
             };
         }
@@ -415,6 +415,7 @@ namespace Tracker.Services
                     ? TimeSpan.FromTicks(habitDb.ReminderTimeTicks.Value)
                     : null,
                 NotesEnabled = habitDb.NotesEnabled,
+                IsNegativeHabit = habitDb.IsNegativeHabit,
                 DisplayOrder = habitDb.DisplayOrder
             };
 

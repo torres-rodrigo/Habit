@@ -77,10 +77,20 @@
             <!-- Notes -->
             <VerticalStackLayout Spacing="10">
                 <Label Text="Notes" FontAttributes="Bold" FontSize="16"/>
-                
+
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding NotesEnabled}"/>
                     <Label Text="Enable Daily Notes" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Negative Habit -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Habit Type" FontAttributes="Bold" FontSize="16"/>
+
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding IsNegativeHabit}"/>
+                    <Label Text="Negative Habit (uses red instead of green)" VerticalOptions="Center"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
         </VerticalStackLayout>

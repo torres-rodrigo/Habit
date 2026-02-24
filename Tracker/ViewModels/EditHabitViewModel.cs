@@ -91,6 +91,13 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _notesEnabled, value);
         }
 
+        private bool _isNegativeHabit;
+        public bool IsNegativeHabit
+        {
+            get => _isNegativeHabit;
+            set => SetProperty(ref _isNegativeHabit, value);
+        }
+
         public ObservableCollection<DayOfWeekItem> DaysOfWeek { get; set; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -138,6 +145,7 @@ namespace Tracker.ViewModels
                     HasReminders = habit.HasReminders;
                     ReminderTime = habit.ReminderTime;
                     NotesEnabled = habit.NotesEnabled;
+                    IsNegativeHabit = habit.IsNegativeHabit;
 
                     foreach (var item in DaysOfWeek)
                     {
@@ -181,6 +189,7 @@ namespace Tracker.ViewModels
                 habit.HasReminders = HasReminders;
                 habit.ReminderTime = HasReminders ? ReminderTime : null;
                 habit.NotesEnabled = NotesEnabled;
+                habit.IsNegativeHabit = IsNegativeHabit;
 
                 habit.TrackingDays.Clear();
                 foreach (var item in DaysOfWeek.Where(d => d.IsSelected))

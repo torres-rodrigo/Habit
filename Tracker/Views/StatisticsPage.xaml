@@ -357,12 +357,7 @@
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
-
-                                
-
                                 <!--<BoxView HeightRequest="1" Color="{StaticResource Gray300}" Margin="0,5"/>-->
-
-                                
                             </VerticalStackLayout>
                         </Frame>
                     </DataTemplate>

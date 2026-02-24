@@ -162,6 +162,8 @@ namespace Tracker.ViewModels
 
         public Guid Id => _habit.Id;
         public string Name => _habit.Name;
+        public bool IsNegativeHabit => _habit.IsNegativeHabit;
+        public string HabitColor => IsNegativeHabit ? "Red" : "Green";
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
         
         private int _weekNumber;
@@ -273,7 +275,8 @@ namespace Tracker.ViewModels
                     DayName = date.ToString("ddd"),
                     IsCompleted = isCompleted,
                     ShouldTrack = shouldTrack,
-                    IsToday = date.Date == DateTime.Today
+                    IsToday = date.Date == DateTime.Today,
+                    HabitColor = HabitColor
                 });
             }
 
@@ -287,14 +290,20 @@ namespace Tracker.ViewModels
         public Guid HabitId { get; set; }
         public DateTime Date { get; set; }
         public string DayName { get; set; } = string.Empty;
-        
+        public string HabitColor { get; set; } = "Green";
+
         private bool _isCompleted;
-        public bool IsCompleted 
-        { 
+        public bool IsCompleted
+        {
             get => _isCompleted;
-            set => SetProperty(ref _isCompleted, value);
+            set
+            {
+                SetProperty(ref _isCompleted, value);
+                OnPropertyChanged(nameof(CompletionBackgroundColor));
+            }
         }
-        
+
+        public string CompletionBackgroundColor => IsCompleted ? HabitColor : "White";
         public bool ShouldTrack { get; set; }
         public bool IsToday { get; set; }
     }

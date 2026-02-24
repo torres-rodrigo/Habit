@@ -440,7 +440,7 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-Persistance
+Persistance looks pretty good so far.
 
 collapsable sections done in tasks page and statitics
 
@@ -452,19 +452,22 @@ Negative habit toggle red border just during creation or editing
 
 This should already be solved for android, windows doesnt work
 Move tab selection to bottom and center
-On the statisctics tab have a filter for all time, and current year
+On the statistics tab have a filter for all time, and current year
 
 Add way to add note for the current day in the card for the habit
 it should have a revert to revert to the way the card was pre save
 it should have a save button
-Mark days as complete from the calander
+Mark days as complete from the calendar
 
 Do a proper display page and fix the edit page
 
 HABITS THAT END SHOULD HAVE A SECTION COMPLETED HABITS
-THere should be a toggle to show or hide completed habits
+There should be a toggle to show or hide completed habits
 
 manage case where habit frequency changes so as to not break statistics
+
+feature to extract notes for a habit into a text file, options for all or multi select
+feature to export the database file for backup or transfer to another device
 
 ---
 
