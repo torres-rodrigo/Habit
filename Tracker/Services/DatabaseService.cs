@@ -17,7 +17,7 @@ namespace Tracker.Services
     {
         private readonly SQLiteAsyncConnection _database;
         private readonly Task _initializationTask;
-        private const int CurrentDatabaseVersion = 2;
+        private const int CurrentDatabaseVersion = 3;
 
         public DatabaseService()
         {
@@ -629,7 +629,8 @@ namespace Tracker.Services
                 HasReminders = task.HasReminders,
                 ReminderTimeTicks = task.ReminderTime?.Ticks,
                 DisplayOrder = task.DisplayOrder,
-                AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks
+                AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks,
+                IsPinned = task.IsPinned
             };
         }
 
@@ -658,7 +659,8 @@ namespace Tracker.Services
                     ? TimeSpan.FromTicks(taskDb.ReminderTimeTicks.Value)
                     : null,
                 DisplayOrder = taskDb.DisplayOrder,
-                AutoCompleteWithSubtasks = taskDb.AutoCompleteWithSubtasks
+                AutoCompleteWithSubtasks = taskDb.AutoCompleteWithSubtasks,
+                IsPinned = taskDb.IsPinned
             };
 
             // Load subtasks

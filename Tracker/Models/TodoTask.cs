@@ -35,6 +35,7 @@ namespace Tracker.Models
         public TimeSpan? ReminderTime { get; set; }
         public int DisplayOrder { get; set; }
         public bool AutoCompleteWithSubtasks { get; set; }
+        public bool IsPinned { get; set; }
         public List<SubTask> SubTasks { get; set; } = new();
 
         public bool AllSubTasksCompleted => SubTasks.Count > 0 && SubTasks.All(st => st.IsCompleted);

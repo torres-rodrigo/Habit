@@ -77,6 +77,7 @@ namespace Tracker.Services
         public long? ReminderTimeTicks { get; set; } // TimeSpan stored as ticks
         public int DisplayOrder { get; set; }
         public bool AutoCompleteWithSubtasks { get; set; }
+        public bool IsPinned { get; set; }
     }
 
     /// <summary>

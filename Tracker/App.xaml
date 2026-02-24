@@ -23,6 +23,7 @@
             <converters:PriorityToColorConverter x:Key="PriorityToColorConverter" />
             <converters:PriorityToShapeConverter x:Key="PriorityToShapeConverter" />
             <converters:BoolToCollapseIconConverter x:Key="BoolToCollapseIconConverter" />
+            <converters:BoolToPinIconConverter x:Key="BoolToPinIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

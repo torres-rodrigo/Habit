@@ -23,9 +23,11 @@ namespace Tracker.ViewModels
         private DateTime? _customEndDate;
         private bool _isTodoCollapsed = false;
         private bool _isCompletedCollapsed = false;
+        private bool _isPinnedCollapsed = false;
 
         public ObservableCollection<TodoTask> PendingTasks { get; set; }
         public ObservableCollection<TodoTask> CompletedTasks { get; set; }
+        public ObservableCollection<TodoTask> PinnedTasks { get; set; }
         public ObservableCollection<PriorityOption> PriorityFilterOptions { get; set; }
         public ObservableCollection<DateTypeOption> DateTypeFilterOptions { get; set; }
         public ObservableCollection<DatePeriodOption> DatePeriodFilterOptions { get; set; }
@@ -152,6 +154,14 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isCompletedCollapsed, value);
         }
 
+        public bool IsPinnedCollapsed
+        {
+            get => _isPinnedCollapsed;
+            set => SetProperty(ref _isPinnedCollapsed, value);
+        }
+
+        public bool HasPinnedTasks => PinnedTasks.Count > 0;
+
         public ICommand AddTaskCommand { get; }
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
@@ -162,12 +172,15 @@ namespace Tracker.ViewModels
         public ICommand NavigateToTaskCommand { get; }
         public ICommand ToggleTodoCollapseCommand { get; }
         public ICommand ToggleCompletedCollapseCommand { get; }
+        public ICommand TogglePinnedCollapseCommand { get; }
+        public ICommand TogglePinCommand { get; }
 
         public TaskViewModel(IDataService dataService)
         {
             _dataService = dataService;
             PendingTasks = new ObservableCollection<TodoTask>();
             CompletedTasks = new ObservableCollection<TodoTask>();
+            PinnedTasks = new ObservableCollection<TodoTask>();
 
             PriorityFilterOptions = new ObservableCollection<PriorityOption>
             {
@@ -209,6 +222,8 @@ namespace Tracker.ViewModels
             NavigateToTaskCommand = new Command(OnNavigateToTask);
             ToggleTodoCollapseCommand = new Command(() => IsTodoCollapsed = !IsTodoCollapsed);
             ToggleCompletedCollapseCommand = new Command(() => IsCompletedCollapsed = !IsCompletedCollapsed);
+            TogglePinnedCollapseCommand = new Command(() => IsPinnedCollapsed = !IsPinnedCollapsed);
+            TogglePinCommand = new Command<Guid>(async (id) => await OnTogglePinAsync(id));
 
             // Subscribe to custom date selection messages
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -244,6 +259,7 @@ namespace Tracker.ViewModels
                 IsLoading = true;
                 PendingTasks.Clear();
                 CompletedTasks.Clear();
+                PinnedTasks.Clear();
 
                 var allTasks = await _dataService.GetAllTasksAsync();
 
@@ -258,13 +274,21 @@ namespace Tracker.ViewModels
                 // Apply date filter
                 filteredTasks = ApplyDateFilter(filteredTasks);
 
-                // Separate into pending and completed
+                // Separate into pinned, pending and completed
                 foreach (var task in filteredTasks)
                 {
-                    if (task.IsCompleted)
+                    if (task.IsPinned)
+                    {
+                        PinnedTasks.Add(task);
+                    }
+                    else if (task.IsCompleted)
+                    {
                         CompletedTasks.Add(task);
+                    }
                     else
+                    {
                         PendingTasks.Add(task);
+                    }
                 }
 
                 // Sort pending tasks by due date if toggle is enabled
@@ -292,6 +316,9 @@ namespace Tracker.ViewModels
                 {
                     CompletedTasks.Add(task);
                 }
+
+                // Notify HasPinnedTasks property changed
+                OnPropertyChanged(nameof(HasPinnedTasks));
             }
             catch (Exception ex)
             {
@@ -478,8 +505,9 @@ namespace Tracker.ViewModels
 
                 await _dataService.ToggleTaskCompletionAsync(taskId);
 
-                // Find the task in either collection and move it to the appropriate one
+                // Find the task in any collection and move it to the appropriate one
                 var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == taskId);
+                var taskInPinned = PinnedTasks.FirstOrDefault(t => t.Id == taskId);
                 taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == taskId);
 
                 if (taskInPending != null)
@@ -490,6 +518,21 @@ namespace Tracker.ViewModels
                     {
                         PendingTasks.Remove(taskInPending);
                         CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
+                    }
+                }
+                else if (taskInPinned != null)
+                {
+                    // Task was pinned, now completed - unpin and move to completed collection
+                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
+                    if (updatedTask != null)
+                    {
+                        // Unpin the task
+                        updatedTask.IsPinned = false;
+                        await _dataService.SaveTaskAsync(updatedTask);
+
+                        PinnedTasks.Remove(taskInPinned);
+                        CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
+                        OnPropertyChanged(nameof(HasPinnedTasks));
                     }
                 }
                 else if (taskInCompleted != null)
@@ -519,8 +562,9 @@ namespace Tracker.ViewModels
                 var updatedTask = await _dataService.GetTaskByIdAsync(args.taskId);
                 if (updatedTask == null) return;
 
-                // Find the task in either collection
+                // Find the task in any collection
                 var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == args.taskId);
+                var taskInPinned = PinnedTasks.FirstOrDefault(t => t.Id == args.taskId);
                 var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
 
                 // Check if the parent task's completion status changed (auto-complete triggered)
@@ -530,10 +574,33 @@ namespace Tracker.ViewModels
                     PendingTasks.Remove(taskInPending);
                     CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
                 }
+                else if (taskInPinned != null && updatedTask.IsCompleted)
+                {
+                    // Pinned task was auto-completed - unpin and move to completed collection
+                    updatedTask.IsPinned = false;
+                    await _dataService.SaveTaskAsync(updatedTask);
+
+                    PinnedTasks.Remove(taskInPinned);
+                    CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
+                    OnPropertyChanged(nameof(HasPinnedTasks));
+                }
                 else if (taskInPending != null)
                 {
                     // Task is still pending - just update the subtask
                     var subTask = taskInPending.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                    if (subTask != null)
+                    {
+                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                        if (updatedSubTask != null)
+                        {
+                            subTask.IsCompleted = updatedSubTask.IsCompleted;
+                        }
+                    }
+                }
+                else if (taskInPinned != null)
+                {
+                    // Pinned task is still not complete - just update the subtask
+                    var subTask = taskInPinned.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
                     if (subTask != null)
                     {
                         var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
@@ -560,6 +627,50 @@ namespace Tracker.ViewModels
             catch (Exception ex)
             {
                 await Shell.Current.DisplayAlert("Error", $"Failed to toggle subtask completion: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task OnTogglePinAsync(Guid taskId)
+        {
+            try
+            {
+                // Find the task in all collections
+                var task = PinnedTasks.FirstOrDefault(t => t.Id == taskId)
+                    ?? PendingTasks.FirstOrDefault(t => t.Id == taskId)
+                    ?? CompletedTasks.FirstOrDefault(t => t.Id == taskId);
+
+                if (task == null) return;
+
+                // Prevent pinning completed tasks
+                if (task.IsCompleted && !task.IsPinned)
+                {
+                    await Shell.Current.DisplayAlert(
+                        "Cannot Pin Completed Task",
+                        "Completed tasks cannot be pinned. Please unmark the task as complete first.",
+                        "OK");
+                    return;
+                }
+
+                // Check if we're trying to pin a task when we already have 5 pinned
+                if (!task.IsPinned && PinnedTasks.Count >= 5)
+                {
+                    await Shell.Current.DisplayAlert(
+                        "Maximum Pinned Tasks",
+                        "You can only pin up to 5 tasks. Please unpin a task before pinning a new one.",
+                        "OK");
+                    return;
+                }
+
+                // Toggle pin status
+                task.IsPinned = !task.IsPinned;
+                await _dataService.SaveTaskAsync(task);
+
+                // Reload to reorganize tasks
+                await ApplyFiltersAsync();
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle pin: {ex.Message}", "OK");
             }
         }
 

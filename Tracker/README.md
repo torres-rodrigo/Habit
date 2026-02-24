@@ -438,9 +438,10 @@ For issues or questions, please create an issue in the project repository.
 
 **Built with ❤️ using .NET MAUI**
 
-PERSONAL TODO
+PERSONAL TODO 
 
-Pin task. New section, cap at 5. put button on the card to pin/unpin
+Completed tasks with due date should have due Date: Completed date
+Habits with due date should show the due date
 
 Fix edit pages
 
@@ -449,6 +450,7 @@ For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this
 
 Untrack/resume habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
+Untracked habits should show the untracked date
 deleted habits, deletes all information from task or habit. should be a button on the edit page with confirmation dialog
 
 probably going to have to move toggles and filtes to hamburguer menu

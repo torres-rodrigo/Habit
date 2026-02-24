@@ -67,6 +67,160 @@
                     </HorizontalStackLayout>
                 </Grid>
 
+                <!-- Pinned Section -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding HasPinnedTasks}">
+                    <HorizontalStackLayout Spacing="10">
+                        <Label FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}"
+                               VerticalOptions="Center">
+                            <Label.Text>
+                                <MultiBinding StringFormat="{}{0} PINNED">
+                                    <Binding Path="IsPinnedCollapsed" Converter="{StaticResource BoolToCollapseIconConverter}" />
+                                </MultiBinding>
+                            </Label.Text>
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding TogglePinnedCollapseCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+
+                    <CollectionView ItemsSource="{Binding PinnedTasks}"
+                                    SelectionMode="None"
+                                    IsVisible="{Binding IsPinnedCollapsed, Converter={StaticResource InvertedBoolConverter}}">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TodoTask">
+                                <Frame CornerRadius="15"
+                                       BorderColor="{StaticResource Primary}"
+                                       HasShadow="True"
+                                       Margin="0,0,0,5"
+                                       Padding="15">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=EditTaskCommand}"
+                                                            CommandParameter="{Binding Id}"/>
+                                    </Frame.GestureRecognizers>
+
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <!-- Task Content -->
+                                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                            <HorizontalStackLayout Spacing="8">
+                                                <!-- Square Checkbox -->
+                                                <Frame CornerRadius="5"
+                                                       WidthRequest="25"
+                                                       HeightRequest="25"
+                                                       Padding="0"
+                                                       BorderColor="{StaticResource Primary}"
+                                                       BackgroundColor="White"
+                                                       HasShadow="False"
+                                                       VerticalOptions="Center">
+                                                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=ToggleTaskCompletionCommand}"
+                                                                            CommandParameter="{Binding Id}"/>
+                                                    </Frame.GestureRecognizers>
+                                                </Frame>
+
+                                                <!-- Priority Icon -->
+                                                <Grid WidthRequest="12" HeightRequest="12" VerticalOptions="Center"
+                                                      IsVisible="{Binding Priority, Converter={StaticResource PriorityToVisibilityConverter}}">
+                                                    <!-- Circle for Low -->
+                                                    <Ellipse Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             WidthRequest="12"
+                                                             HeightRequest="12"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Circle}"/>
+
+                                                    <!-- Hexagon for Medium -->
+                                                    <Polygon Points="6,0 12,3 12,9 6,12 0,9 0,3"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Hexagon}"/>
+
+                                                    <!-- Inverted Triangle for High -->
+                                                    <Polygon Points="6,12 0,0 12,0"
+                                                             Fill="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                             IsVisible="{Binding Priority, Converter={StaticResource PriorityToShapeConverter}, ConverterParameter=Triangle}"/>
+                                                </Grid>
+
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1"/>
+                                            </HorizontalStackLayout>
+                                            <Label Text="{Binding Description}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   MaxLines="5"
+                                                   LineBreakMode="TailTruncation"
+                                                   IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
+                                            <Label Text="{Binding DueDate, StringFormat='Due: {0:MMM dd, yyyy}'}"
+                                                   FontSize="13"
+                                                   TextColor="{StaticResource Tertiary}"
+                                                   IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}"/>
+
+                                            <!-- Overdue Indicator -->
+                                            <Label Text="OVERDUE"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Red"
+                                                   IsVisible="{Binding IsOverdue}"/>
+
+                                            <!-- Subtasks -->
+                                            <VerticalStackLayout Spacing="5"
+                                                               IsVisible="{Binding SubTasks.Count, Converter={StaticResource CountToBoolConverter}}">
+                                                <CollectionView ItemsSource="{Binding SubTasks}" SelectionMode="None">
+                                                    <CollectionView.ItemsLayout>
+                                                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="0"/>
+                                                    </CollectionView.ItemsLayout>
+                                                    <CollectionView.ItemTemplate>
+                                                        <DataTemplate x:DataType="models:SubTask">
+                                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="3" Margin="0,0,0,2">
+                                                                <CheckBox Grid.Column="0"
+                                                                        IsChecked="{Binding IsCompleted, Mode=OneWay}"
+                                                                        Color="{StaticResource Primary}"
+                                                                        CheckedChanged="OnSubTaskCheckChanged"
+                                                                        Margin="0,0,0,-12"/>
+                                                                <Label Grid.Column="1"
+                                                                     Text="{Binding Name}"
+                                                                     FontSize="13"
+                                                                     TextColor="{StaticResource Gray600}"
+                                                                     VerticalOptions="Center"
+                                                                     TextDecorations="{Binding IsCompleted, Converter={StaticResource BoolToTextDecorationConverter}}"
+                                                                     Margin="-10,0,0,-12"
+                                                                     LineBreakMode="TailTruncation"
+                                                                     MaxLines="1"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </CollectionView.ItemTemplate>
+                                                </CollectionView>
+                                                <Label Text="{Binding SubTaskCompletionPercentage, StringFormat='{0}% complete'}"
+                                                       FontSize="12"
+                                                       TextColor="{StaticResource Primary}"
+                                                       FontAttributes="Bold"/>
+                                            </VerticalStackLayout>
+                                        </VerticalStackLayout>
+
+                                        <!-- Pin Button -->
+                                        <Label Grid.Column="1"
+                                               Text="📌"
+                                               FontSize="20"
+                                               VerticalOptions="Start"
+                                               HorizontalOptions="End">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=TogglePinCommand}"
+                                                                    CommandParameter="{Binding Id}"/>
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
                 <!-- TODO Section -->
                 <VerticalStackLayout Spacing="10">
                     <HorizontalStackLayout Spacing="10">
@@ -215,12 +369,26 @@
                                             </VerticalStackLayout>
                                         </VerticalStackLayout>
 
-                                        <!-- Arrow Icon -->
-                                        <Label Grid.Column="1" 
-                                               Text="›" 
-                                               FontSize="24"
-                                               TextColor="{StaticResource Gray400}"
-                                               VerticalOptions="Center"/>
+                                        <!-- Pin and Arrow Icons -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="20">
+                                            <!-- Pin Button -->
+                                            <Label Text="{Binding IsPinned, Converter={StaticResource BoolToPinIconConverter}}"
+                                                   FontSize="18"
+                                                   HorizontalOptions="End"
+                                                   VerticalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TaskViewModel}}, Path=TogglePinCommand}"
+                                                                        CommandParameter="{Binding Id}"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+
+                                            <!-- Arrow Icon -->
+                                            <Label Text="›"
+                                                   FontSize="24"
+                                                   TextColor="{StaticResource Gray400}"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="End"/>
+                                        </VerticalStackLayout>
                                     </Grid>
                                 </Frame>
                             </DataTemplate>
@@ -368,6 +536,14 @@
                                                 </Label>
                                             </VerticalStackLayout>
                                         </VerticalStackLayout>
+
+                                        <!-- Arrow Icon (no pin button for completed tasks) -->
+                                        <Label Grid.Column="1"
+                                               Text="›"
+                                               FontSize="24"
+                                               TextColor="{StaticResource Gray400}"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="End"/>
                                     </Grid>
                                 </Frame>
                             </DataTemplate>
