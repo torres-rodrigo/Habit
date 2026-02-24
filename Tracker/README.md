@@ -442,13 +442,14 @@ PERSONAL TODO
 
 Persistance looks pretty good so far.
 
-collapsable sections done in tasks page and statitics
+Pin task/ habit. New section, cap at 5. put button on the card to pin/unpin
+
+Untrack habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
+deleted habits, deletes all information from task or habit. should be a button on the edit page with confirmation dialog
 
 Test in android
 
 Notifications/reminders
-
-Negative habit toggle red border just during creation or editing
 
 This should already be solved for android, windows doesnt work
 Move tab selection to bottom and center
@@ -460,9 +461,6 @@ it should have a save button
 Mark days as complete from the calendar
 
 Do a proper display page and fix the edit page
-
-HABITS THAT END SHOULD HAVE A SECTION COMPLETED HABITS
-There should be a toggle to show or hide completed habits
 
 manage case where habit frequency changes so as to not break statistics
 

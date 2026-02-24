@@ -13,8 +13,14 @@ namespace Tracker.ViewModels
         private readonly IDataService _dataService;
         private bool _showOverlay;
         private bool _isLoading;
+        private bool _showCompleted;
+        private bool _activeHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
+        private bool _completedHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
 
         public ObservableCollection<HabitCardViewModel> Habits { get; set; }
+        public ObservableCollection<HabitCardViewModel> ActiveHabits { get; set; }
+        public ObservableCollection<HabitCardViewModel> CompletedHabits { get; set; }
+
         public ICommand AddHabitCommand { get; }
         public ICommand EditHabitCommand { get; }
         public ICommand DeleteHabitCommand { get; }
@@ -22,6 +28,8 @@ namespace Tracker.ViewModels
         public ICommand CloseOverlayCommand { get; }
         public ICommand NavigateToHabitCommand { get; }
         public ICommand NavigateToTaskCommand { get; }
+        public ICommand ToggleActiveHabitsSectionCommand { get; }
+        public ICommand ToggleCompletedHabitsSectionCommand { get; }
 
         public bool ShowOverlay
         {
@@ -35,10 +43,38 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isLoading, value);
         }
 
+        public bool ShowCompleted
+        {
+            get => _showCompleted;
+            set
+            {
+                if (SetProperty(ref _showCompleted, value))
+                {
+                    OrganizeHabits();
+                }
+            }
+        }
+
+        public bool ActiveHabitsExpanded
+        {
+            get => _activeHabitsExpanded;
+            set => SetProperty(ref _activeHabitsExpanded, value);
+        }
+
+        public bool CompletedHabitsExpanded
+        {
+            get => _completedHabitsExpanded;
+            set => SetProperty(ref _completedHabitsExpanded, value);
+        }
+
+        public bool HasCompletedHabits => CompletedHabits.Count > 0;
+
         public HabitViewModel(IDataService dataService)
         {
             _dataService = dataService;
             Habits = new ObservableCollection<HabitCardViewModel>();
+            ActiveHabits = new ObservableCollection<HabitCardViewModel>();
+            CompletedHabits = new ObservableCollection<HabitCardViewModel>();
 
             AddHabitCommand = new Command(OnAddHabit);
             EditHabitCommand = new Command<Guid>(async (id) => await OnEditHabit(id));
@@ -47,6 +83,8 @@ namespace Tracker.ViewModels
             CloseOverlayCommand = new Command(() => ShowOverlay = false);
             NavigateToHabitCommand = new Command(OnNavigateToHabit);
             NavigateToTaskCommand = new Command(OnNavigateToTask);
+            ToggleActiveHabitsSectionCommand = new Command(() => ActiveHabitsExpanded = !ActiveHabitsExpanded);
+            ToggleCompletedHabitsSectionCommand = new Command(() => CompletedHabitsExpanded = !CompletedHabitsExpanded);
 
             _ = LoadHabitsAsync();
         }
@@ -64,6 +102,7 @@ namespace Tracker.ViewModels
                 {
                     Habits.Add(new HabitCardViewModel(habit, _dataService));
                 }
+                OrganizeHabits();
             }
             catch (Exception ex)
             {
@@ -73,6 +112,31 @@ namespace Tracker.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private void OrganizeHabits()
+        {
+            ActiveHabits.Clear();
+            CompletedHabits.Clear();
+
+            var now = DateTime.Now;
+
+            foreach (var habit in Habits)
+            {
+                // A habit is completed if it has a deadline that has passed
+                var isCompleted = habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date;
+
+                if (isCompleted)
+                {
+                    CompletedHabits.Add(habit);
+                }
+                else
+                {
+                    ActiveHabits.Add(habit);
+                }
+            }
+
+            OnPropertyChanged(nameof(HasCompletedHabits));
         }
 
         private void OnAddHabit()
@@ -164,6 +228,7 @@ namespace Tracker.ViewModels
         public string Name => _habit.Name;
         public bool IsNegativeHabit => _habit.IsNegativeHabit;
         public string HabitColor => IsNegativeHabit ? "Red" : "Green";
+        public DateTime? Deadline => _habit.Deadline;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
         
         private int _weekNumber;
