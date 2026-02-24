@@ -271,8 +271,23 @@ namespace Tracker.ViewModels
 
         private async Task OnDeleteAsync()
         {
-            // TODO: Implement delete behavior
-            await Shell.Current.DisplayAlert("Info", "Delete functionality will be implemented", "OK");
+            try
+            {
+                var confirm = await Shell.Current.DisplayAlert(
+                    "Delete Habit",
+                    "Are you sure you want to permanently delete this habit? This action cannot be undone.",
+                    "Delete",
+                    "Cancel");
+
+                if (!confirm) return;
+
+                await _dataService.DeleteHabitAsync(_habitId);
+                await Shell.Current.GoToAsync("..");
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
+            }
         }
 
         private async void OnCancel()
