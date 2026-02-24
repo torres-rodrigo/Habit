@@ -440,8 +440,6 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
-Add description to habit cards
-
 Pin task. New section, cap at 5. put button on the card to pin/unpin
 
 completed habits function not working have to clarify that completed habits should not be shown by default

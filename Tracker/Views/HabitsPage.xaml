@@ -46,6 +46,13 @@
                                            FontAttributes="Bold"
                                            TextColor="{Binding HabitColor}"/>
 
+                                    <Label Text="{Binding Description}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource Gray600}"
+                                           MaxLines="3"
+                                           LineBreakMode="TailTruncation"
+                                           IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
+
                                     <Grid ColumnDefinitions="Auto,*,Auto">
                                         <Label Grid.Column="0"
                                                FontSize="14" 
@@ -179,6 +186,13 @@
                                                    FontAttributes="Bold"
                                                    TextColor="{Binding HabitColor}"/>
 
+                                            <Label Text="{Binding Description}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   MaxLines="3"
+                                                   LineBreakMode="TailTruncation"
+                                                   IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
+
                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                 <Label Grid.Column="0"
                                                        FontSize="14"
@@ -307,6 +321,13 @@
                                                    FontSize="20"
                                                    FontAttributes="Bold"
                                                    TextColor="{Binding HabitColor}"/>
+
+                                            <Label Text="{Binding Description}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   MaxLines="3"
+                                                   LineBreakMode="TailTruncation"
+                                                   IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
 
                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                 <Label Grid.Column="0"

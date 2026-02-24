@@ -226,6 +226,7 @@ namespace Tracker.ViewModels
 
         public Guid Id => _habit.Id;
         public string Name => _habit.Name;
+        public string Description => _habit.Description;
         public bool IsNegativeHabit => _habit.IsNegativeHabit;
         public string HabitColor => IsNegativeHabit ? "Red" : "Green";
         public DateTime? Deadline => _habit.Deadline;
