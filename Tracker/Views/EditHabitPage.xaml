@@ -30,7 +30,7 @@
                 
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding TrackEveryday}"/>
-                    <Label Text="Track Everyday" VerticalOptions="Center"/>
+                    <Label Text="Track Everyday" VerticalOptions="Center" Margin="-110,0"/>
                 </HorizontalStackLayout>
 
                 <VerticalStackLayout Spacing="5" IsVisible="{Binding TrackEveryday, Converter={StaticResource InvertedBoolConverter}}">
@@ -40,7 +40,7 @@
                             <DataTemplate x:DataType="viewmodels:DayOfWeekItem">
                                 <HorizontalStackLayout Spacing="10" Margin="0,5">
                                     <CheckBox IsChecked="{Binding IsSelected}" Color="{StaticResource Primary}"/>
-                                    <Label Text="{Binding Name}" VerticalOptions="Center"/>
+                                    <Label Text="{Binding Name}" VerticalOptions="Center" Margin="-15,0"/>
                                 </HorizontalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -54,11 +54,11 @@
                 
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding HasDeadline}"/>
-                    <Label Text="Set Deadline" VerticalOptions="Center"/>
+                    <Label Text="Set Deadline" VerticalOptions="Center" Margin="-110, 0"/>
                 </HorizontalStackLayout>
 
                 <DatePicker Date="{Binding Deadline}" 
-                          IsVisible="{Binding HasDeadline}"/>
+                            IsVisible="{Binding HasDeadline}"/>
             </VerticalStackLayout>
 
             <!-- Reminders -->
@@ -67,11 +67,12 @@
                 
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding HasReminders}"/>
-                    <Label Text="Enable Reminders" VerticalOptions="Center"/>
+                    <Label Text="Enable Reminders" VerticalOptions="Center" Margin="-110, 0"/>
                 </HorizontalStackLayout>
 
                 <TimePicker Time="{Binding ReminderTime}" 
-                          IsVisible="{Binding HasReminders}"/>
+                          IsVisible="{Binding HasReminders}"
+                          Format="HH:mm"/>
             </VerticalStackLayout>
 
             <!-- Notes -->
@@ -80,17 +81,16 @@
 
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding NotesEnabled}"/>
-                    <Label Text="Enable Daily Notes" VerticalOptions="Center"/>
+                    <Label Text="Enable Daily Notes" VerticalOptions="Center" Margin="-110, 0"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <!-- Negative Habit -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Habit Type" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Negative Habit" FontAttributes="Bold" FontSize="16"/>
 
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding IsNegativeHabit}"/>
-                    <Label Text="Negative Habit (uses red instead of green)" VerticalOptions="Center"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
         </VerticalStackLayout>
