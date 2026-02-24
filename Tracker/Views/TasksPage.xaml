@@ -10,7 +10,7 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="20" Spacing="20">
+            <VerticalStackLayout Padding="10" Spacing="20">
 
                 <!-- All Filters in One Line -->
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">

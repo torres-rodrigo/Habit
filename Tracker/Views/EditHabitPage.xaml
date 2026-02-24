@@ -93,6 +93,27 @@
                     <Switch IsToggled="{Binding IsNegativeHabit}"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
+
+            <!-- Action Buttons (only visible when editing) -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding IsEditingExistingHabit}">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <!-- Untrack/Track Button -->
+                    <Button Grid.Column="0"
+                            Text="Untrack / Track"
+                            Command="{Binding UntrackTrackCommand}"
+                            BackgroundColor="{StaticResource Secondary}"
+                            TextColor="White"
+                            WidthRequest="200"/>
+
+                    <!-- Delete Button -->
+                    <Button Grid.Column="1"
+                            Text="🗑️ Delete"
+                            Command="{Binding DeleteCommand}"
+                            BackgroundColor="Red"
+                            TextColor="White"
+                            WidthRequest="200"/>
+                </Grid>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
     

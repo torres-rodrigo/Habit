@@ -10,7 +10,7 @@
     <Grid>
         <!-- Main Content -->
         <ScrollView>
-            <VerticalStackLayout Padding="20" Spacing="15">
+            <VerticalStackLayout Padding="10" Spacing="15">
                 <!-- Show Completed Toggle -->
                 <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
                     <Label Text="Completed Habits"

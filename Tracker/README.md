@@ -440,8 +440,6 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO 
 
-Fix edit pages
-
 Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this

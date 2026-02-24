@@ -20,6 +20,7 @@ namespace Tracker.ViewModels
                 if (Guid.TryParse(value, out var habitId))
                 {
                     _habitId = habitId;
+                    OnPropertyChanged(nameof(IsEditingExistingHabit));
                     _ = LoadHabitAsync();
                 }
             }
@@ -31,6 +32,7 @@ namespace Tracker.ViewModels
             set
             {
                 _habitId = value;
+                OnPropertyChanged(nameof(IsEditingExistingHabit));
                 _ = LoadHabitAsync();
             }
         }
@@ -101,12 +103,16 @@ namespace Tracker.ViewModels
         public ObservableCollection<DayOfWeekItem> DaysOfWeek { get; set; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand UntrackTrackCommand { get; }
+        public ICommand DeleteCommand { get; }
 
         public bool IsSaving
         {
             get => _isSaving;
             set => SetProperty(ref _isSaving, value);
         }
+
+        public bool IsEditingExistingHabit => _habitId != Guid.Empty;
 
         public EditHabitViewModel(IDataService dataService)
         {
@@ -126,6 +132,8 @@ namespace Tracker.ViewModels
 
             SaveCommand = new Command(async () => await OnSaveAsync());
             CancelCommand = new Command(OnCancel);
+            UntrackTrackCommand = new Command(async () => await OnUntrackTrackAsync());
+            DeleteCommand = new Command(async () => await OnDeleteAsync());
         }
 
         private async Task LoadHabitAsync()
@@ -208,6 +216,18 @@ namespace Tracker.ViewModels
             {
                 IsSaving = false;
             }
+        }
+
+        private async Task OnUntrackTrackAsync()
+        {
+            // TODO: Implement untrack/track behavior
+            await Shell.Current.DisplayAlert("Info", "Untrack/Track functionality will be implemented", "OK");
+        }
+
+        private async Task OnDeleteAsync()
+        {
+            // TODO: Implement delete behavior
+            await Shell.Current.DisplayAlert("Info", "Delete functionality will be implemented", "OK");
         }
 
         private async void OnCancel()

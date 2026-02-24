@@ -24,55 +24,49 @@
                         HeightRequest="250"/>
             </VerticalStackLayout>
 
-            <!-- Toggles and Pickers Row -->
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="15">
-                <!-- Due Date Column -->
-                <VerticalStackLayout Grid.Column="0" Spacing="5">
-                    <Label Text="Due Date" FontAttributes="Bold" FontSize="14"/>
-                    <HorizontalStackLayout Spacing="0">
-                        <Switch IsToggled="{Binding HasDueDate}"
-                                VerticalOptions="Center"
-                                Margin="0,0,5,0"/>
-                        <DatePicker Date="{Binding DueDate}"
-                                  Format="dd/MM/yyyy"
-                                  IsEnabled="{Binding HasDueDate}"
-                                  VerticalOptions="Center"
-                                  WidthRequest="120"
-                                  Margin="-75,0,0,0"/>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
+            <!-- Due Date -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Due Date" FontAttributes="Bold" FontSize="16"/>
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding HasDueDate}"
+                            VerticalOptions="Center"/>
+                    <DatePicker Date="{Binding DueDate}"
+                              Format="dd/MM/yyyy"
+                              IsEnabled="{Binding HasDueDate}"
+                              VerticalOptions="Center"
+                              Margin="-110, 0"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
 
-                <!-- Reminders Column -->
-                <VerticalStackLayout Grid.Column="1" Spacing="5">
-                    <Label Text="Reminders" FontAttributes="Bold" FontSize="14"/>
-                    <HorizontalStackLayout Spacing="0">
-                        <Switch IsToggled="{Binding HasReminders}"
-                                VerticalOptions="Center"/>
-                        <TimePicker Time="{Binding ReminderTime}"
-                                  Format="HH:mm"
-                                  IsEnabled="{Binding HasReminders}"
-                                  VerticalOptions="Center"
-                                  HorizontalOptions="Center"
-                                  FontSize="12"
-                                  Margin="-75,0,0,-15"/>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
+            <!-- Reminders -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding HasReminders}"
+                            VerticalOptions="Center"
+                            Margin="0, 0, 0, 10"/>
+                    <TimePicker Time="{Binding ReminderTime}"
+                              Format="HH:mm"
+                              IsEnabled="{Binding HasReminders}"
+                              VerticalOptions="Center"
+                              Margin="-110, 0, 0, 0"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
 
-                <!-- Auto-complete Column -->
-                <VerticalStackLayout Grid.Column="2" Spacing="5">
-                    <Label Text="Auto-complete" FontAttributes="Bold" FontSize="14"/>
-                    <HorizontalStackLayout Spacing="0">
-                        <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"
-                                VerticalOptions="Center"/>
-                        <Label Text="Completes task if all subtasks are completed"
-                               FontSize="11"
-                               LineBreakMode="WordWrap"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"
-                               Margin="-75,0,0,0"/>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
-            </Grid>
+            <!-- Auto-complete -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Auto-complete" FontAttributes="Bold" FontSize="16"/>
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"
+                            VerticalOptions="Center"
+                            Margin="0,0,0,0"/>
+                    <Label Text="Completes task if all subtasks are completed"
+                           FontSize="14"
+                           LineBreakMode="WordWrap"
+                           VerticalOptions="Center"
+                           Margin="-110, 0, 0, 3"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
 
             <!-- Priority -->
             <VerticalStackLayout Spacing="10">
