@@ -486,10 +486,14 @@
                                                        LineBreakMode="TailTruncation"
                                                        MaxLines="1"/>
                                             </HorizontalStackLayout>
+                                            <Label Text="{Binding DueDate, StringFormat='Due: {0:MMM dd, yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Gray500}"
+                                                   IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}"/>
                                             <Label Text="{Binding CompletedDate, StringFormat='Completed: {0:MMM dd, yyyy HH:mm}'}"
                                                    FontSize="12"
                                                    TextColor="{StaticResource Gray500}"/>
-                                            
+
                                             <!-- Subtasks for Completed Tasks -->
                                             <VerticalStackLayout Spacing="5"
                                                                IsVisible="{Binding SubTasks.Count, Converter={StaticResource CountToBoolConverter}}"

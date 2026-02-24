@@ -329,36 +329,28 @@
                                                    LineBreakMode="TailTruncation"
                                                    IsVisible="{Binding Description, Converter={StaticResource StringNullOrEmptyConverter}}"/>
 
-                                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <Label Grid.Column="0"
-                                                       FontSize="14"
-                                                       TextColor="{StaticResource Gray600}">
-                                                    <Label.FormattedText>
-                                                        <FormattedString>
-                                                            <Span Text="Week " />
-                                                            <Span Text="{Binding WeekNumber}" />
-                                                        </FormattedString>
-                                                    </Label.FormattedText>
-                                                </Label>
-                                                <HorizontalStackLayout Grid.Column="2"
-                                                                      Spacing="8"
-                                                                      HorizontalOptions="End"
-                                                                      Margin="0,0,10,0">
-                                                    <controls:CircularProgressView
-                                                        Progress="{Binding WeeklyCompletionDecimal}"
-                                                        ProgressColor="{Binding HabitColor}"
-                                                        TrackColor="{StaticResource Gray300}"
-                                                        StrokeWidth="3"
-                                                        WidthRequest="34"
-                                                        HeightRequest="34"
-                                                        VerticalOptions="Center"/>
-                                                    <Label Text="{Binding WeeklyCompletionPercentage}"
-                                                           FontSize="16"
-                                                           FontAttributes="Bold"
-                                                           TextColor="{Binding HabitColor}"
-                                                           VerticalOptions="Center"/>
-                                                </HorizontalStackLayout>
-                                            </Grid>
+                                            <Label Text="{Binding Deadline, StringFormat='Due Date: {0:MMM dd, yyyy}'}"
+                                                   FontSize="13"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   IsVisible="{Binding Deadline, Converter={StaticResource NullToBoolConverter}}"/>
+
+                                            <HorizontalStackLayout Spacing="8"
+                                                                  HorizontalOptions="End"
+                                                                  Margin="0,0,10,0">
+                                                <controls:CircularProgressView
+                                                    Progress="{Binding WeeklyCompletionDecimal}"
+                                                    ProgressColor="{Binding HabitColor}"
+                                                    TrackColor="{StaticResource Gray300}"
+                                                    StrokeWidth="3"
+                                                    WidthRequest="34"
+                                                    HeightRequest="34"
+                                                    VerticalOptions="Center"/>
+                                                <Label Text="{Binding WeeklyCompletionPercentage}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{Binding HabitColor}"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
 
                                             <CollectionView ItemsSource="{Binding WeekDays}"
                                                           SelectionMode="None">

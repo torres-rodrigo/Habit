@@ -440,8 +440,8 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO 
 
-Completed tasks with due date should have due Date: Completed date
-Habits with due date should show the due date
+Completed tasks should not allow to be edited, add the same modal asking if user is sure they want to modify
+a completed task
 
 Fix edit pages
 
