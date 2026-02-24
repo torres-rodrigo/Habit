@@ -442,7 +442,11 @@ PERSONAL TODO
 
 Persistance looks pretty good so far.
 
-Pin task/ habit. New section, cap at 5. put button on the card to pin/unpin
+Pin task. New section, cap at 5. put button on the card to pin/unpin
+Reorder for habits
+For habits if it was completed today send to bottom, toggle for this
+
+completed habits function not working
 
 Untrack habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
 deleted habits, deletes all information from task or habit. should be a button on the edit page with confirmation dialog
