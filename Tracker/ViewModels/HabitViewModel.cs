@@ -159,6 +159,23 @@ namespace Tracker.ViewModels
 
         private async Task OnEditHabit(Guid habitId)
         {
+            // Find the habit to check if it's completed
+            var habitCard = Habits.FirstOrDefault(h => h.Id == habitId)
+                ?? ActiveHabits.FirstOrDefault(h => h.Id == habitId)
+                ?? CompletedHabits.FirstOrDefault(h => h.Id == habitId);
+
+            if (habitCard != null && habitCard.IsCompleted)
+            {
+                // Show confirmation modal for completed habits
+                var confirm = await Shell.Current.DisplayAlert(
+                    "Edit Completed Habit",
+                    "This habit is already completed. Are you sure you want to edit it? This may affect your statistics.",
+                    "Edit",
+                    "Cancel");
+
+                if (!confirm) return;
+            }
+
             // Navigate to edit habit page
             await Shell.Current.GoToAsync($"habits/edithabit?id={habitId}");
         }
@@ -196,12 +213,22 @@ namespace Tracker.ViewModels
             if (dayCompletion == null || !dayCompletion.ShouldTrack)
                 return;
 
+            // Check if the habit is completed (past deadline)
+            var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
+                ?? ActiveHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
+                ?? CompletedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+
+            if (habitCard != null && habitCard.IsCompleted)
+            {
+                // Prevent toggling for completed habits
+                return;
+            }
+
             try
             {
                 await _dataService.ToggleHabitCompletionAsync(dayCompletion.HabitId, dayCompletion.Date);
 
                 // Update only the toggled day and recalculate percentages
-                var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
                 if (habitCard != null)
                 {
                     await habitCard.UpdateDayCompletionAsync(dayCompletion.Date);
@@ -230,6 +257,7 @@ namespace Tracker.ViewModels
         public bool IsNegativeHabit => _habit.IsNegativeHabit;
         public string HabitColor => IsNegativeHabit ? "Red" : "Green";
         public DateTime? Deadline => _habit.Deadline;
+        public bool IsCompleted => Deadline.HasValue && Deadline.Value.Date < DateTime.Now.Date;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
         
         private int _weekNumber;
@@ -342,7 +370,8 @@ namespace Tracker.ViewModels
                     IsCompleted = isCompleted,
                     ShouldTrack = shouldTrack,
                     IsToday = date.Date == DateTime.Today,
-                    HabitColor = HabitColor
+                    HabitColor = HabitColor,
+                    IsHabitCompleted = IsCompleted
                 });
             }
 
@@ -372,5 +401,6 @@ namespace Tracker.ViewModels
         public string CompletionBackgroundColor => IsCompleted ? HabitColor : "White";
         public bool ShouldTrack { get; set; }
         public bool IsToday { get; set; }
+        public bool IsHabitCompleted { get; set; } // Indicates if the parent habit is completed (past deadline)
     }
 }
