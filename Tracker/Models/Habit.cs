@@ -17,6 +17,7 @@ namespace Tracker.Models
         public bool NotesEnabled { get; set; }
         public bool IsNegativeHabit { get; set; }
         public bool IsTracked { get; set; } = true;
+        public DateTime? UntrackedDate { get; set; }
         public int DisplayOrder { get; set; }
         public List<HabitCompletion> Completions { get; set; } = new();
     }

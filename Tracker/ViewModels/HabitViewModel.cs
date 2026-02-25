@@ -309,6 +309,7 @@ namespace Tracker.ViewModels
         }
         public DateTime? Deadline => _habit.Deadline;
         public bool IsCompleted => Deadline.HasValue && Deadline.Value.Date < DateTime.Now.Date;
+        public string UntrackedDateFormatted => _habit.UntrackedDate?.ToString("dd/MM/yyyy") ?? string.Empty;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
         
         private int _weekNumber;

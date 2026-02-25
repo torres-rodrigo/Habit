@@ -215,7 +215,16 @@ namespace Tracker.ViewModels
                 habit.ReminderTime = HasReminders ? ReminderTime : null;
                 habit.NotesEnabled = NotesEnabled;
                 habit.IsNegativeHabit = IsNegativeHabit;
+
+                // Track when habit was untracked
+                bool wasTracked = habit.IsTracked;
                 habit.IsTracked = IsTracked;
+
+                if (wasTracked && !IsTracked)
+                {
+                    // Newly untracked - set the date
+                    habit.UntrackedDate = DateTime.Now;
+                }
 
                 habit.TrackingDays.Clear();
                 foreach (var item in DaysOfWeek.Where(d => d.IsSelected))

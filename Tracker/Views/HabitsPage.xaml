@@ -469,8 +469,8 @@
                                                        TextColor="{StaticResource Gray600}">
                                                     <Label.FormattedText>
                                                         <FormattedString>
-                                                            <Span Text="Week " />
-                                                            <Span Text="{Binding WeekNumber}" />
+                                                            <Span Text="Untracked since: " />
+                                                            <Span Text="{Binding UntrackedDateFormatted}" />
                                                         </FormattedString>
                                                     </Label.FormattedText>
                                                 </Label>
@@ -496,7 +496,7 @@
 
                                             <CollectionView ItemsSource="{Binding WeekDays}"
                                                           SelectionMode="None"
-                                                          Margin="0,-10,0,0">
+                                                          Margin="0,0,0,0">
                                                 <CollectionView.ItemsLayout>
                                                     <GridItemsLayout Orientation="Horizontal" Span="1" />
                                                 </CollectionView.ItemsLayout>

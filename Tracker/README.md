@@ -451,10 +451,6 @@ Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this
 
-Untrack/resume habits untracked section with toggle to show/hide they still show up on stats should be a button on the edit page with confirmation dialog
-Untracked habits should show the untracked date
-deleted habits, deletes all information from task or habit. should be a button on the edit page with confirmation dialog
-
 probably going to have to move toggles and filtes to hamburguer menu
 
 Notifications/reminders

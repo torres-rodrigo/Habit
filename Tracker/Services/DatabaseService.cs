@@ -17,7 +17,7 @@ namespace Tracker.Services
     {
         private readonly SQLiteAsyncConnection _database;
         private readonly Task _initializationTask;
-        private const int CurrentDatabaseVersion = 4;
+        private const int CurrentDatabaseVersion = 5;
 
         public DatabaseService()
         {
@@ -385,6 +385,7 @@ namespace Tracker.Services
                 NotesEnabled = habit.NotesEnabled,
                 IsNegativeHabit = habit.IsNegativeHabit,
                 IsTracked = habit.IsTracked,
+                UntrackedDateUtc = habit.UntrackedDate?.ToUniversalTime().ToString("o"),
                 DisplayOrder = habit.DisplayOrder
             };
         }
@@ -412,6 +413,9 @@ namespace Tracker.Services
                 NotesEnabled = habitDb.NotesEnabled,
                 IsNegativeHabit = habitDb.IsNegativeHabit,
                 IsTracked = habitDb.IsTracked,
+                UntrackedDate = string.IsNullOrEmpty(habitDb.UntrackedDateUtc)
+                    ? null
+                    : DateTime.Parse(habitDb.UntrackedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
                 DisplayOrder = habitDb.DisplayOrder
             };
 

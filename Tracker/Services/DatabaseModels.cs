@@ -22,6 +22,7 @@ namespace Tracker.Services
         public bool NotesEnabled { get; set; }
         public bool IsNegativeHabit { get; set; }
         public bool IsTracked { get; set; } = true;
+        public string? UntrackedDateUtc { get; set; } // ISO 8601 format, nullable
         public int DisplayOrder { get; set; }
     }
 
