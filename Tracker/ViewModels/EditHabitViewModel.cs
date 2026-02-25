@@ -10,6 +10,7 @@ namespace Tracker.ViewModels
     public class EditHabitViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private readonly INotificationService _notificationService;
         private Guid _habitId;
         private bool _isSaving;
 
@@ -130,9 +131,10 @@ namespace Tracker.ViewModels
         public string UntrackTrackButtonText => IsTracked ? "Untrack" : "Track";
         public string UntrackTrackButtonColor => IsTracked ? "#FFC107" : "Green";
 
-        public EditHabitViewModel(IDataService dataService)
+        public EditHabitViewModel(IDataService dataService, INotificationService notificationService)
         {
             _dataService = dataService;
+            _notificationService = notificationService;
             Title = "Edit Habit";
 
             DaysOfWeek = new ObservableCollection<DayOfWeekItem>
@@ -233,6 +235,32 @@ namespace Tracker.ViewModels
                 }
 
                 await _dataService.SaveHabitAsync(habit);
+
+                // Handle notifications
+                if (HasReminders && ReminderTime.HasValue)
+                {
+                    // Request permissions first (Android only, no-op on Windows)
+                    var permissionGranted = await _notificationService.RequestNotificationPermissionsAsync();
+                    if (permissionGranted)
+                    {
+                        var trackingDays = TrackEveryday
+                            ? new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday }
+                            : DaysOfWeek.Where(d => d.IsSelected).Select(d => d.Day).ToArray();
+
+                        await _notificationService.ScheduleHabitReminderAsync(
+                            habit.Id,
+                            habit.Name,
+                            habit.Description,
+                            ReminderTime.Value,
+                            trackingDays);
+                    }
+                }
+                else
+                {
+                    // Cancel notifications if reminders are disabled
+                    await _notificationService.CancelHabitReminderAsync(habit.Id);
+                }
+
                 await Shell.Current.GoToAsync("..");
             }
             catch (Exception ex)
@@ -289,6 +317,9 @@ namespace Tracker.ViewModels
                     "Cancel");
 
                 if (!confirm) return;
+
+                // Cancel any scheduled notifications for this habit
+                await _notificationService.CancelHabitReminderAsync(_habitId);
 
                 await _dataService.DeleteHabitAsync(_habitId);
                 await Shell.Current.GoToAsync("..");

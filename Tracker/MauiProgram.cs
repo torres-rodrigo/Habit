@@ -27,6 +27,12 @@ public static class MauiProgram
 		// For testing with in-memory data, use:
 		// builder.Services.AddSingleton<IDataService, InMemoryDataService>();
 
+#if WINDOWS
+		builder.Services.AddSingleton<INotificationService, Platforms.Windows.NotificationService>();
+#elif ANDROID
+		builder.Services.AddSingleton<INotificationService, Platforms.Android.NotificationService>();
+#endif
+
 		// Register ViewModels
 		builder.Services.AddTransient<StatisticsViewModel>();
 		builder.Services.AddTransient<HabitViewModel>();
