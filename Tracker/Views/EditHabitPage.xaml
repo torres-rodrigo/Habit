@@ -94,6 +94,225 @@
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
+            <!-- Calendar Section -->
+            <Border IsVisible="{Binding IsEditingExistingHabit}" BackgroundColor="#2D2D2D" Padding="15" Margin="0,10">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <Grid>
+                    <!-- Day View -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDayViewMode}">
+                        <!-- Header: Month/Year (clickable) + Navigation Arrows -->
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
+                            <Label Grid.Column="0" Text="{Binding CurrentMonthYearDisplay}"
+                                   FontSize="20" FontAttributes="Bold" TextColor="White"
+                                   VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleMonthSelectionCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Grid.Column="1" Text="&#x25B2;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center" Margin="0,0,15,0">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding PreviousMonthCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Grid.Column="2" Text="&#x25BC;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding NextMonthCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+
+                        <!-- Day Headers with Week Number Column -->
+                        <Grid ColumnDefinitions="50,*,*,*,*,*,*,*" ColumnSpacing="0">
+                            <Label Grid.Column="0" Text="" FontSize="12"/>
+                            <Label Grid.Column="1" Text="Su" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="2" Text="Mo" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="3" Text="Tu" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="4" Text="We" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="5" Text="Th" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="6" Text="Fr" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                            <Label Grid.Column="7" Text="Sa" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                        </Grid>
+
+                        <!-- Calendar Weeks -->
+                        <CollectionView ItemsSource="{Binding CalendarWeeks}" SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:CalendarWeekViewModel">
+                                    <Grid ColumnDefinitions="50,*,*,*,*,*,*,*" ColumnSpacing="0" HeightRequest="45">
+                                        <!-- Week Number -->
+                                        <Label Grid.Column="0" Text="{Binding WeekLabel}" FontSize="16" FontAttributes="Bold"
+                                               TextColor="#888888" VerticalOptions="Center" HorizontalOptions="Start"/>
+                                        <!-- Days -->
+                                        <Border Grid.Column="1" BackgroundColor="{Binding Days[0].BackgroundColor}"
+                                                Stroke="{Binding Days[0].BorderColor}" StrokeThickness="{Binding Days[0].BorderThickness}"
+                                                Opacity="{Binding Days[0].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[0]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[0].DayNumber}" FontSize="16" TextColor="{Binding Days[0].TextColor}"
+                                                       FontAttributes="{Binding Days[0].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[0].TextColor}" IsVisible="{Binding Days[0].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="2" BackgroundColor="{Binding Days[1].BackgroundColor}"
+                                                Stroke="{Binding Days[1].BorderColor}" StrokeThickness="{Binding Days[1].BorderThickness}"
+                                                Opacity="{Binding Days[1].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[1]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[1].DayNumber}" FontSize="16" TextColor="{Binding Days[1].TextColor}"
+                                                       FontAttributes="{Binding Days[1].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[1].TextColor}" IsVisible="{Binding Days[1].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="3" BackgroundColor="{Binding Days[2].BackgroundColor}"
+                                                Stroke="{Binding Days[2].BorderColor}" StrokeThickness="{Binding Days[2].BorderThickness}"
+                                                Opacity="{Binding Days[2].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[2]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[2].DayNumber}" FontSize="16" TextColor="{Binding Days[2].TextColor}"
+                                                       FontAttributes="{Binding Days[2].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[2].TextColor}" IsVisible="{Binding Days[2].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="4" BackgroundColor="{Binding Days[3].BackgroundColor}"
+                                                Stroke="{Binding Days[3].BorderColor}" StrokeThickness="{Binding Days[3].BorderThickness}"
+                                                Opacity="{Binding Days[3].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[3]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[3].DayNumber}" FontSize="16" TextColor="{Binding Days[3].TextColor}"
+                                                       FontAttributes="{Binding Days[3].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[3].TextColor}" IsVisible="{Binding Days[3].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="5" BackgroundColor="{Binding Days[4].BackgroundColor}"
+                                                Stroke="{Binding Days[4].BorderColor}" StrokeThickness="{Binding Days[4].BorderThickness}"
+                                                Opacity="{Binding Days[4].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[4]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[4].DayNumber}" FontSize="16" TextColor="{Binding Days[4].TextColor}"
+                                                       FontAttributes="{Binding Days[4].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[4].TextColor}" IsVisible="{Binding Days[4].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="6" BackgroundColor="{Binding Days[5].BackgroundColor}"
+                                                Stroke="{Binding Days[5].BorderColor}" StrokeThickness="{Binding Days[5].BorderThickness}"
+                                                Opacity="{Binding Days[5].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[5]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[5].DayNumber}" FontSize="16" TextColor="{Binding Days[5].TextColor}"
+                                                       FontAttributes="{Binding Days[5].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[5].TextColor}" IsVisible="{Binding Days[5].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="7" BackgroundColor="{Binding Days[6].BackgroundColor}"
+                                                Stroke="{Binding Days[6].BorderColor}" StrokeThickness="{Binding Days[6].BorderThickness}"
+                                                Opacity="{Binding Days[6].Opacity}"
+                                                WidthRequest="40" HeightRequest="40" HorizontalOptions="Center">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=ToggleCalendarDayCommand}"
+                                                                    CommandParameter="{Binding Days[6]}"/>
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="-2">
+                                                <Label Text="{Binding Days[6].DayNumber}" FontSize="16" TextColor="{Binding Days[6].TextColor}"
+                                                       FontAttributes="{Binding Days[6].FontWeight}" HorizontalOptions="Center"/>
+                                                <Label Text="&#x2713;" FontSize="8" TextColor="{Binding Days[6].TextColor}" IsVisible="{Binding Days[6].IsCompleted}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+
+                    <!-- Month Selection View -->
+                    <VerticalStackLayout Spacing="15" IsVisible="{Binding IsMonthSelectionMode}">
+                        <!-- Year Selector -->
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
+                            <Border Grid.Column="0" BackgroundColor="#404040" Padding="10,8">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="6"/></Border.StrokeShape>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleMonthSelectionCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding DisplayYear}" FontSize="18" TextColor="White"/>
+                            </Border>
+                            <Label Grid.Column="1" Text="&#x25B2;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center" Margin="15,0,15,0">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding NextYearCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Grid.Column="2" Text="&#x25BC;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding PreviousYearCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+
+                        <!-- Month Grid (4x3) -->
+                        <CollectionView ItemsSource="{Binding MonthItems}" SelectionMode="None" HeightRequest="250">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical" Span="4" HorizontalItemSpacing="10" VerticalItemSpacing="15"/>
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:MonthItemViewModel">
+                                    <Border BackgroundColor="{Binding BackgroundColor}"
+                                            StrokeThickness="0" HeightRequest="50" HorizontalOptions="Center" WidthRequest="70">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="25"/></Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=SelectMonthCommand}"
+                                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding ShortName}" FontSize="16" TextColor="{Binding TextColor}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
             <!-- Action Buttons (only visible when editing) -->
             <VerticalStackLayout Spacing="10" IsVisible="{Binding IsEditingExistingHabit}">
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">

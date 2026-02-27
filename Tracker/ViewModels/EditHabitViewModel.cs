@@ -13,6 +13,10 @@ namespace Tracker.ViewModels
         private readonly INotificationService _notificationService;
         private Guid _habitId;
         private bool _isSaving;
+        private DateTime _currentDisplayMonth;
+        private Habit? _loadedHabit;
+        private bool _isMonthSelectionMode;
+        private int _displayYear;
 
         public string HabitIdString
         {
@@ -56,7 +60,13 @@ namespace Tracker.ViewModels
         public bool TrackEveryday
         {
             get => _trackEveryday;
-            set => SetProperty(ref _trackEveryday, value);
+            set
+            {
+                if (SetProperty(ref _trackEveryday, value))
+                {
+                    BuildCalendarDays();
+                }
+            }
         }
 
         private bool _hasDeadline;
@@ -116,10 +126,64 @@ namespace Tracker.ViewModels
         }
 
         public ObservableCollection<DayOfWeekItem> DaysOfWeek { get; set; }
+        public ObservableCollection<CalendarDayViewModel> CalendarDays { get; set; }
+
+        public DateTime CurrentDisplayMonth
+        {
+            get => _currentDisplayMonth;
+            set
+            {
+                if (SetProperty(ref _currentDisplayMonth, value))
+                {
+                    OnPropertyChanged(nameof(CurrentMonthYearDisplay));
+                    BuildCalendarDays();
+                }
+            }
+        }
+
+        public string CurrentMonthYearDisplay => CurrentDisplayMonth.ToString("MMMM yyyy");
+        public string HabitColor => IsNegativeHabit ? "Red" : "Green";
+
+        public ObservableCollection<CalendarWeekViewModel> CalendarWeeks { get; set; }
+        public ObservableCollection<MonthItemViewModel> MonthItems { get; set; }
+
+        public bool IsMonthSelectionMode
+        {
+            get => _isMonthSelectionMode;
+            set
+            {
+                if (SetProperty(ref _isMonthSelectionMode, value))
+                {
+                    OnPropertyChanged(nameof(IsDayViewMode));
+                }
+            }
+        }
+
+        public bool IsDayViewMode => !IsMonthSelectionMode;
+
+        public int DisplayYear
+        {
+            get => _displayYear;
+            set
+            {
+                if (SetProperty(ref _displayYear, value))
+                {
+                    UpdateMonthItemsSelection();
+                }
+            }
+        }
+
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand UntrackTrackCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand PreviousMonthCommand { get; }
+        public ICommand NextMonthCommand { get; }
+        public ICommand ToggleCalendarDayCommand { get; }
+        public ICommand ToggleMonthSelectionCommand { get; }
+        public ICommand SelectMonthCommand { get; }
+        public ICommand PreviousYearCommand { get; }
+        public ICommand NextYearCommand { get; }
 
         public bool IsSaving
         {
@@ -148,10 +212,40 @@ namespace Tracker.ViewModels
                 new() { Day = DayOfWeek.Sunday, Name = "Sunday" }
             };
 
+            // Wire up callback for day selection changes to rebuild calendar
+            foreach (var day in DaysOfWeek)
+            {
+                day.SetOnSelectionChanged(() => BuildCalendarDays());
+            }
+
+            CalendarDays = new ObservableCollection<CalendarDayViewModel>();
+            CalendarWeeks = new ObservableCollection<CalendarWeekViewModel>();
+            _currentDisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            _displayYear = DateTime.Today.Year;
+
+            // Initialize month items
+            MonthItems = new ObservableCollection<MonthItemViewModel>();
+            for (int i = 1; i <= 12; i++)
+            {
+                MonthItems.Add(new MonthItemViewModel
+                {
+                    MonthNumber = i,
+                    MonthName = new DateTime(2000, i, 1).ToString("MMMM"),
+                    IsSelected = i == DateTime.Today.Month
+                });
+            }
+
             SaveCommand = new Command(async () => await OnSaveAsync());
             CancelCommand = new Command(OnCancel);
             UntrackTrackCommand = new Command(async () => await OnUntrackTrackAsync());
             DeleteCommand = new Command(async () => await OnDeleteAsync());
+            PreviousMonthCommand = new Command(OnPreviousMonth);
+            NextMonthCommand = new Command(OnNextMonth);
+            ToggleCalendarDayCommand = new Command<CalendarDayViewModel>(async (day) => await OnToggleCalendarDayAsync(day));
+            ToggleMonthSelectionCommand = new Command(OnToggleMonthSelection);
+            SelectMonthCommand = new Command<MonthItemViewModel>(OnSelectMonth);
+            PreviousYearCommand = new Command(() => DisplayYear--);
+            NextYearCommand = new Command(() => DisplayYear++);
         }
 
         private async Task LoadHabitAsync()
@@ -163,6 +257,8 @@ namespace Tracker.ViewModels
                 var habit = await _dataService.GetHabitByIdAsync(_habitId);
                 if (habit != null)
                 {
+                    _loadedHabit = habit;
+
                     Name = habit.Name;
                     Description = habit.Description;
                     TrackEveryday = habit.TrackEveryday;
@@ -178,6 +274,9 @@ namespace Tracker.ViewModels
                     {
                         item.IsSelected = habit.TrackingDays.Contains(item.Day);
                     }
+
+                    OnPropertyChanged(nameof(HabitColor));
+                    BuildCalendarDays();
                 }
             }
             catch (Exception ex)
@@ -330,6 +429,155 @@ namespace Tracker.ViewModels
             }
         }
 
+        private void OnPreviousMonth()
+        {
+            CurrentDisplayMonth = CurrentDisplayMonth.AddMonths(-1);
+        }
+
+        private void OnNextMonth()
+        {
+            CurrentDisplayMonth = CurrentDisplayMonth.AddMonths(1);
+        }
+
+        private void BuildCalendarDays()
+        {
+            if (!IsEditingExistingHabit || _loadedHabit == null) return;
+
+            CalendarDays.Clear();
+            CalendarWeeks.Clear();
+
+            var firstOfMonth = new DateTime(CurrentDisplayMonth.Year, CurrentDisplayMonth.Month, 1);
+            var startingDayOfWeek = (int)firstOfMonth.DayOfWeek;
+            var startDate = firstOfMonth.AddDays(-startingDayOfWeek);
+
+            // Build 6 weeks (covering all possible month layouts plus overflow)
+            for (int week = 0; week < 6; week++)
+            {
+                var weekStartDate = startDate.AddDays(week * 7);
+                var weekNumber = GetIso8601WeekNumber(weekStartDate);
+
+                var calendarWeek = new CalendarWeekViewModel { WeekNumber = weekNumber };
+
+                for (int day = 0; day < 7; day++)
+                {
+                    var date = weekStartDate.AddDays(day);
+                    var isCurrentMonth = date.Month == CurrentDisplayMonth.Month;
+                    var shouldTrack = ShouldTrackOnDate(date);
+                    var isCompleted = _loadedHabit.Completions.Any(c => c.CompletedDate.Date == date.Date);
+
+                    var dayVm = new CalendarDayViewModel
+                    {
+                        Date = date,
+                        IsCurrentMonth = isCurrentMonth,
+                        IsCompleted = isCompleted,
+                        ShouldTrack = shouldTrack,
+                        IsNegativeHabit = IsNegativeHabit
+                    };
+
+                    CalendarDays.Add(dayVm);
+                    calendarWeek.Days.Add(dayVm);
+                }
+
+                CalendarWeeks.Add(calendarWeek);
+            }
+
+            // Update month items selection when display month changes
+            _displayYear = CurrentDisplayMonth.Year;
+            OnPropertyChanged(nameof(DisplayYear));
+            UpdateMonthItemsSelection();
+        }
+
+        private static int GetIso8601WeekNumber(DateTime date)
+        {
+            var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+            var dayOfWeek = cal.GetDayOfWeek(date);
+            if (dayOfWeek >= DayOfWeek.Monday && dayOfWeek <= DayOfWeek.Wednesday)
+            {
+                date = date.AddDays(3);
+            }
+            return cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        }
+
+        private void OnToggleMonthSelection()
+        {
+            if (IsMonthSelectionMode)
+            {
+                // Going back to day view - don't change anything
+                IsMonthSelectionMode = false;
+            }
+            else
+            {
+                // Going to month selection - sync display year
+                DisplayYear = CurrentDisplayMonth.Year;
+                UpdateMonthItemsSelection();
+                IsMonthSelectionMode = true;
+            }
+        }
+
+        private void OnSelectMonth(MonthItemViewModel? month)
+        {
+            if (month == null) return;
+
+            CurrentDisplayMonth = new DateTime(DisplayYear, month.MonthNumber, 1);
+            IsMonthSelectionMode = false;
+        }
+
+        private void UpdateMonthItemsSelection()
+        {
+            foreach (var month in MonthItems)
+            {
+                month.IsSelected = month.MonthNumber == CurrentDisplayMonth.Month && DisplayYear == CurrentDisplayMonth.Year;
+            }
+        }
+
+        private bool ShouldTrackOnDate(DateTime date)
+        {
+            if (TrackEveryday) return true;
+            return DaysOfWeek.Any(d => d.IsSelected && d.Day == date.DayOfWeek);
+        }
+
+        private async Task OnToggleCalendarDayAsync(CalendarDayViewModel? day)
+        {
+            if (day == null || _habitId == Guid.Empty) return;
+
+            // If clicking on a day from another month, navigate to that month
+            if (!day.IsCurrentMonth)
+            {
+                CurrentDisplayMonth = new DateTime(day.Date.Year, day.Date.Month, 1);
+                return;
+            }
+
+            // Only toggle completion for trackable days
+            if (!day.ShouldTrack) return;
+
+            try
+            {
+                await _dataService.ToggleHabitCompletionAsync(_habitId, day.Date);
+                day.IsCompleted = !day.IsCompleted;
+
+                // Update local completions list
+                if (day.IsCompleted)
+                {
+                    _loadedHabit?.Completions.Add(new HabitCompletion
+                    {
+                        Id = Guid.NewGuid(),
+                        HabitId = _habitId,
+                        CompletedDate = day.Date
+                    });
+                }
+                else
+                {
+                    var completion = _loadedHabit?.Completions.FirstOrDefault(c => c.CompletedDate.Date == day.Date.Date);
+                    if (completion != null)
+                        _loadedHabit?.Completions.Remove(completion);
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to toggle completion: {ex.Message}", "OK");
+            }
+        }
+
         private async void OnCancel()
         {
             await Shell.Current.GoToAsync("..");
@@ -340,12 +588,117 @@ namespace Tracker.ViewModels
     {
         public DayOfWeek Day { get; set; }
         public string Name { get; set; } = string.Empty;
+        private Action? _onSelectionChanged;
+
+        public void SetOnSelectionChanged(Action callback)
+        {
+            _onSelectionChanged = callback;
+        }
 
         private bool _isSelected;
         public bool IsSelected
         {
             get => _isSelected;
-            set => SetProperty(ref _isSelected, value);
+            set
+            {
+                if (SetProperty(ref _isSelected, value))
+                {
+                    _onSelectionChanged?.Invoke();
+                }
+            }
         }
+    }
+
+    public class CalendarDayViewModel : BaseViewModel
+    {
+        public DateTime Date { get; set; }
+        public int DayNumber => Date.Day;
+        public bool IsCurrentMonth { get; set; }
+        public bool IsToday => Date.Date == DateTime.Today;
+
+        private bool _isCompleted;
+        public bool IsCompleted
+        {
+            get => _isCompleted;
+            set
+            {
+                if (SetProperty(ref _isCompleted, value))
+                {
+                    OnPropertyChanged(nameof(BackgroundColor));
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
+
+        private bool _shouldTrack;
+        public bool ShouldTrack
+        {
+            get => _shouldTrack;
+            set
+            {
+                if (SetProperty(ref _shouldTrack, value))
+                {
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
+
+        public bool IsNegativeHabit { get; set; }
+
+        // Visual properties for dark theme
+        // Background only fills for completed days (not just today)
+        public string BackgroundColor => IsCompleted ? (IsNegativeHabit ? "#FF4444" : "#44FF44") : "Transparent";
+
+        // Border for today indicator (darker green outline)
+        public string BorderColor => IsToday ? (IsNegativeHabit ? "#AA0000" : "#507d2a") : "Transparent";
+        public double BorderThickness => IsToday ? 3.0 : 0.0;
+
+        // Opacity: lower for non-current month days
+        public double Opacity => IsCurrentMonth ? 1.0 : 0.35;
+
+        // Font styling - bold for current month
+        public string FontWeight => IsCurrentMonth ? "Bold" : "None";
+
+        public string TextColor
+        {
+            get
+            {
+                if (IsCompleted) return "#000000"; // Black text on filled circle
+                if (!IsCurrentMonth) return "#666666"; // Gray for other months
+                if (!ShouldTrack) return "#888888"; // Lighter gray for non-trackable
+                return "#FFFFFF"; // White for trackable current month days
+            }
+        }
+    }
+
+    public class CalendarWeekViewModel : BaseViewModel
+    {
+        public int WeekNumber { get; set; }
+        public string WeekLabel => $"W{WeekNumber}";
+        public ObservableCollection<CalendarDayViewModel> Days { get; set; } = new();
+    }
+
+    public class MonthItemViewModel : BaseViewModel
+    {
+        public int MonthNumber { get; set; }
+        public string MonthName { get; set; } = string.Empty;
+        public string ShortName => MonthName.Length > 3 ? MonthName[..3] : MonthName;
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (SetProperty(ref _isSelected, value))
+                {
+                    OnPropertyChanged(nameof(BackgroundColor));
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
+
+        public string BackgroundColor => IsSelected ? "#44FF44" : "Transparent";
+        public string TextColor => IsSelected ? "#000000" : "#FFFFFF";
     }
 }
