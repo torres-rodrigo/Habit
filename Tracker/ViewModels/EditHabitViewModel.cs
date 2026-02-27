@@ -726,6 +726,9 @@ namespace Tracker.ViewModels
                 return;
             }
 
+            // Update the selected note date to match the clicked day
+            SelectedNoteDate = day.Date;
+
             // Only toggle completion for days that can be toggled
             // (trackable, within valid date range, and current month)
             if (!day.CanToggle) return;
