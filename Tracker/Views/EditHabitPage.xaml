@@ -291,13 +291,13 @@
                             <Label Grid.Column="1" Text="&#x25B2;" FontSize="16" TextColor="#888888"
                                    VerticalOptions="Center" Margin="15,0,15,0">
                                 <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding NextYearCommand}"/>
+                                    <TapGestureRecognizer Command="{Binding PreviousYearCommand}"/>
                                 </Label.GestureRecognizers>
                             </Label>
                             <Label Grid.Column="2" Text="&#x25BC;" FontSize="16" TextColor="#888888"
                                    VerticalOptions="Center">
                                 <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding PreviousYearCommand}"/>
+                                    <TapGestureRecognizer Command="{Binding NextYearCommand}"/>
                                 </Label.GestureRecognizers>
                             </Label>
                         </Grid>
