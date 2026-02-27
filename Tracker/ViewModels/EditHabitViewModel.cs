@@ -19,6 +19,7 @@ namespace Tracker.ViewModels
         private bool _isYearSelectionMode;
         private int _displayYear;
         private int _yearRangeStart;
+        private DateTime _habitCreatedDate;
 
         public string HabitIdString
         {
@@ -321,6 +322,7 @@ namespace Tracker.ViewModels
                 if (habit != null)
                 {
                     _loadedHabit = habit;
+                    _habitCreatedDate = habit.CreatedDate;
 
                     Name = habit.Name;
                     Description = habit.Description;
@@ -525,6 +527,8 @@ namespace Tracker.ViewModels
                     var isCurrentMonth = date.Month == CurrentDisplayMonth.Month;
                     var shouldTrack = ShouldTrackOnDate(date);
                     var isCompleted = _loadedHabit.Completions.Any(c => c.CompletedDate.Date == date.Date);
+                    // Only allow marking days from habit creation to today (inclusive)
+                    var isWithinValidRange = date.Date >= _habitCreatedDate.Date && date.Date <= DateTime.Today;
 
                     var dayVm = calendarWeek.Days[day];
                     dayVm.Date = date;
@@ -532,6 +536,7 @@ namespace Tracker.ViewModels
                     dayVm.IsCompleted = isCompleted;
                     dayVm.ShouldTrack = shouldTrack;
                     dayVm.IsNegativeHabit = IsNegativeHabit;
+                    dayVm.IsWithinValidRange = isWithinValidRange;
                 }
             }
 
@@ -636,8 +641,9 @@ namespace Tracker.ViewModels
                 return;
             }
 
-            // Only toggle completion for trackable days
-            if (!day.ShouldTrack) return;
+            // Only toggle completion for days that can be toggled
+            // (trackable, within valid date range, and current month)
+            if (!day.CanToggle) return;
 
             try
             {
@@ -775,6 +781,29 @@ namespace Tracker.ViewModels
             }
         }
 
+        private bool _isWithinValidRange;
+        /// <summary>
+        /// True if the date is between habit creation date and today (inclusive)
+        /// </summary>
+        public bool IsWithinValidRange
+        {
+            get => _isWithinValidRange;
+            set
+            {
+                if (SetProperty(ref _isWithinValidRange, value))
+                {
+                    OnPropertyChanged(nameof(CanToggle));
+                    OnPropertyChanged(nameof(Opacity));
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
+
+        /// <summary>
+        /// True if this day can be toggled (is trackable AND within valid date range)
+        /// </summary>
+        public bool CanToggle => ShouldTrack && IsWithinValidRange && IsCurrentMonth;
+
         // Visual properties for dark theme
         // Background only fills for completed days (not just today)
         // Use same green as habit cards ("Green" = #008000)
@@ -784,8 +813,16 @@ namespace Tracker.ViewModels
         public string BorderColor => IsToday ? (IsNegativeHabit ? "#AA0000" : "#507d2a") : "Transparent";
         public double BorderThickness => IsToday ? 3.0 : 0.0;
 
-        // Opacity: lower for non-current month days
-        public double Opacity => IsCurrentMonth ? 1.0 : 0.35;
+        // Opacity: lower for non-current month days or days outside valid range
+        public double Opacity
+        {
+            get
+            {
+                if (!IsCurrentMonth) return 0.35;
+                if (!IsWithinValidRange) return 0.4;
+                return 1.0;
+            }
+        }
 
         // Font styling - bold for current month
         public string FontWeight => IsCurrentMonth ? "Bold" : "None";
