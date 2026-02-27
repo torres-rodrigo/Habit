@@ -118,7 +118,7 @@
                                                            Padding="0"
                                                            BorderColor="{Binding HabitColor}"
                                                            BackgroundColor="{Binding CompletionBackgroundColor}"
-                                                           Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"
+                                                           Opacity="{Binding DayOpacity}"
                                                            HasShadow="False">
                                                         <Frame.GestureRecognizers>
                                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ToggleCompletionCommand}"
@@ -256,7 +256,7 @@
                                                                    Padding="0"
                                                                    BorderColor="{Binding HabitColor}"
                                                                    BackgroundColor="{Binding CompletionBackgroundColor}"
-                                                                   Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"
+                                                                   Opacity="{Binding DayOpacity}"
                                                                    HasShadow="False">
                                                                 <Frame.GestureRecognizers>
                                                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ToggleCompletionCommand}"
@@ -388,7 +388,7 @@
                                                                    Padding="0"
                                                                    BorderColor="{Binding HabitColor}"
                                                                    BackgroundColor="{Binding CompletionBackgroundColor}"
-                                                                   Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"
+                                                                   Opacity="{Binding DayOpacity}"
                                                                    HasShadow="False">
                                                                 <Frame.GestureRecognizers>
                                                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ToggleCompletionCommand}"
@@ -525,7 +525,7 @@
                                                                    Padding="0"
                                                                    BorderColor="{Binding HabitColor}"
                                                                    BackgroundColor="{Binding CompletionBackgroundColor}"
-                                                                   Opacity="{Binding ShouldTrack, Converter={StaticResource BoolToOpacityConverter}}"
+                                                                   Opacity="{Binding DayOpacity}"
                                                                    HasShadow="False">
                                                                 <Frame.GestureRecognizers>
                                                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ToggleCompletionCommand}"

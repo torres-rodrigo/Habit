@@ -444,18 +444,19 @@ Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this
 
-habits page should only allow to mark days since the creation of the habit
-
 probably going to have to move toggles and filtes to hamburguer menu
-
-Notifications/reminders
 
 feature to export notes for a habit into a text file, options for all or multi select, in stats tab
 feature to export the database file for backup or transfer to another device, in stats tab
 
-manage case where habit frequency changes so as to not break statistics
+manage case where habit frequency changes so as to not break statistics and fix stats so that they start counting from
+habit creation
+
+Performance review
 
 Test in android
+
+Notifications/reminders
 
 Move tab selection to bottom and center
 This should already be solved for android, windows doesnt work

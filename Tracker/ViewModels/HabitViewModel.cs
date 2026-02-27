@@ -243,7 +243,7 @@ namespace Tracker.ViewModels
 
         private async Task OnToggleCompletion(DayCompletionViewModel? dayCompletion)
         {
-            if (dayCompletion == null || !dayCompletion.ShouldTrack)
+            if (dayCompletion == null || !dayCompletion.CanToggle)
                 return;
 
             // Check if the habit is completed (past deadline) or untracked
@@ -423,7 +423,8 @@ namespace Tracker.ViewModels
                     ShouldTrack = shouldTrack,
                     IsToday = date.Date == DateTime.Today,
                     HabitColor = HabitColor,
-                    IsHabitCompleted = IsCompleted
+                    IsHabitCompleted = IsCompleted,
+                    HabitCreatedDate = _habit.CreatedDate
                 });
             }
 
@@ -438,6 +439,7 @@ namespace Tracker.ViewModels
         public DateTime Date { get; set; }
         public string DayName { get; set; } = string.Empty;
         public string HabitColor { get; set; } = "Green";
+        public DateTime HabitCreatedDate { get; set; }
 
         private bool _isCompleted;
         public bool IsCompleted
@@ -454,5 +456,8 @@ namespace Tracker.ViewModels
         public bool ShouldTrack { get; set; }
         public bool IsToday { get; set; }
         public bool IsHabitCompleted { get; set; } // Indicates if the parent habit is completed (past deadline)
+        public bool IsWithinValidRange => Date.Date >= HabitCreatedDate.Date && Date.Date <= DateTime.Today;
+        public bool CanToggle => ShouldTrack && IsWithinValidRange && !IsHabitCompleted;
+        public double DayOpacity => !ShouldTrack ? 0.3 : (!IsWithinValidRange ? 0.4 : 1.0);
     }
 }
