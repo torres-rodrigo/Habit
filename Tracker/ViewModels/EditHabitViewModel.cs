@@ -223,6 +223,19 @@ namespace Tracker.ViewModels
             _currentDisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             _displayYear = DateTime.Today.Year;
 
+            // Pre-create 6 weeks with 7 days each to avoid collection changes that cause scroll jumps
+            for (int week = 0; week < 6; week++)
+            {
+                var calendarWeek = new CalendarWeekViewModel();
+                for (int day = 0; day < 7; day++)
+                {
+                    var dayVm = new CalendarDayViewModel();
+                    calendarWeek.Days.Add(dayVm);
+                    CalendarDays.Add(dayVm);
+                }
+                CalendarWeeks.Add(calendarWeek);
+            }
+
             // Initialize month items
             MonthItems = new ObservableCollection<MonthItemViewModel>();
             for (int i = 1; i <= 12; i++)
@@ -443,20 +456,18 @@ namespace Tracker.ViewModels
         {
             if (!IsEditingExistingHabit || _loadedHabit == null) return;
 
-            CalendarDays.Clear();
-            CalendarWeeks.Clear();
-
             var firstOfMonth = new DateTime(CurrentDisplayMonth.Year, CurrentDisplayMonth.Month, 1);
             var startingDayOfWeek = (int)firstOfMonth.DayOfWeek;
             var startDate = firstOfMonth.AddDays(-startingDayOfWeek);
 
-            // Build 6 weeks (covering all possible month layouts plus overflow)
+            // Update existing week/day objects in place (no collection changes = no scroll jump)
             for (int week = 0; week < 6; week++)
             {
                 var weekStartDate = startDate.AddDays(week * 7);
                 var weekNumber = GetIso8601WeekNumber(weekStartDate);
 
-                var calendarWeek = new CalendarWeekViewModel { WeekNumber = weekNumber };
+                var calendarWeek = CalendarWeeks[week];
+                calendarWeek.WeekNumber = weekNumber;
 
                 for (int day = 0; day < 7; day++)
                 {
@@ -465,20 +476,13 @@ namespace Tracker.ViewModels
                     var shouldTrack = ShouldTrackOnDate(date);
                     var isCompleted = _loadedHabit.Completions.Any(c => c.CompletedDate.Date == date.Date);
 
-                    var dayVm = new CalendarDayViewModel
-                    {
-                        Date = date,
-                        IsCurrentMonth = isCurrentMonth,
-                        IsCompleted = isCompleted,
-                        ShouldTrack = shouldTrack,
-                        IsNegativeHabit = IsNegativeHabit
-                    };
-
-                    CalendarDays.Add(dayVm);
-                    calendarWeek.Days.Add(dayVm);
+                    var dayVm = calendarWeek.Days[day];
+                    dayVm.Date = date;
+                    dayVm.IsCurrentMonth = isCurrentMonth;
+                    dayVm.IsCompleted = isCompleted;
+                    dayVm.ShouldTrack = shouldTrack;
+                    dayVm.IsNegativeHabit = IsNegativeHabit;
                 }
-
-                CalendarWeeks.Add(calendarWeek);
             }
 
             // Update month items selection when display month changes
@@ -611,10 +615,39 @@ namespace Tracker.ViewModels
 
     public class CalendarDayViewModel : BaseViewModel
     {
-        public DateTime Date { get; set; }
+        private DateTime _date;
+        public DateTime Date
+        {
+            get => _date;
+            set
+            {
+                if (SetProperty(ref _date, value))
+                {
+                    OnPropertyChanged(nameof(DayNumber));
+                    OnPropertyChanged(nameof(IsToday));
+                    OnPropertyChanged(nameof(BorderColor));
+                    OnPropertyChanged(nameof(BorderThickness));
+                }
+            }
+        }
+
         public int DayNumber => Date.Day;
-        public bool IsCurrentMonth { get; set; }
         public bool IsToday => Date.Date == DateTime.Today;
+
+        private bool _isCurrentMonth;
+        public bool IsCurrentMonth
+        {
+            get => _isCurrentMonth;
+            set
+            {
+                if (SetProperty(ref _isCurrentMonth, value))
+                {
+                    OnPropertyChanged(nameof(Opacity));
+                    OnPropertyChanged(nameof(FontWeight));
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
 
         private bool _isCompleted;
         public bool IsCompleted
@@ -643,7 +676,19 @@ namespace Tracker.ViewModels
             }
         }
 
-        public bool IsNegativeHabit { get; set; }
+        private bool _isNegativeHabit;
+        public bool IsNegativeHabit
+        {
+            get => _isNegativeHabit;
+            set
+            {
+                if (SetProperty(ref _isNegativeHabit, value))
+                {
+                    OnPropertyChanged(nameof(BackgroundColor));
+                    OnPropertyChanged(nameof(BorderColor));
+                }
+            }
+        }
 
         // Visual properties for dark theme
         // Background only fills for completed days (not just today)
@@ -673,7 +718,18 @@ namespace Tracker.ViewModels
 
     public class CalendarWeekViewModel : BaseViewModel
     {
-        public int WeekNumber { get; set; }
+        private int _weekNumber;
+        public int WeekNumber
+        {
+            get => _weekNumber;
+            set
+            {
+                if (SetProperty(ref _weekNumber, value))
+                {
+                    OnPropertyChanged(nameof(WeekLabel));
+                }
+            }
+        }
         public string WeekLabel => $"W{WeekNumber}";
         public ObservableCollection<CalendarDayViewModel> Days { get; set; } = new();
     }

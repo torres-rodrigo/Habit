@@ -7,21 +7,30 @@
 
     <Grid RowDefinitions="*,Auto">
         <!-- Scrollable Content -->
-        <ScrollView Grid.Row="0">
+        <ScrollView Grid.Row="0" x:Name="MainScrollView">
             <VerticalStackLayout Padding="20" Spacing="20">
             
             <!-- Habit Name -->
             <VerticalStackLayout Spacing="5">
                 <Label Text="Habit Name" FontAttributes="Bold"/>
-                <Entry Text="{Binding Name}" Placeholder="Enter habit name"/>
+                <Entry x:Name="HabitNameEntry" Text="{Binding Name}" Placeholder="Enter habit name">
+                    <Entry.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHabitNameEntryTapped"/>
+                    </Entry.GestureRecognizers>
+                </Entry>
             </VerticalStackLayout>
 
             <!-- Description -->
             <VerticalStackLayout Spacing="5">
                 <Label Text="Description" FontAttributes="Bold"/>
-                <Editor Text="{Binding Description}" 
+                <Editor x:Name="DescriptionEditor"
+                        Text="{Binding Description}"
                         Placeholder="Enter description (optional)"
-                        HeightRequest="250"/>
+                        HeightRequest="250">
+                    <Editor.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnDescriptionEditorTapped"/>
+                    </Editor.GestureRecognizers>
+                </Editor>
             </VerticalStackLayout>
 
             <!-- Tracking Days -->
@@ -95,13 +104,17 @@
             </VerticalStackLayout>
 
             <!-- Calendar Section -->
-            <Border IsVisible="{Binding IsEditingExistingHabit}" BackgroundColor="#2D2D2D" Padding="15" Margin="0,10">
+            <Border IsVisible="{Binding IsEditingExistingHabit}" BackgroundColor="#2D2D2D" Padding="15" Margin="0,10"
+                    x:Name="CalendarBorder">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12"/>
                 </Border.StrokeShape>
-                <Grid>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCalendarTapped"/>
+                </Border.GestureRecognizers>
+                <Grid MinimumHeightRequest="380">
                     <!-- Day View -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDayViewMode}">
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDayViewMode}" MinimumHeightRequest="380">
                         <!-- Header: Month/Year (clickable) + Navigation Arrows -->
                         <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
                             <Label Grid.Column="0" Text="{Binding CurrentMonthYearDisplay}"
@@ -137,9 +150,9 @@
                             <Label Grid.Column="7" Text="Sa" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
                         </Grid>
 
-                        <!-- Calendar Weeks -->
-                        <CollectionView ItemsSource="{Binding CalendarWeeks}" SelectionMode="None">
-                            <CollectionView.ItemTemplate>
+                        <!-- Calendar Weeks - Using BindableLayout instead of CollectionView to prevent scroll jump -->
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding CalendarWeeks}" HeightRequest="270">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:CalendarWeekViewModel">
                                     <Grid ColumnDefinitions="50,*,*,*,*,*,*,*" ColumnSpacing="0" HeightRequest="45">
                                         <!-- Week Number -->
@@ -260,8 +273,8 @@
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
 
                     <!-- Month Selection View -->
