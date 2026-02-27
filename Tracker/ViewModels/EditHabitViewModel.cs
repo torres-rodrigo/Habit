@@ -250,6 +250,7 @@ namespace Tracker.ViewModels
                 {
                     OnPropertyChanged(nameof(SelectedNoteDateDisplay));
                     OnPropertyChanged(nameof(IsNoteDateTrackable));
+                    OnPropertyChanged(nameof(SaveNoteButtonColor));
                     _ = LoadNoteForDateAsync();
                 }
             }
@@ -265,15 +266,21 @@ namespace Tracker.ViewModels
 
         /// <summary>
         /// True if the selected note date is a day that should be tracked by the habit
+        /// and is within the valid date range (creation date to today)
         /// </summary>
         public bool IsNoteDateTrackable
         {
             get
             {
                 if (!IsEditingExistingHabit) return false;
+                // Check if date is within valid range (creation date to today)
+                if (SelectedNoteDate.Date < _habitCreatedDate.Date || SelectedNoteDate.Date > DateTime.Today)
+                    return false;
                 return ShouldTrackOnDate(SelectedNoteDate);
             }
         }
+
+        public string SaveNoteButtonColor => IsNoteDateTrackable ? "#512BD4" : "#9E9E9E";
 
         public bool ShowNotesSection => NotesEnabled && IsEditingExistingHabit;
 

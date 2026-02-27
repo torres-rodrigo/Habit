@@ -460,11 +460,6 @@ Test in android
 Move tab selection to bottom and center
 This should already be solved for android, windows doesnt work
 
-Add way to add note for the current day in the card for the habit
-it should have a revert to revert to the way the card was pre save
-it should have a save button
-Mark days as complete from the calendar
-
 ---
 
 MAGIC 8 ball program 

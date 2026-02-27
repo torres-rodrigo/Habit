@@ -386,7 +386,7 @@
                             Text="Save Note"
                             Command="{Binding SaveNoteCommand}"
                             IsEnabled="{Binding IsNoteDateTrackable}"
-                            BackgroundColor="{StaticResource Primary}"
+                            BackgroundColor="{Binding SaveNoteButtonColor}"
                             TextColor="White"
                             HeightRequest="40"
                             Padding="15,0"/>
