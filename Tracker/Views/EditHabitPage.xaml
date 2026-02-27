@@ -48,6 +48,20 @@
                 </VerticalStackLayout>
             </VerticalStackLayout>
 
+            <!-- Reminders -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
+
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding HasReminders}"/>
+                    <Label Text="Enable Reminders" VerticalOptions="Center" Margin="-110, 0"/>
+                </HorizontalStackLayout>
+
+                <TimePicker Time="{Binding ReminderTime}" 
+                            IsVisible="{Binding HasReminders}"
+                            Format="HH:mm"/>
+            </VerticalStackLayout>
+
             <!-- Deadline -->
             <VerticalStackLayout Spacing="10">
                 <Label Text="Deadline" FontAttributes="Bold" FontSize="16"/>
@@ -61,18 +75,13 @@
                             IsVisible="{Binding HasDeadline}"/>
             </VerticalStackLayout>
 
-            <!-- Reminders -->
+            <!-- Negative Habit -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
-                
-                <HorizontalStackLayout Spacing="10">
-                    <Switch IsToggled="{Binding HasReminders}"/>
-                    <Label Text="Enable Reminders" VerticalOptions="Center" Margin="-110, 0"/>
-                </HorizontalStackLayout>
+                <Label Text="Negative Habit" FontAttributes="Bold" FontSize="16"/>
 
-                <TimePicker Time="{Binding ReminderTime}" 
-                          IsVisible="{Binding HasReminders}"
-                          Format="HH:mm"/>
+                <HorizontalStackLayout Spacing="10">
+                    <Switch IsToggled="{Binding IsNegativeHabit}"/>
+                </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <!-- Notes -->
@@ -82,15 +91,6 @@
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding NotesEnabled}"/>
                     <Label Text="Enable Daily Notes" VerticalOptions="Center" Margin="-110, 0"/>
-                </HorizontalStackLayout>
-            </VerticalStackLayout>
-
-            <!-- Negative Habit -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Negative Habit" FontAttributes="Bold" FontSize="16"/>
-
-                <HorizontalStackLayout Spacing="10">
-                    <Switch IsToggled="{Binding IsNegativeHabit}"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
