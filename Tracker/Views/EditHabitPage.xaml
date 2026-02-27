@@ -393,7 +393,7 @@
                 </Grid>
 
                 <!-- Note Editor -->
-                <Editor Text="{Binding NoteText}"
+                <Editor Text="{Binding NoteEditorText}"
                         Placeholder="Enter your note for this date..."
                         HeightRequest="120"
                         IsEnabled="{Binding IsNoteDateTrackable}"/>

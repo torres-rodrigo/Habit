@@ -251,6 +251,7 @@ namespace Tracker.ViewModels
                     OnPropertyChanged(nameof(SelectedNoteDateDisplay));
                     OnPropertyChanged(nameof(IsNoteDateTrackable));
                     OnPropertyChanged(nameof(SaveNoteButtonColor));
+                    OnPropertyChanged(nameof(NoteEditorText));
                     _ = LoadNoteForDateAsync();
                 }
             }
@@ -261,7 +262,28 @@ namespace Tracker.ViewModels
         public string NoteText
         {
             get => _noteText;
-            set => SetProperty(ref _noteText, value);
+            set
+            {
+                if (SetProperty(ref _noteText, value))
+                {
+                    OnPropertyChanged(nameof(NoteEditorText));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Text to display in the note editor - shows "INVALID DATE" when date is not trackable
+        /// </summary>
+        public string NoteEditorText
+        {
+            get => IsNoteDateTrackable ? _noteText : "INVALID DATE";
+            set
+            {
+                if (IsNoteDateTrackable)
+                {
+                    NoteText = value;
+                }
+            }
         }
 
         /// <summary>
