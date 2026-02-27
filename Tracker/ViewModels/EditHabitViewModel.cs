@@ -20,6 +20,8 @@ namespace Tracker.ViewModels
         private int _displayYear;
         private int _yearRangeStart;
         private DateTime _habitCreatedDate;
+        private HashSet<DateTime> _originalCompletions = new();
+        private HashSet<DateTime> _currentCompletions = new();
 
         public string HabitIdString
         {
@@ -301,7 +303,7 @@ namespace Tracker.ViewModels
             DeleteCommand = new Command(async () => await OnDeleteAsync());
             PreviousMonthCommand = new Command(OnPreviousMonth);
             NextMonthCommand = new Command(OnNextMonth);
-            ToggleCalendarDayCommand = new Command<CalendarDayViewModel>(async (day) => await OnToggleCalendarDayAsync(day));
+            ToggleCalendarDayCommand = new Command<CalendarDayViewModel>(OnToggleCalendarDay);
             ToggleMonthSelectionCommand = new Command(OnToggleMonthSelection);
             SelectMonthCommand = new Command<MonthItemViewModel>(OnSelectMonth);
             PreviousYearCommand = new Command(() => DisplayYear--);
@@ -323,6 +325,10 @@ namespace Tracker.ViewModels
                 {
                     _loadedHabit = habit;
                     _habitCreatedDate = habit.CreatedDate;
+
+                    // Store original completions for comparison on save
+                    _originalCompletions = habit.Completions.Select(c => c.CompletedDate.Date).ToHashSet();
+                    _currentCompletions = new HashSet<DateTime>(_originalCompletions);
 
                     Name = habit.Name;
                     Description = habit.Description;
@@ -399,6 +405,24 @@ namespace Tracker.ViewModels
                 }
 
                 await _dataService.SaveHabitAsync(habit);
+
+                // Save completion changes (only for existing habits)
+                if (_habitId != Guid.Empty)
+                {
+                    // Find completions to add (in current but not in original)
+                    var completionsToAdd = _currentCompletions.Except(_originalCompletions);
+                    foreach (var date in completionsToAdd)
+                    {
+                        await _dataService.ToggleHabitCompletionAsync(_habitId, date);
+                    }
+
+                    // Find completions to remove (in original but not in current)
+                    var completionsToRemove = _originalCompletions.Except(_currentCompletions);
+                    foreach (var date in completionsToRemove)
+                    {
+                        await _dataService.ToggleHabitCompletionAsync(_habitId, date);
+                    }
+                }
 
                 // Handle notifications
                 if (HasReminders && ReminderTime.HasValue)
@@ -526,7 +550,8 @@ namespace Tracker.ViewModels
                     var date = weekStartDate.AddDays(day);
                     var isCurrentMonth = date.Month == CurrentDisplayMonth.Month;
                     var shouldTrack = ShouldTrackOnDate(date);
-                    var isCompleted = _loadedHabit.Completions.Any(c => c.CompletedDate.Date == date.Date);
+                    // Use _currentCompletions to show pending (unsaved) state
+                    var isCompleted = _currentCompletions.Contains(date.Date);
                     // Only allow marking days from habit creation to today (inclusive)
                     var isWithinValidRange = date.Date >= _habitCreatedDate.Date && date.Date <= DateTime.Today;
 
@@ -630,7 +655,7 @@ namespace Tracker.ViewModels
             return DaysOfWeek.Any(d => d.IsSelected && d.Day == date.DayOfWeek);
         }
 
-        private async Task OnToggleCalendarDayAsync(CalendarDayViewModel? day)
+        private void OnToggleCalendarDay(CalendarDayViewModel? day)
         {
             if (day == null || _habitId == Guid.Empty) return;
 
@@ -645,31 +670,17 @@ namespace Tracker.ViewModels
             // (trackable, within valid date range, and current month)
             if (!day.CanToggle) return;
 
-            try
-            {
-                await _dataService.ToggleHabitCompletionAsync(_habitId, day.Date);
-                day.IsCompleted = !day.IsCompleted;
+            // Toggle the completion state locally (will be saved when user clicks Save)
+            day.IsCompleted = !day.IsCompleted;
+            var dateKey = day.Date.Date;
 
-                // Update local completions list
-                if (day.IsCompleted)
-                {
-                    _loadedHabit?.Completions.Add(new HabitCompletion
-                    {
-                        Id = Guid.NewGuid(),
-                        HabitId = _habitId,
-                        CompletedDate = day.Date
-                    });
-                }
-                else
-                {
-                    var completion = _loadedHabit?.Completions.FirstOrDefault(c => c.CompletedDate.Date == day.Date.Date);
-                    if (completion != null)
-                        _loadedHabit?.Completions.Remove(completion);
-                }
-            }
-            catch (Exception ex)
+            if (day.IsCompleted)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle completion: {ex.Message}", "OK");
+                _currentCompletions.Add(dateKey);
+            }
+            else
+            {
+                _currentCompletions.Remove(dateKey);
             }
         }
 
