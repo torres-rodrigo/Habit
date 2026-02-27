@@ -46,6 +46,7 @@ namespace Tracker.Services
             await _database.CreateTableAsync<HabitDb>();
             await _database.CreateTableAsync<HabitTrackingDayDb>();
             await _database.CreateTableAsync<HabitCompletionDb>();
+            await _database.CreateTableAsync<HabitNoteDb>();
             await _database.CreateTableAsync<TaskDb>();
             await _database.CreateTableAsync<SubTaskDb>();
             await _database.CreateTableAsync<DatabaseInfoDb>();
@@ -57,6 +58,10 @@ namespace Tracker.Services
                 "CREATE INDEX IF NOT EXISTS idx_habit_completions_habit_id ON HabitCompletions(HabitId)");
             await _database.ExecuteAsync(
                 "CREATE INDEX IF NOT EXISTS idx_habit_completions_date ON HabitCompletions(CompletedDateUtc)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_habit_notes_habit_id ON HabitNotes(HabitId)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_habit_notes_date ON HabitNotes(DateUtc)");
             await _database.ExecuteAsync(
                 "CREATE INDEX IF NOT EXISTS idx_subtasks_parent_task_id ON SubTasks(ParentTaskId)");
 
@@ -298,6 +303,9 @@ namespace Tracker.Services
                 // Cascade delete completions
                 conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
 
+                // Cascade delete notes
+                conn.Execute("DELETE FROM HabitNotes WHERE HabitId = ?", habitId);
+
                 // Delete habit
                 conn.Execute("DELETE FROM Habits WHERE Id = ?", habitId);
             });
@@ -361,6 +369,61 @@ namespace Tracker.Services
                 .FirstOrDefaultAsync();
 
             return completion != null;
+        }
+
+        public async Task<string?> GetHabitNoteAsync(Guid habitId, DateTime date)
+        {
+            await EnsureInitializedAsync();
+
+            var habitIdStr = habitId.ToString();
+            var dateOnly = date.Date.ToString("yyyy-MM-dd");
+
+            var note = await _database.Table<HabitNoteDb>()
+                .Where(n => n.HabitId == habitIdStr && n.DateUtc == dateOnly)
+                .FirstOrDefaultAsync();
+
+            return note?.Text;
+        }
+
+        public async Task SaveHabitNoteAsync(Guid habitId, DateTime date, string noteText)
+        {
+            await EnsureInitializedAsync();
+
+            var habitIdStr = habitId.ToString();
+            var dateOnly = date.Date.ToString("yyyy-MM-dd");
+
+            var existing = await _database.Table<HabitNoteDb>()
+                .Where(n => n.HabitId == habitIdStr && n.DateUtc == dateOnly)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(noteText))
+            {
+                // If note text is empty, remove the note if it exists
+                if (existing != null)
+                {
+                    await _database.DeleteAsync(existing);
+                }
+            }
+            else
+            {
+                if (existing != null)
+                {
+                    // Update existing note
+                    existing.Text = noteText;
+                    await _database.UpdateAsync(existing);
+                }
+                else
+                {
+                    // Add new note
+                    await _database.InsertAsync(new HabitNoteDb
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        HabitId = habitIdStr,
+                        DateUtc = dateOnly,
+                        Text = noteText
+                    });
+                }
+            }
         }
 
         #endregion

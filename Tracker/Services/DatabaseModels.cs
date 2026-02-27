@@ -60,6 +60,24 @@ namespace Tracker.Services
     }
 
     /// <summary>
+    /// Database table for Habit notes
+    /// </summary>
+    [Table("HabitNotes")]
+    public class HabitNoteDb
+    {
+        [PrimaryKey]
+        public string Id { get; set; } = string.Empty;
+
+        [Indexed]
+        public string HabitId { get; set; } = string.Empty;
+
+        [Indexed]
+        public string DateUtc { get; set; } = string.Empty; // Date only in "yyyy-MM-dd" format
+
+        public string Text { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// Database table for Tasks
     /// </summary>
     [Table("Tasks")]

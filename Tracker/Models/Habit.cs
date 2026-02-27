@@ -20,6 +20,7 @@ namespace Tracker.Models
         public DateTime? UntrackedDate { get; set; }
         public int DisplayOrder { get; set; }
         public List<HabitCompletion> Completions { get; set; } = new();
+        public List<HabitNote> Notes { get; set; } = new();
     }
 
     public class HabitCompletion
@@ -28,5 +29,13 @@ namespace Tracker.Models
         public Guid HabitId { get; set; }
         public DateTime CompletedDate { get; set; }
         public string? Note { get; set; }
+    }
+
+    public class HabitNote
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid HabitId { get; set; }
+        public DateTime Date { get; set; }
+        public string Text { get; set; } = string.Empty;
     }
 }

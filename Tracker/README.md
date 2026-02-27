@@ -444,6 +444,8 @@ Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this
 
+habits page should only allow to mark days since the creation of the habit
+
 probably going to have to move toggles and filtes to hamburguer menu
 
 Notifications/reminders

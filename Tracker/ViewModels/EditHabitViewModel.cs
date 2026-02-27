@@ -22,6 +22,8 @@ namespace Tracker.ViewModels
         private DateTime _habitCreatedDate;
         private HashSet<DateTime> _originalCompletions = new();
         private HashSet<DateTime> _currentCompletions = new();
+        private DateTime _selectedNoteDate = DateTime.Today;
+        private string _noteText = string.Empty;
 
         public string HabitIdString
         {
@@ -106,7 +108,13 @@ namespace Tracker.ViewModels
         public bool NotesEnabled
         {
             get => _notesEnabled;
-            set => SetProperty(ref _notesEnabled, value);
+            set
+            {
+                if (SetProperty(ref _notesEnabled, value))
+                {
+                    OnPropertyChanged(nameof(ShowNotesSection));
+                }
+            }
         }
 
         private bool _isNegativeHabit;
@@ -232,6 +240,45 @@ namespace Tracker.ViewModels
         public string UntrackTrackButtonText => IsTracked ? "Untrack" : "Track";
         public string UntrackTrackButtonColor => IsTracked ? "#FFC107" : "Green";
 
+        // Notes properties
+        public DateTime SelectedNoteDate
+        {
+            get => _selectedNoteDate;
+            set
+            {
+                if (SetProperty(ref _selectedNoteDate, value))
+                {
+                    OnPropertyChanged(nameof(SelectedNoteDateDisplay));
+                    OnPropertyChanged(nameof(IsNoteDateTrackable));
+                    _ = LoadNoteForDateAsync();
+                }
+            }
+        }
+
+        public string SelectedNoteDateDisplay => SelectedNoteDate.ToString("dd/MM/yyyy");
+
+        public string NoteText
+        {
+            get => _noteText;
+            set => SetProperty(ref _noteText, value);
+        }
+
+        /// <summary>
+        /// True if the selected note date is a day that should be tracked by the habit
+        /// </summary>
+        public bool IsNoteDateTrackable
+        {
+            get
+            {
+                if (!IsEditingExistingHabit) return false;
+                return ShouldTrackOnDate(SelectedNoteDate);
+            }
+        }
+
+        public bool ShowNotesSection => NotesEnabled && IsEditingExistingHabit;
+
+        public ICommand SaveNoteCommand { get; }
+
         public EditHabitViewModel(IDataService dataService, INotificationService notificationService)
         {
             _dataService = dataService;
@@ -312,6 +359,7 @@ namespace Tracker.ViewModels
             SelectYearCommand = new Command<YearItemViewModel>(OnSelectYear);
             PreviousYearRangeCommand = new Command(() => YearRangeStart -= 12);
             NextYearRangeCommand = new Command(() => YearRangeStart += 12);
+            SaveNoteCommand = new Command(async () => await OnSaveNoteAsync());
         }
 
         private async Task LoadHabitAsync()
@@ -347,7 +395,12 @@ namespace Tracker.ViewModels
                     }
 
                     OnPropertyChanged(nameof(HabitColor));
+                    OnPropertyChanged(nameof(ShowNotesSection));
+                    OnPropertyChanged(nameof(IsNoteDateTrackable));
                     BuildCalendarDays();
+
+                    // Load note for today's date
+                    await LoadNoteForDateAsync();
                 }
             }
             catch (Exception ex)
@@ -681,6 +734,36 @@ namespace Tracker.ViewModels
             else
             {
                 _currentCompletions.Remove(dateKey);
+            }
+        }
+
+        private async Task LoadNoteForDateAsync()
+        {
+            if (_habitId == Guid.Empty) return;
+
+            try
+            {
+                var noteText = await _dataService.GetHabitNoteAsync(_habitId, SelectedNoteDate);
+                NoteText = noteText ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                NoteText = string.Empty;
+            }
+        }
+
+        private async Task OnSaveNoteAsync()
+        {
+            if (_habitId == Guid.Empty || !IsNoteDateTrackable) return;
+
+            try
+            {
+                await _dataService.SaveHabitNoteAsync(_habitId, SelectedNoteDate, NoteText);
+                await Shell.Current.DisplayAlert("Success", "Note saved successfully.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Failed to save note: {ex.Message}", "OK");
             }
         }
 

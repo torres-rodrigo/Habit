@@ -15,6 +15,8 @@ namespace Tracker.Services
         Task UpdateHabitOrderAsync(List<Habit> habits);
         Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null);
         Task<bool> IsHabitCompletedOnDateAsync(Guid habitId, DateTime date);
+        Task<string?> GetHabitNoteAsync(Guid habitId, DateTime date);
+        Task SaveHabitNoteAsync(Guid habitId, DateTime date, string noteText);
 
         // Tasks
         Task<List<TodoTask>> GetAllTasksAsync();
@@ -206,6 +208,51 @@ namespace Tracker.Services
             if (habit == null) return false;
 
             return habit.Completions.Any(c => c.CompletedDate.Date == date.Date);
+        }
+
+        public async Task<string?> GetHabitNoteAsync(Guid habitId, DateTime date)
+        {
+            var habit = await GetHabitByIdAsync(habitId);
+            if (habit == null) return null;
+
+            var note = habit.Notes.FirstOrDefault(n => n.Date.Date == date.Date);
+            return note?.Text;
+        }
+
+        public async Task SaveHabitNoteAsync(Guid habitId, DateTime date, string noteText)
+        {
+            var habit = await GetHabitByIdAsync(habitId);
+            if (habit == null) return;
+
+            var dateOnly = date.Date;
+            var existingNote = habit.Notes.FirstOrDefault(n => n.Date.Date == dateOnly);
+
+            if (string.IsNullOrWhiteSpace(noteText))
+            {
+                // If note text is empty, remove the note if it exists
+                if (existingNote != null)
+                {
+                    habit.Notes.Remove(existingNote);
+                }
+            }
+            else
+            {
+                if (existingNote != null)
+                {
+                    // Update existing note
+                    existingNote.Text = noteText;
+                }
+                else
+                {
+                    // Add new note
+                    habit.Notes.Add(new HabitNote
+                    {
+                        HabitId = habitId,
+                        Date = dateOnly,
+                        Text = noteText
+                    });
+                }
+            }
         }
 
         // Task methods
