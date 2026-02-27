@@ -16,7 +16,9 @@ namespace Tracker.ViewModels
         private DateTime _currentDisplayMonth;
         private Habit? _loadedHabit;
         private bool _isMonthSelectionMode;
+        private bool _isYearSelectionMode;
         private int _displayYear;
+        private int _yearRangeStart;
 
         public string HabitIdString
         {
@@ -146,6 +148,19 @@ namespace Tracker.ViewModels
 
         public ObservableCollection<CalendarWeekViewModel> CalendarWeeks { get; set; }
         public ObservableCollection<MonthItemViewModel> MonthItems { get; set; }
+        public ObservableCollection<YearItemViewModel> YearItems { get; set; }
+
+        public int YearRangeStart
+        {
+            get => _yearRangeStart;
+            set
+            {
+                if (SetProperty(ref _yearRangeStart, value))
+                {
+                    UpdateYearItems();
+                }
+            }
+        }
 
         public bool IsMonthSelectionMode
         {
@@ -155,11 +170,26 @@ namespace Tracker.ViewModels
                 if (SetProperty(ref _isMonthSelectionMode, value))
                 {
                     OnPropertyChanged(nameof(IsDayViewMode));
+                    OnPropertyChanged(nameof(IsMonthSelectionOnly));
                 }
             }
         }
 
-        public bool IsDayViewMode => !IsMonthSelectionMode;
+        public bool IsYearSelectionMode
+        {
+            get => _isYearSelectionMode;
+            set
+            {
+                if (SetProperty(ref _isYearSelectionMode, value))
+                {
+                    OnPropertyChanged(nameof(IsDayViewMode));
+                    OnPropertyChanged(nameof(IsMonthSelectionOnly));
+                }
+            }
+        }
+
+        public bool IsDayViewMode => !IsMonthSelectionMode && !IsYearSelectionMode;
+        public bool IsMonthSelectionOnly => IsMonthSelectionMode && !IsYearSelectionMode;
 
         public int DisplayYear
         {
@@ -184,6 +214,10 @@ namespace Tracker.ViewModels
         public ICommand SelectMonthCommand { get; }
         public ICommand PreviousYearCommand { get; }
         public ICommand NextYearCommand { get; }
+        public ICommand ToggleYearSelectionCommand { get; }
+        public ICommand SelectYearCommand { get; }
+        public ICommand PreviousYearRangeCommand { get; }
+        public ICommand NextYearRangeCommand { get; }
 
         public bool IsSaving
         {
@@ -248,6 +282,18 @@ namespace Tracker.ViewModels
                 });
             }
 
+            // Initialize year items (show 12 years at a time, 4x3 grid)
+            YearItems = new ObservableCollection<YearItemViewModel>();
+            _yearRangeStart = DateTime.Today.Year - 5; // Center current year in the range
+            for (int i = 0; i < 12; i++)
+            {
+                YearItems.Add(new YearItemViewModel
+                {
+                    Year = _yearRangeStart + i,
+                    IsSelected = (_yearRangeStart + i) == DateTime.Today.Year
+                });
+            }
+
             SaveCommand = new Command(async () => await OnSaveAsync());
             CancelCommand = new Command(OnCancel);
             UntrackTrackCommand = new Command(async () => await OnUntrackTrackAsync());
@@ -259,6 +305,10 @@ namespace Tracker.ViewModels
             SelectMonthCommand = new Command<MonthItemViewModel>(OnSelectMonth);
             PreviousYearCommand = new Command(() => DisplayYear--);
             NextYearCommand = new Command(() => DisplayYear++);
+            ToggleYearSelectionCommand = new Command(OnToggleYearSelection);
+            SelectYearCommand = new Command<YearItemViewModel>(OnSelectYear);
+            PreviousYearRangeCommand = new Command(() => YearRangeStart -= 12);
+            NextYearRangeCommand = new Command(() => YearRangeStart += 12);
         }
 
         private async Task LoadHabitAsync()
@@ -534,6 +584,41 @@ namespace Tracker.ViewModels
             }
         }
 
+        private void OnToggleYearSelection()
+        {
+            if (IsYearSelectionMode)
+            {
+                // Going back to month selection
+                IsYearSelectionMode = false;
+            }
+            else
+            {
+                // Going to year selection - center current display year in the range
+                YearRangeStart = DisplayYear - 5;
+                UpdateYearItems();
+                IsYearSelectionMode = true;
+            }
+        }
+
+        private void OnSelectYear(YearItemViewModel? yearItem)
+        {
+            if (yearItem == null) return;
+
+            DisplayYear = yearItem.Year;
+            UpdateMonthItemsSelection();
+            IsYearSelectionMode = false;
+        }
+
+        private void UpdateYearItems()
+        {
+            for (int i = 0; i < YearItems.Count; i++)
+            {
+                var yearItem = YearItems[i];
+                yearItem.Year = YearRangeStart + i;
+                yearItem.IsSelected = yearItem.Year == DisplayYear;
+            }
+        }
+
         private bool ShouldTrackOnDate(DateTime date)
         {
             if (TrackEveryday) return true;
@@ -692,7 +777,8 @@ namespace Tracker.ViewModels
 
         // Visual properties for dark theme
         // Background only fills for completed days (not just today)
-        public string BackgroundColor => IsCompleted ? (IsNegativeHabit ? "#FF4444" : "#44FF44") : "Transparent";
+        // Use same green as habit cards ("Green" = #008000)
+        public string BackgroundColor => IsCompleted ? (IsNegativeHabit ? "Red" : "Green") : "Transparent";
 
         // Border for today indicator (darker green outline)
         public string BorderColor => IsToday ? (IsNegativeHabit ? "#AA0000" : "#507d2a") : "Transparent";
@@ -754,7 +840,42 @@ namespace Tracker.ViewModels
             }
         }
 
-        public string BackgroundColor => IsSelected ? "#44FF44" : "Transparent";
-        public string TextColor => IsSelected ? "#000000" : "#FFFFFF";
+        public string BackgroundColor => IsSelected ? "Green" : "Transparent";
+        public string TextColor => IsSelected ? "White" : "#FFFFFF";
+    }
+
+    public class YearItemViewModel : BaseViewModel
+    {
+        private int _year;
+        public int Year
+        {
+            get => _year;
+            set
+            {
+                if (SetProperty(ref _year, value))
+                {
+                    OnPropertyChanged(nameof(YearDisplay));
+                }
+            }
+        }
+
+        public string YearDisplay => Year.ToString();
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (SetProperty(ref _isSelected, value))
+                {
+                    OnPropertyChanged(nameof(BackgroundColor));
+                    OnPropertyChanged(nameof(TextColor));
+                }
+            }
+        }
+
+        public string BackgroundColor => IsSelected ? "Green" : "Transparent";
+        public string TextColor => IsSelected ? "White" : "#FFFFFF";
     }
 }

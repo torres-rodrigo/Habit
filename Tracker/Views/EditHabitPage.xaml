@@ -278,13 +278,13 @@
                     </VerticalStackLayout>
 
                     <!-- Month Selection View -->
-                    <VerticalStackLayout Spacing="15" IsVisible="{Binding IsMonthSelectionMode}">
-                        <!-- Year Selector -->
+                    <VerticalStackLayout Spacing="15" IsVisible="{Binding IsMonthSelectionOnly}">
+                        <!-- Year Selector (clickable to open year selection) -->
                         <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
                             <Border Grid.Column="0" BackgroundColor="#404040" Padding="10,8">
                                 <Border.StrokeShape><RoundRectangle CornerRadius="6"/></Border.StrokeShape>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ToggleMonthSelectionCommand}"/>
+                                    <TapGestureRecognizer Command="{Binding ToggleYearSelectionCommand}"/>
                                 </Border.GestureRecognizers>
                                 <Label Text="{Binding DisplayYear}" FontSize="18" TextColor="White"/>
                             </Border>
@@ -317,6 +317,48 @@
                                                                 CommandParameter="{Binding .}"/>
                                         </Border.GestureRecognizers>
                                         <Label Text="{Binding ShortName}" FontSize="16" TextColor="{Binding TextColor}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+
+                    <!-- Year Selection View -->
+                    <VerticalStackLayout Spacing="15" IsVisible="{Binding IsYearSelectionMode}">
+                        <!-- Year Range Header with Navigation -->
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
+                            <Label Grid.Column="0" Text="Select Year" FontSize="18" FontAttributes="Bold"
+                                   TextColor="White" VerticalOptions="Center"/>
+                            <Label Grid.Column="1" Text="&#x25B2;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center" Margin="15,0,15,0">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding PreviousYearRangeCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Grid.Column="2" Text="&#x25BC;" FontSize="16" TextColor="#888888"
+                                   VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding NextYearRangeCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+
+                        <!-- Year Grid (4x3) -->
+                        <CollectionView ItemsSource="{Binding YearItems}" SelectionMode="None" HeightRequest="250">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical" Span="4" HorizontalItemSpacing="10" VerticalItemSpacing="15"/>
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:YearItemViewModel">
+                                    <Border BackgroundColor="{Binding BackgroundColor}"
+                                            StrokeThickness="0" HeightRequest="50" HorizontalOptions="Center" WidthRequest="70">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="25"/></Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:EditHabitViewModel}}, Path=SelectYearCommand}"
+                                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding YearDisplay}" FontSize="14" TextColor="{Binding TextColor}"
                                                HorizontalOptions="Center" VerticalOptions="Center"/>
                                     </Border>
                                 </DataTemplate>
