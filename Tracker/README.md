@@ -438,10 +438,7 @@ For issues or questions, please create an issue in the project repository.
 
 **Built with ❤️ using .NET MAUI**
 
-PERSONAL TODO 
-
-For completed and untrack habits, the habits page week selector should remain with the values of the week the habit was
-completed or untracked
+PERSONAL TODO
 
 probably going to have to move toggles and filtes to hamburguer menu
 

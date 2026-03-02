@@ -599,13 +599,31 @@ namespace Tracker.ViewModels
         private async Task LoadWeekProgressAsync()
         {
             WeekDays.Clear();
-            var today = DateTime.Today;
-            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+
+            // Determine which week to display based on habit status
+            DateTime referenceDate;
+            if (!IsTracked && _habit.UntrackedDate.HasValue)
+            {
+                // Untracked habit: show week when it was untracked
+                referenceDate = _habit.UntrackedDate.Value.Date;
+            }
+            else if (IsCompleted && _habit.Deadline.HasValue)
+            {
+                // Completed habit: show week when deadline passed
+                referenceDate = _habit.Deadline.Value.Date;
+            }
+            else
+            {
+                // Active habit: show current week
+                referenceDate = DateTime.Today;
+            }
+
+            var startOfWeek = referenceDate.AddDays(-(int)referenceDate.DayOfWeek);
 
             // Calculate week number (ISO 8601)
             var culture = System.Globalization.CultureInfo.CurrentCulture;
             var calendar = culture.Calendar;
-            WeekNumber = calendar.GetWeekOfYear(today,
+            WeekNumber = calendar.GetWeekOfYear(referenceDate,
                 System.Globalization.CalendarWeekRule.FirstDay,
                 DayOfWeek.Sunday);
 
@@ -634,7 +652,7 @@ namespace Tracker.ViewModels
                     DayName = date.ToString("ddd"),
                     IsCompleted = isCompleted,
                     ShouldTrack = shouldTrack,
-                    IsToday = date.Date == DateTime.Today,
+                    IsToday = date.Date == referenceDate.Date,
                     HabitColor = HabitColor,
                     IsHabitCompleted = IsCompleted,
                     HabitCreatedDate = _habit.CreatedDate
