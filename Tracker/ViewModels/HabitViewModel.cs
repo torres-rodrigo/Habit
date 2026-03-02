@@ -36,8 +36,8 @@ namespace Tracker.ViewModels
         public ICommand ToggleCompletedHabitsSectionCommand { get; }
         public ICommand ToggleUntrackedHabitsSectionCommand { get; }
         public ICommand ToggleReorderModeCommand { get; }
-        public ICommand ItemDraggedOverCommand { get; }
-        public ICommand ItemDroppedCommand { get; }
+        public ICommand StartDragCommand { get; }
+        public ICommand DropCommand { get; }
 
         public bool ShowOverlay
         {
@@ -117,8 +117,8 @@ namespace Tracker.ViewModels
             ToggleCompletedHabitsSectionCommand = new Command(() => CompletedHabitsExpanded = !CompletedHabitsExpanded);
             ToggleUntrackedHabitsSectionCommand = new Command(() => UntrackedHabitsExpanded = !UntrackedHabitsExpanded);
             ToggleReorderModeCommand = new Command(async () => await OnToggleReorderModeAsync());
-            ItemDraggedOverCommand = new Command<HabitCardViewModel>(OnItemDraggedOver);
-            ItemDroppedCommand = new Command<HabitCardViewModel>(OnItemDropped);
+            StartDragCommand = new Command<HabitCardViewModel>(OnStartDrag);
+            DropCommand = new Command<HabitCardViewModel>(OnDrop);
 
             _ = LoadHabitsAsync();
         }
@@ -234,8 +234,16 @@ namespace Tracker.ViewModels
 
         private async Task OnEditHabit(Guid habitId)
         {
-            // Don't allow editing while in reorder mode
-            if (IsReorderMode) return;
+            // In reorder mode, use tap to select for reordering
+            if (IsReorderMode)
+            {
+                var habit = ActiveHabits.FirstOrDefault(h => h.Id == habitId);
+                if (habit != null)
+                {
+                    OnStartDrag(habit);
+                }
+                return;
+            }
 
             // Find the habit to check if it's completed or untracked
             var habitCard = Habits.FirstOrDefault(h => h.Id == habitId)
@@ -341,16 +349,33 @@ namespace Tracker.ViewModels
             }
         }
 
-        private void OnItemDraggedOver(HabitCardViewModel? item)
+        private void OnStartDrag(HabitCardViewModel? item)
         {
             if (item == null || !IsReorderMode) return;
-            _draggedItem = item;
+
+            // If no item is selected, select this one
+            if (_draggedItem == null)
+            {
+                _draggedItem = item;
+                item.IsSelectedForReorder = true;
+            }
+            // If an item is already selected, swap positions
+            else
+            {
+                OnDrop(item);
+            }
         }
 
-        private void OnItemDropped(HabitCardViewModel? targetItem)
+        private void OnDrop(HabitCardViewModel? targetItem)
         {
             if (targetItem == null || _draggedItem == null || !IsReorderMode) return;
-            if (_draggedItem == targetItem) return;
+            if (_draggedItem == targetItem)
+            {
+                // Deselect if same item clicked again
+                _draggedItem.IsSelectedForReorder = false;
+                _draggedItem = null;
+                return;
+            }
 
             var oldIndex = ActiveHabits.IndexOf(_draggedItem);
             var newIndex = ActiveHabits.IndexOf(targetItem);
@@ -362,6 +387,7 @@ namespace Tracker.ViewModels
                 ActiveHabits.Insert(newIndex, _draggedItem);
             }
 
+            _draggedItem.IsSelectedForReorder = false;
             _draggedItem = null;
         }
 
@@ -445,6 +471,21 @@ namespace Tracker.ViewModels
             get => _displayOrder;
             set => SetProperty(ref _displayOrder, value);
         }
+
+        private bool _isSelectedForReorder;
+        public bool IsSelectedForReorder
+        {
+            get => _isSelectedForReorder;
+            set
+            {
+                if (SetProperty(ref _isSelectedForReorder, value))
+                {
+                    OnPropertyChanged(nameof(SelectionBackgroundColor));
+                }
+            }
+        }
+
+        public Color SelectionBackgroundColor => IsSelectedForReorder ? Color.FromArgb("#E0E0E0") : Colors.Transparent;
 
         public bool IsTrackedToday
         {

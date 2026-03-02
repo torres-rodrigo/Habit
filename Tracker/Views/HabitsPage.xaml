@@ -45,14 +45,11 @@
                                    BorderColor="{Binding HabitColor}"
                                    HasShadow="True"
                                    Margin="0,0,0,5"
-                                   Padding="15">
+                                   Padding="15"
+                                   BackgroundColor="{Binding SelectionBackgroundColor}">
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
                                                         CommandParameter="{Binding Id}"/>
-                                    <DragGestureRecognizer DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDraggedOverCommand}"
-                                                         DragStartingCommandParameter="{Binding .}"/>
-                                    <DropGestureRecognizer DropCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDroppedCommand}"
-                                                         DropCommandParameter="{Binding .}"/>
                                 </Frame.GestureRecognizers>
 
                                 <Grid ColumnDefinitions="Auto,*">
@@ -201,14 +198,11 @@
                                            BorderColor="{Binding HabitColor}"
                                            HasShadow="True"
                                            Margin="0,0,0,5"
-                                           Padding="15">
+                                           Padding="15"
+                                           BackgroundColor="{Binding SelectionBackgroundColor}">
                                         <Frame.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
                                                                 CommandParameter="{Binding Id}"/>
-                                            <DragGestureRecognizer DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDraggedOverCommand}"
-                                                                 DragStartingCommandParameter="{Binding .}"/>
-                                            <DropGestureRecognizer DropCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDroppedCommand}"
-                                                                 DropCommandParameter="{Binding .}"/>
                                         </Frame.GestureRecognizers>
 
                                         <Grid ColumnDefinitions="Auto,*">
