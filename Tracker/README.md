@@ -443,10 +443,6 @@ PERSONAL TODO
 For completed and untrack habits, the habits page week selector should remain with the values of the week the habit was
 completed or untracked
 
-Reorder for habits
-For habits if it was completed today send to bottom, toggle for this
-If habit is not enabled for today send to bottom, toggle for this
-
 probably going to have to move toggles and filtes to hamburguer menu
 
 feature to export notes for a habit into a text file, options for all or multi select, in stats tab

@@ -344,7 +344,17 @@ namespace Tracker.ViewModels
             }
             else
             {
-                // Entering reorder mode
+                // Entering reorder mode - show habits sorted by DisplayOrder only (ignore auto-sorting groups)
+                var sortedByDisplayOrder = ActiveHabits
+                    .OrderBy(h => h.DisplayOrder)
+                    .ToList();
+
+                ActiveHabits.Clear();
+                foreach (var habit in sortedByDisplayOrder)
+                {
+                    ActiveHabits.Add(habit);
+                }
+
                 IsReorderMode = true;
             }
         }
