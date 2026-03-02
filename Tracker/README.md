@@ -442,9 +442,6 @@ PERSONAL TODO
 
 probably going to have to move toggles and filtes to hamburguer menu
 
-feature to export notes for a habit into a text file, options for all or multi select, in stats tab
-feature to export the database file for backup or transfer to another device, in stats tab
-
 manage case where habit frequency changes so as to not break statistics and fix stats so that they start counting from
 habit creation
 

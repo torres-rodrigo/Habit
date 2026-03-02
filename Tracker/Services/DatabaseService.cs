@@ -23,7 +23,7 @@ namespace Tracker.Services
         {
             var dbPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "tracker.db3");
+                "tracker.db");
 
             _database = new SQLiteAsyncConnection(dbPath);
             _initializationTask = InitializeDatabaseAsync();

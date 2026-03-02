@@ -13,6 +13,11 @@ namespace Tracker.ViewModels
         private bool _isHabitStatisticsCollapsed = false;
         private bool _isCompletedHabitsCollapsed = false;
         private bool _isUntrackedHabitsCollapsed = false;
+        private bool _showExportPopup = false;
+        private string _exportStatusMessage = string.Empty;
+        private bool _isExporting = false;
+        private bool _isExportSuccessful = false;
+        private CancellationTokenSource? _cancellationTokenSource;
 
         public ObservableCollection<HabitStatistics> ActiveHabitStatistics { get; set; }
         public ObservableCollection<HabitStatistics> CompletedHabitStatistics { get; set; }
@@ -52,10 +57,71 @@ namespace Tracker.ViewModels
         public bool HasCompletedHabits => CompletedHabitStatistics.Count > 0;
         public bool HasUntrackedHabits => UntrackedHabitsByYear.Count > 0;
 
+        public bool ShowExportPopup
+        {
+            get => _showExportPopup;
+            set => SetProperty(ref _showExportPopup, value);
+        }
+
+        public string ExportStatusMessage
+        {
+            get => _exportStatusMessage;
+            set
+            {
+                if (SetProperty(ref _exportStatusMessage, value))
+                {
+                    OnPropertyChanged(nameof(StatusMessageColor));
+                }
+            }
+        }
+
+        public bool IsExporting
+        {
+            get => _isExporting;
+            set
+            {
+                if (SetProperty(ref _isExporting, value))
+                {
+                    OnPropertyChanged(nameof(IsNotExporting));
+                    OnPropertyChanged(nameof(CanExport));
+                }
+            }
+        }
+
+        public bool IsExportSuccessful
+        {
+            get => _isExportSuccessful;
+            set
+            {
+                if (SetProperty(ref _isExportSuccessful, value))
+                {
+                    OnPropertyChanged(nameof(ExportButtonText));
+                }
+            }
+        }
+
+        public bool IsNotExporting => !IsExporting;
+        public bool CanExport => !IsExporting;
+        public string ExportButtonText => IsExportSuccessful ? "OK" : "Export";
+        public Color StatusMessageColor
+        {
+            get
+            {
+                if (ExportStatusMessage.StartsWith("SUCCESS"))
+                    return Colors.Green;
+                if (ExportStatusMessage.StartsWith("ERROR"))
+                    return Colors.Red;
+                return Colors.White;
+            }
+        }
+
         public ICommand ToggleTaskStatisticsCollapseCommand { get; }
         public ICommand ToggleHabitStatisticsCollapseCommand { get; }
         public ICommand ToggleCompletedHabitsCollapseCommand { get; }
         public ICommand ToggleUntrackedHabitsCollapseCommand { get; }
+        public ICommand ShowExportPopupCommand { get; }
+        public ICommand CancelExportCommand { get; }
+        public ICommand ExecuteExportCommand { get; }
 
         public StatisticsViewModel(IDataService dataService)
         {
@@ -67,6 +133,9 @@ namespace Tracker.ViewModels
             ToggleHabitStatisticsCollapseCommand = new Command(() => IsHabitStatisticsCollapsed = !IsHabitStatisticsCollapsed);
             ToggleCompletedHabitsCollapseCommand = new Command(() => IsCompletedHabitsCollapsed = !IsCompletedHabitsCollapsed);
             ToggleUntrackedHabitsCollapseCommand = new Command(() => IsUntrackedHabitsCollapsed = !IsUntrackedHabitsCollapsed);
+            ShowExportPopupCommand = new Command(OnShowExportPopup);
+            CancelExportCommand = new Command(OnCancelExport);
+            ExecuteExportCommand = new Command(async () => await OnExecuteExportAsync());
             _ = LoadStatisticsAsync();
         }
 
@@ -166,6 +235,95 @@ namespace Tracker.ViewModels
         public async Task RefreshAsync()
         {
             await LoadStatisticsAsync();
+        }
+
+        private void OnShowExportPopup()
+        {
+            ExportStatusMessage = string.Empty;
+            IsExporting = false;
+            IsExportSuccessful = false;
+            ShowExportPopup = true;
+        }
+
+        private void OnCancelExport()
+        {
+            _cancellationTokenSource?.Cancel();
+            ShowExportPopup = false;
+            IsExporting = false;
+            IsExportSuccessful = false;
+            ExportStatusMessage = string.Empty;
+        }
+
+        private async Task OnExecuteExportAsync()
+        {
+            // If export was successful, just close the popup
+            if (IsExportSuccessful)
+            {
+                ShowExportPopup = false;
+                IsExportSuccessful = false;
+                ExportStatusMessage = string.Empty;
+                return;
+            }
+
+            if (IsExporting) return;
+
+            try
+            {
+                IsExporting = true;
+                _cancellationTokenSource = new CancellationTokenSource();
+                ExportStatusMessage = "Please wait...";
+
+                // Get the actual database path (it's tracker.db in LocalApplicationData)
+                var dbPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "tracker.db");
+
+                // Check if database exists
+                if (!File.Exists(dbPath))
+                {
+                    ExportStatusMessage = "ERROR: Database file not found";
+                    return;
+                }
+
+                // Export to Documents folder where user can access it
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var backupFileName = $"tracker-{DateTime.Now:yyyy-MM-dd}-bak.db";
+                var targetPath = Path.Combine(documentsPath, backupFileName);
+
+                // Copy the database file
+                await Task.Run(() =>
+                {
+                    File.Copy(dbPath, targetPath, overwrite: true);
+                }, _cancellationTokenSource.Token);
+
+                if (_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    ExportStatusMessage = string.Empty;
+                    if (File.Exists(targetPath))
+                    {
+                        File.Delete(targetPath);
+                    }
+                }
+                else
+                {
+                    ExportStatusMessage = $"SUCCESS! DB exported to {targetPath}";
+                    IsExportSuccessful = true;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                ExportStatusMessage = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ExportStatusMessage = $"ERROR: {ex.Message}";
+            }
+            finally
+            {
+                IsExporting = false;
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
+            }
         }
     }
 }
