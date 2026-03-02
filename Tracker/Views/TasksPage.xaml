@@ -585,7 +585,7 @@
             <!-- Modal popup container -->
             <Border WidthRequest="400"
                     HeightRequest="380"
-                    BackgroundColor="White"
+                    BackgroundColor="#2B2B2B"
                     StrokeThickness="0"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
@@ -596,22 +596,22 @@
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer/>
                 </Border.GestureRecognizers>
-                
+
                 <Grid RowDefinitions="Auto,*,Auto" Padding="0">
                     <!-- Header -->
                     <Grid Grid.Row="0" Padding="24,20">
-                        <Label Text="Create New" 
-                               FontSize="22" 
+                        <Label Text="Create New"
+                               FontSize="22"
                                FontAttributes="Bold"
-                               TextColor="#212121"
+                               TextColor="White"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
                     </Grid>
                     
                     <!-- Options -->
                     <VerticalStackLayout Grid.Row="1" Spacing="12" Padding="20,0" VerticalOptions="Center">
-                        <Border BackgroundColor="#F8F9FA"
-                                Stroke="#E0E0E0"
+                        <Border BackgroundColor="#3A3A3A"
+                                Stroke="#4A4A4A"
                                 StrokeThickness="1"
                                 Padding="0">
                             <Border.StrokeShape>
@@ -621,40 +621,40 @@
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding NavigateToHabitCommand}"/>
                                 </Grid.GestureRecognizers>
-                                
-                                <Frame Grid.Column="0" 
-                                       WidthRequest="48" 
-                                       HeightRequest="48" 
-                                       CornerRadius="24" 
-                                       BackgroundColor="#6366F1" 
+
+                                <Frame Grid.Column="0"
+                                       WidthRequest="48"
+                                       HeightRequest="48"
+                                       CornerRadius="24"
+                                       BackgroundColor="#6366F1"
                                        Padding="0"
                                        HasShadow="False">
-                                    <Label Text="🎯" 
-                                           FontSize="26" 
-                                           HorizontalOptions="Center" 
+                                    <Label Text="🎯"
+                                           FontSize="26"
+                                           HorizontalOptions="Center"
                                            VerticalOptions="Center"/>
                                 </Frame>
-                                
+
                                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="12,0,0,0">
-                                    <Label Text="New Habit" 
-                                           FontSize="17" 
+                                    <Label Text="New Habit"
+                                           FontSize="17"
                                            FontAttributes="Bold"
-                                           TextColor="#212121"/>
-                                    <Label Text="Track recurring activities" 
-                                           FontSize="13" 
-                                           TextColor="#757575"
+                                           TextColor="White"/>
+                                    <Label Text="Track recurring activities"
+                                           FontSize="13"
+                                           TextColor="#AAAAAA"
                                            Margin="0,2,0,0"/>
                                 </VerticalStackLayout>
-                                
-                                <Label Grid.Column="2" 
-                                       Text="›" 
-                                       FontSize="28" 
-                                       TextColor="#BDBDBD"
+
+                                <Label Grid.Column="2"
+                                       Text="›"
+                                       FontSize="28"
+                                       TextColor="#888888"
                                        VerticalOptions="Center"/>
                             </Grid>
                         </Border>
-                        <Border BackgroundColor="#F8F9FA"
-                                Stroke="#E0E0E0"
+                        <Border BackgroundColor="#3A3A3A"
+                                Stroke="#4A4A4A"
                                 StrokeThickness="1"
                                 Padding="0">
                             <Border.StrokeShape>
@@ -664,45 +664,45 @@
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding NavigateToTaskCommand}"/>
                                 </Grid.GestureRecognizers>
-                                
-                                <Frame Grid.Column="0" 
-                                       WidthRequest="48" 
-                                       HeightRequest="48" 
-                                       CornerRadius="24" 
-                                       BackgroundColor="#10B981" 
+
+                                <Frame Grid.Column="0"
+                                       WidthRequest="48"
+                                       HeightRequest="48"
+                                       CornerRadius="24"
+                                       BackgroundColor="#10B981"
                                        Padding="0"
                                        HasShadow="False">
-                                    <Label Text="✓" 
-                                           FontSize="26" 
-                                           HorizontalOptions="Center" 
+                                    <Label Text="✓"
+                                           FontSize="26"
+                                           HorizontalOptions="Center"
                                            VerticalOptions="Center"/>
                                 </Frame>
-                                
+
                                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="12,0,0,0">
-                                    <Label Text="New Task" 
-                                           FontSize="17" 
+                                    <Label Text="New Task"
+                                           FontSize="17"
                                            FontAttributes="Bold"
-                                           TextColor="#212121"/>
-                                    <Label Text="One-time to-do items" 
-                                           FontSize="13" 
-                                           TextColor="#757575"
+                                           TextColor="White"/>
+                                    <Label Text="One-time to-do items"
+                                           FontSize="13"
+                                           TextColor="#AAAAAA"
                                            Margin="0,2,0,0"/>
                                 </VerticalStackLayout>
-                                
-                                <Label Grid.Column="2" 
-                                       Text="›" 
-                                       FontSize="28" 
-                                       TextColor="#BDBDBD"
+
+                                <Label Grid.Column="2"
+                                       Text="›"
+                                       FontSize="28"
+                                       TextColor="#888888"
                                        VerticalOptions="Center"/>
                             </Grid>
                         </Border>
                     </VerticalStackLayout>
-                    
+
                     <!-- Cancel button at bottom -->
                     <Border Grid.Row="2"
-                            Stroke="#E0E0E0"
+                            Stroke="#4A4A4A"
                             StrokeThickness="1"
-                            BackgroundColor="#F5F5F5"
+                            BackgroundColor="#3A3A3A"
                             Margin="20,0,20,16"
                             Padding="0">
                         <Border.StrokeShape>
@@ -711,7 +711,7 @@
                         <Button Text="Cancel"
                                 Command="{Binding CloseOverlayCommand}"
                                 BackgroundColor="Transparent"
-                                TextColor="#757575"
+                                TextColor="#AAAAAA"
                                 FontSize="16"
                                 FontAttributes="Bold"
                                 Padding="12"/>
