@@ -439,6 +439,9 @@ namespace Tracker.ViewModels
                 {
                     await habitCard.UpdateDayCompletionAsync(dayCompletion.Date);
                 }
+
+                // Re-apply auto-sorting since completion status changed
+                OrganizeHabits();
             }
             catch (Exception ex)
             {
@@ -510,8 +513,9 @@ namespace Tracker.ViewModels
         {
             get
             {
-                var todayCompletion = WeekDays.FirstOrDefault(d => d.IsToday);
-                return todayCompletion?.IsCompleted ?? false;
+                // Check completions directly from the habit, not from WeekDays (which loads async)
+                var today = DateTime.Today;
+                return _habit.Completions.Any(c => c.CompletedDate.Date == today);
             }
         }
         
