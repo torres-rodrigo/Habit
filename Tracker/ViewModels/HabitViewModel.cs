@@ -456,7 +456,16 @@ namespace Tracker.ViewModels
         public bool ShouldTrack { get; set; }
         public bool IsToday { get; set; }
         public bool IsHabitCompleted { get; set; } // Indicates if the parent habit is completed (past deadline)
-        public bool IsWithinValidRange => Date.Date >= HabitCreatedDate.Date && Date.Date <= DateTime.Today;
+        public bool IsWithinValidRange
+        {
+            get
+            {
+                var today = DateTime.Today;
+                var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+                var endOfWeek = startOfWeek.AddDays(6);
+                return Date.Date >= HabitCreatedDate.Date && Date.Date <= endOfWeek;
+            }
+        }
         public bool CanToggle => ShouldTrack && IsWithinValidRange && !IsHabitCompleted;
         public double DayOpacity => !ShouldTrack ? 0.3 : (!IsWithinValidRange ? 0.4 : 1.0);
     }
