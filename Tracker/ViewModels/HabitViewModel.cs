@@ -234,6 +234,9 @@ namespace Tracker.ViewModels
 
         private async Task OnEditHabit(Guid habitId)
         {
+            // Don't allow editing while in reorder mode
+            if (IsReorderMode) return;
+
             // Find the habit to check if it's completed or untracked
             var habitCard = Habits.FirstOrDefault(h => h.Id == habitId)
                 ?? ActiveHabits.FirstOrDefault(h => h.Id == habitId)
@@ -364,6 +367,9 @@ namespace Tracker.ViewModels
 
         private async Task OnToggleCompletion(DayCompletionViewModel? dayCompletion)
         {
+            // Don't allow toggling completion while in reorder mode
+            if (IsReorderMode) return;
+
             if (dayCompletion == null || !dayCompletion.CanToggle)
                 return;
 

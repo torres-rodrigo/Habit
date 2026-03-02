@@ -22,7 +22,7 @@
                             VerticalOptions="Center"/>
                     <Button Text="{Binding ReorderButtonText}"
                             Command="{Binding ToggleReorderModeCommand}"
-                            BackgroundColor="{StaticResource Primary}"
+                            BackgroundColor="{StaticResource Gray500}"
                             TextColor="White"
                             FontSize="14"
                             Padding="15,8"
