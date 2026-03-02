@@ -13,6 +13,7 @@ namespace Tracker.Services
         Task SaveHabitAsync(Habit habit);
         Task DeleteHabitAsync(Guid id);
         Task UpdateHabitOrderAsync(List<Habit> habits);
+        Task UpdateHabitDisplayOrderAsync(Guid habitId, int displayOrder);
         Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null);
         Task<bool> IsHabitCompletedOnDateAsync(Guid habitId, DateTime date);
         Task<string?> GetHabitNoteAsync(Guid habitId, DateTime date);
@@ -177,6 +178,15 @@ namespace Tracker.Services
                 habits[i].DisplayOrder = i;
             }
             return Task.CompletedTask;
+        }
+
+        public async Task UpdateHabitDisplayOrderAsync(Guid habitId, int displayOrder)
+        {
+            var habit = await GetHabitByIdAsync(habitId);
+            if (habit != null)
+            {
+                habit.DisplayOrder = displayOrder;
+            }
         }
 
         public async Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null)

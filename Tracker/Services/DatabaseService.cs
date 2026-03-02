@@ -328,6 +328,16 @@ namespace Tracker.Services
             });
         }
 
+        public async Task UpdateHabitDisplayOrderAsync(Guid habitId, int displayOrder)
+        {
+            await EnsureInitializedAsync();
+
+            await _database.ExecuteAsync(
+                "UPDATE Habits SET DisplayOrder = ? WHERE Id = ?",
+                displayOrder,
+                habitId.ToString());
+        }
+
         public async Task ToggleHabitCompletionAsync(Guid habitId, DateTime date, string? note = null)
         {
             await EnsureInitializedAsync();

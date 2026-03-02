@@ -17,6 +17,8 @@ namespace Tracker.ViewModels
         private bool _activeHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
         private bool _completedHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
         private bool _untrackedHabitsExpanded = false;  // false = expanded (to match TasksPage pattern)
+        private bool _isReorderMode = false;
+        private HabitCardViewModel? _draggedItem;
 
         public ObservableCollection<HabitCardViewModel> Habits { get; set; }
         public ObservableCollection<HabitCardViewModel> ActiveHabits { get; set; }
@@ -33,6 +35,9 @@ namespace Tracker.ViewModels
         public ICommand ToggleActiveHabitsSectionCommand { get; }
         public ICommand ToggleCompletedHabitsSectionCommand { get; }
         public ICommand ToggleUntrackedHabitsSectionCommand { get; }
+        public ICommand ToggleReorderModeCommand { get; }
+        public ICommand ItemDraggedOverCommand { get; }
+        public ICommand ItemDroppedCommand { get; }
 
         public bool ShowOverlay
         {
@@ -76,6 +81,20 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _untrackedHabitsExpanded, value);
         }
 
+        public bool IsReorderMode
+        {
+            get => _isReorderMode;
+            set
+            {
+                if (SetProperty(ref _isReorderMode, value))
+                {
+                    OnPropertyChanged(nameof(ReorderButtonText));
+                }
+            }
+        }
+
+        public string ReorderButtonText => IsReorderMode ? "Done" : "Reorder";
+
         public bool HasCompletedHabits => CompletedHabits.Count > 0;
         public bool HasUntrackedHabits => UntrackedHabits.Count > 0;
 
@@ -97,6 +116,9 @@ namespace Tracker.ViewModels
             ToggleActiveHabitsSectionCommand = new Command(() => ActiveHabitsExpanded = !ActiveHabitsExpanded);
             ToggleCompletedHabitsSectionCommand = new Command(() => CompletedHabitsExpanded = !CompletedHabitsExpanded);
             ToggleUntrackedHabitsSectionCommand = new Command(() => UntrackedHabitsExpanded = !UntrackedHabitsExpanded);
+            ToggleReorderModeCommand = new Command(async () => await OnToggleReorderModeAsync());
+            ItemDraggedOverCommand = new Command<HabitCardViewModel>(OnItemDraggedOver);
+            ItemDroppedCommand = new Command<HabitCardViewModel>(OnItemDropped);
 
             _ = LoadHabitsAsync();
         }
@@ -133,6 +155,7 @@ namespace Tracker.ViewModels
             UntrackedHabits.Clear();
 
             var now = DateTime.Now;
+            var today = now.Date;
 
             foreach (var habit in Habits)
             {
@@ -153,8 +176,42 @@ namespace Tracker.ViewModels
                 }
             }
 
+            // Apply 3-tier auto-sorting to Active Habits
+            var sortedActiveHabits = ActiveHabits
+                .Select(h => new
+                {
+                    Habit = h,
+                    TrackedToday = h.IsTrackedToday,
+                    CompletedToday = h.IsCompletedToday,
+                    SortPriority = GetSortPriority(h)
+                })
+                .OrderBy(x => x.SortPriority)
+                .ThenBy(x => x.Habit.DisplayOrder)
+                .Select(x => x.Habit)
+                .ToList();
+
+            ActiveHabits.Clear();
+            foreach (var habit in sortedActiveHabits)
+            {
+                ActiveHabits.Add(habit);
+            }
+
             OnPropertyChanged(nameof(HasCompletedHabits));
             OnPropertyChanged(nameof(HasUntrackedHabits));
+        }
+
+        private int GetSortPriority(HabitCardViewModel habit)
+        {
+            // Priority 1: Tracked today and not completed
+            if (habit.IsTrackedToday && !habit.IsCompletedToday)
+                return 1;
+
+            // Priority 2: Tracked today and completed
+            if (habit.IsTrackedToday && habit.IsCompletedToday)
+                return 2;
+
+            // Priority 3: Not tracked today
+            return 3;
         }
 
         private void OnAddHabit()
@@ -241,6 +298,70 @@ namespace Tracker.ViewModels
             }
         }
 
+        private async Task OnToggleReorderModeAsync()
+        {
+            if (IsReorderMode)
+            {
+                // Exiting reorder mode - save the new DisplayOrder values
+                try
+                {
+                    IsLoading = true;
+
+                    // Update DisplayOrder for all active habits based on their current position
+                    for (int i = 0; i < ActiveHabits.Count; i++)
+                    {
+                        var habit = ActiveHabits[i];
+                        if (habit.DisplayOrder != i)
+                        {
+                            await _dataService.UpdateHabitDisplayOrderAsync(habit.Id, i);
+                            habit.UpdateDisplayOrder(i);
+                        }
+                    }
+
+                    IsReorderMode = false;
+                    // Re-apply auto-sorting after saving
+                    OrganizeHabits();
+                }
+                catch (Exception ex)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Failed to save order: {ex.Message}", "OK");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            }
+            else
+            {
+                // Entering reorder mode
+                IsReorderMode = true;
+            }
+        }
+
+        private void OnItemDraggedOver(HabitCardViewModel? item)
+        {
+            if (item == null || !IsReorderMode) return;
+            _draggedItem = item;
+        }
+
+        private void OnItemDropped(HabitCardViewModel? targetItem)
+        {
+            if (targetItem == null || _draggedItem == null || !IsReorderMode) return;
+            if (_draggedItem == targetItem) return;
+
+            var oldIndex = ActiveHabits.IndexOf(_draggedItem);
+            var newIndex = ActiveHabits.IndexOf(targetItem);
+
+            if (oldIndex != -1 && newIndex != -1)
+            {
+                // Remove and insert at new position
+                ActiveHabits.RemoveAt(oldIndex);
+                ActiveHabits.Insert(newIndex, _draggedItem);
+            }
+
+            _draggedItem = null;
+        }
+
         private async Task OnToggleCompletion(DayCompletionViewModel? dayCompletion)
         {
             if (dayCompletion == null || !dayCompletion.CanToggle)
@@ -311,6 +432,31 @@ namespace Tracker.ViewModels
         public bool IsCompleted => Deadline.HasValue && Deadline.Value.Date < DateTime.Now.Date;
         public string UntrackedDateFormatted => _habit.UntrackedDate?.ToString("dd/MM/yyyy") ?? string.Empty;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
+
+        private int _displayOrder;
+        public int DisplayOrder
+        {
+            get => _displayOrder;
+            set => SetProperty(ref _displayOrder, value);
+        }
+
+        public bool IsTrackedToday
+        {
+            get
+            {
+                var today = DateTime.Today.DayOfWeek;
+                return _habit.TrackEveryday || _habit.TrackingDays.Contains(today);
+            }
+        }
+
+        public bool IsCompletedToday
+        {
+            get
+            {
+                var todayCompletion = WeekDays.FirstOrDefault(d => d.IsToday);
+                return todayCompletion?.IsCompleted ?? false;
+            }
+        }
         
         private int _weekNumber;
         public int WeekNumber 
@@ -337,8 +483,14 @@ namespace Tracker.ViewModels
         {
             _habit = habit;
             _dataService = dataService;
+            _displayOrder = habit.DisplayOrder;
             WeekDays = new ObservableCollection<DayCompletionViewModel>();
             _ = LoadWeekProgressAsync();
+        }
+
+        public void UpdateDisplayOrder(int newOrder)
+        {
+            DisplayOrder = newOrder;
         }
 
         public async Task RefreshWeekProgressAsync()

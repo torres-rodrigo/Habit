@@ -11,24 +11,35 @@
         <!-- Main Content -->
         <ScrollView>
             <VerticalStackLayout Padding="7" Spacing="15">
-                <!-- Show Archived Toggle -->
-                <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                <!-- Show Archived Toggle and Reorder Button -->
+                <HorizontalStackLayout Spacing="7" HorizontalOptions="End">
                     <Label Text="Show Archived"
                            VerticalOptions="Center"
                            HorizontalOptions="End"
                            FontSize="16"/>
                     <Switch IsToggled="{Binding ShowArchived}"
-                            HorizontalOptions="End"/>
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"/>
+                    <Button Text="{Binding ReorderButtonText}"
+                            Command="{Binding ToggleReorderModeCommand}"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            FontSize="14"
+                            Padding="15,8"
+                            CornerRadius="8"
+                            VerticalOptions="Center"
+                            FontAttributes="Bold"
+                            Margin="-105,0,0,0"/>
                 </HorizontalStackLayout>
 
                 <!-- Single List View (when ShowArchived is OFF) -->
                 <CollectionView ItemsSource="{Binding ActiveHabits}"
                               SelectionMode="None"
                               IsVisible="{Binding ShowArchived, Converter={StaticResource InvertedBoolConverter}}">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodels:HabitCardViewModel">
                             <Frame CornerRadius="15"
                                    BorderColor="{Binding HabitColor}"
@@ -38,9 +49,23 @@
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
                                                         CommandParameter="{Binding Id}"/>
+                                    <DragGestureRecognizer DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDraggedOverCommand}"
+                                                         DragStartingCommandParameter="{Binding .}"/>
+                                    <DropGestureRecognizer DropCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDroppedCommand}"
+                                                         DropCommandParameter="{Binding .}"/>
                                 </Frame.GestureRecognizers>
 
-                                <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <!-- Drag Handle (visible only in reorder mode) -->
+                                    <Label Grid.Column="0"
+                                           Text="≡"
+                                           FontSize="24"
+                                           TextColor="{StaticResource Gray600}"
+                                           VerticalOptions="Center"
+                                           Margin="0,0,10,0"
+                                           IsVisible="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=IsReorderMode}"/>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="8">
                                     <Label Text="{Binding Name}"
                                            FontSize="20"
                                            FontAttributes="Bold"
@@ -135,7 +160,8 @@
                                             </DataTemplate>
                                         </CollectionView.ItemTemplate>
                                     </CollectionView>
-                                </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Grid>
                             </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
@@ -179,9 +205,23 @@
                                         <Frame.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=EditHabitCommand}"
                                                                 CommandParameter="{Binding Id}"/>
+                                            <DragGestureRecognizer DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDraggedOverCommand}"
+                                                                 DragStartingCommandParameter="{Binding .}"/>
+                                            <DropGestureRecognizer DropCommand="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=ItemDroppedCommand}"
+                                                                 DropCommandParameter="{Binding .}"/>
                                         </Frame.GestureRecognizers>
 
-                                        <VerticalStackLayout Spacing="8">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <!-- Drag Handle (visible only in reorder mode) -->
+                                            <Label Grid.Column="0"
+                                                   Text="≡"
+                                                   FontSize="24"
+                                                   TextColor="{StaticResource Gray600}"
+                                                   VerticalOptions="Center"
+                                                   Margin="0,0,10,0"
+                                                   IsVisible="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HabitViewModel}}, Path=IsReorderMode}"/>
+
+                                            <VerticalStackLayout Grid.Column="1" Spacing="8">
                                             <Label Text="{Binding Name}"
                                                    FontSize="20"
                                                    FontAttributes="Bold"
@@ -273,7 +313,8 @@
                                                     </DataTemplate>
                                                 </CollectionView.ItemTemplate>
                                             </CollectionView>
-                                        </VerticalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Grid>
                                     </Frame>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>

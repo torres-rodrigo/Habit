@@ -440,6 +440,9 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO 
 
+For completed and untrack habits, the habits page week selector should remain with the values of the week the habit was
+completed or untracked
+
 Reorder for habits
 For habits if it was completed today send to bottom, toggle for this
 If habit is not enabled for today send to bottom, toggle for this
