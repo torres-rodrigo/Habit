@@ -568,6 +568,26 @@ namespace Tracker.ViewModels
                 var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
                 day.IsCompleted = isCompleted;
 
+                // Update the underlying habit's Completions collection
+                var dateOnly = date.Date;
+                var existingCompletion = _habit.Completions.FirstOrDefault(c => c.CompletedDate.Date == dateOnly);
+
+                if (isCompleted && existingCompletion == null)
+                {
+                    // Add completion to the habit's collection
+                    _habit.Completions.Add(new HabitCompletion
+                    {
+                        Id = Guid.NewGuid(),
+                        HabitId = _habit.Id,
+                        CompletedDate = dateOnly
+                    });
+                }
+                else if (!isCompleted && existingCompletion != null)
+                {
+                    // Remove completion from the habit's collection
+                    _habit.Completions.Remove(existingCompletion);
+                }
+
                 // Recalculate percentages without rebuilding the collection
                 RecalculateWeeklyCompletion();
             }
