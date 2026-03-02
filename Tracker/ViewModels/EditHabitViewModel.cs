@@ -237,6 +237,7 @@ namespace Tracker.ViewModels
         }
 
         public bool IsEditingExistingHabit => _habitId != Guid.Empty;
+        public string CreatedDateFormatted => _habitCreatedDate.ToString("dd/MM/yyyy");
         public string UntrackTrackButtonText => IsTracked ? "Untrack" : "Track";
         public string UntrackTrackButtonColor => IsTracked ? "#FFC107" : "Green";
 
@@ -426,6 +427,7 @@ namespace Tracker.ViewModels
                     OnPropertyChanged(nameof(HabitColor));
                     OnPropertyChanged(nameof(ShowNotesSection));
                     OnPropertyChanged(nameof(IsNoteDateTrackable));
+                    OnPropertyChanged(nameof(CreatedDateFormatted));
                     BuildCalendarDays();
 
                     // Load note for today's date

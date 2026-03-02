@@ -19,6 +19,7 @@ public class EditTaskViewModel : BaseViewModel
     private TimeSpan _reminderTime = new TimeSpan(9, 0, 0);
     private bool _autoCompleteWithSubtasks;
     private bool _isSaving;
+    private DateTime _taskCreatedDate = DateTime.MinValue;
 
     public string? TaskId
     {
@@ -101,6 +102,7 @@ public class EditTaskViewModel : BaseViewModel
     }
 
     public bool IsEditingExistingTask => !string.IsNullOrEmpty(TaskId) && Guid.TryParse(TaskId, out _);
+    public string CreatedDateFormatted => _taskCreatedDate.ToString("dd/MM/yyyy");
 
     public EditTaskViewModel(IDataService dataService)
     {
@@ -135,6 +137,7 @@ public class EditTaskViewModel : BaseViewModel
                 DueDate = task.DueDate ?? DateTime.Today;
                 SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
                 AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks;
+                _taskCreatedDate = task.CreatedDate;
 
                 Subtasks.Clear();
                 foreach (var subtask in task.SubTasks)
@@ -148,6 +151,7 @@ public class EditTaskViewModel : BaseViewModel
                 }
 
                 OnPropertyChanged(nameof(IsEditingExistingTask));
+                OnPropertyChanged(nameof(CreatedDateFormatted));
             }
         }
         catch (Exception ex)

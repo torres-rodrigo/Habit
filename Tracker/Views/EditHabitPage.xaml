@@ -12,7 +12,16 @@
             
             <!-- Habit Name -->
             <VerticalStackLayout Spacing="5">
-                <Label Text="Habit Name" FontAttributes="Bold" FontSize="17"/>
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="Habit Name" FontAttributes="Bold" FontSize="17"/>
+                    <Label Grid.Column="1"
+                           Text="{Binding CreatedDateFormatted, StringFormat='Created: {0}'}"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray400}"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End"
+                           IsVisible="{Binding IsEditingExistingHabit}"/>
+                </Grid>
                 <Entry x:Name="HabitNameEntry" Text="{Binding Name}" Placeholder="Enter habit name">
                     <Entry.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnHabitNameEntryTapped"/>

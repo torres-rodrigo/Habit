@@ -12,13 +12,22 @@
             
             <!-- Task Name -->
             <VerticalStackLayout Spacing="5">
-                <Label Text="Task Name" FontAttributes="Bold"/>
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="Task Name" FontAttributes="Bold" FontSize="17"/>
+                    <Label Grid.Column="1"
+                           Text="{Binding CreatedDateFormatted, StringFormat='Created: {0}'}"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray500}"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End"
+                           IsVisible="{Binding IsEditingExistingTask}"/>
+                </Grid>
                 <Entry Text="{Binding TaskName}" Placeholder="Enter task name"/>
             </VerticalStackLayout>
 
             <!-- Description -->
             <VerticalStackLayout Spacing="5">
-                <Label Text="Description" FontAttributes="Bold"/>
+                <Label Text="Description" FontAttributes="Bold" FontSize="17"/>
                 <Editor Text="{Binding Description}" 
                         Placeholder="Enter description (optional)"
                         HeightRequest="250"/>
@@ -26,7 +35,7 @@
 
             <!-- Due Date -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Due Date" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Due Date" FontAttributes="Bold" FontSize="17"/>
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding HasDueDate}"
                             VerticalOptions="Center"/>
@@ -40,7 +49,7 @@
 
             <!-- Reminders -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Reminders" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Reminders" FontAttributes="Bold" FontSize="17"/>
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding HasReminders}"
                             VerticalOptions="Center"
@@ -55,7 +64,7 @@
 
             <!-- Auto-complete -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Auto-complete" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Auto-complete" FontAttributes="Bold" FontSize="17"/>
                 <HorizontalStackLayout Spacing="10">
                     <Switch IsToggled="{Binding AutoCompleteWithSubtasks}"
                             VerticalOptions="Center"
@@ -70,14 +79,14 @@
 
             <!-- Priority -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Priority" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Priority" FontAttributes="Bold" FontSize="17"/>
                 <Picker ItemsSource="{Binding Priorities}"
                         SelectedItem="{Binding SelectedPriority}"/>
             </VerticalStackLayout>
 
             <!-- Subtasks -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Subtasks" FontAttributes="Bold" FontSize="16"/>
+                <Label Text="Subtasks" FontAttributes="Bold" FontSize="17"/>
 
                 <CollectionView ItemsSource="{Binding Subtasks}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
