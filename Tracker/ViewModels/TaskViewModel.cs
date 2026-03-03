@@ -547,65 +547,40 @@ namespace Tracker.ViewModels
                 var updatedTask = await _dataService.GetTaskByIdAsync(args.taskId);
                 if (updatedTask == null) return;
 
-                // Find the task in any collection
+                // Find the task in whichever collection it belongs to
                 var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == args.taskId);
                 var taskInPinned = PinnedTasks.FirstOrDefault(t => t.Id == args.taskId);
-                var taskInCompleted = CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
+                var existingTask = taskInPending ?? taskInPinned
+                    ?? CompletedTasks.FirstOrDefault(t => t.Id == args.taskId);
 
-                // Check if the parent task's completion status changed (auto-complete triggered)
-                if (taskInPending != null && updatedTask.IsCompleted)
-                {
-                    // Task was auto-completed - move to completed collection
-                    PendingTasks.Remove(taskInPending);
-                    CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
-                }
-                else if (taskInPinned != null && updatedTask.IsCompleted)
-                {
-                    // Pinned task was auto-completed - unpin and move to completed collection
-                    updatedTask.IsPinned = false;
-                    await _dataService.SaveTaskAsync(updatedTask);
+                if (existingTask == null) return;
 
-                    PinnedTasks.Remove(taskInPinned);
-                    CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
-                    OnPropertyChanged(nameof(HasPinnedTasks));
-                }
-                else if (taskInPending != null)
+                // Check if auto-complete was triggered
+                if (updatedTask.IsCompleted && !existingTask.IsCompleted)
                 {
-                    // Task is still pending - just update the subtask
-                    var subTask = taskInPending.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                    if (subTask != null)
+                    // Task was auto-completed — remove from current collection and move to completed
+                    if (taskInPending != null)
                     {
-                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                        if (updatedSubTask != null)
-                        {
-                            subTask.IsCompleted = updatedSubTask.IsCompleted;
-                        }
+                        PendingTasks.Remove(taskInPending);
                     }
-                }
-                else if (taskInPinned != null)
-                {
-                    // Pinned task is still not complete - just update the subtask
-                    var subTask = taskInPinned.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                    if (subTask != null)
+                    else if (taskInPinned != null)
                     {
-                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                        if (updatedSubTask != null)
-                        {
-                            subTask.IsCompleted = updatedSubTask.IsCompleted;
-                        }
+                        updatedTask.IsPinned = false;
+                        await _dataService.SaveTaskAsync(updatedTask);
+                        PinnedTasks.Remove(taskInPinned);
+                        OnPropertyChanged(nameof(HasPinnedTasks));
                     }
+
+                    CompletedTasks.Insert(0, updatedTask);
                 }
-                else if (taskInCompleted != null)
+                else
                 {
-                    // Task is in completed - just update the subtask
-                    var subTask = taskInCompleted.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                    if (subTask != null)
+                    // Task not auto-completed — just update the subtask in place
+                    var subTask = existingTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                    var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
+                    if (subTask != null && updatedSubTask != null)
                     {
-                        var updatedSubTask = updatedTask.SubTasks.FirstOrDefault(st => st.Id == args.subTaskId);
-                        if (updatedSubTask != null)
-                        {
-                            subTask.IsCompleted = updatedSubTask.IsCompleted;
-                        }
+                        subTask.IsCompleted = updatedSubTask.IsCompleted;
                     }
                 }
             }
