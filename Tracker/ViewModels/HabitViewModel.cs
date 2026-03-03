@@ -155,43 +155,34 @@ namespace Tracker.ViewModels
             UntrackedHabits.Clear();
 
             var now = DateTime.Now;
-            var today = now.Date;
+
+            // Categorize and sort active habits in a single pass
+            var activeList = new List<HabitCardViewModel>();
 
             foreach (var habit in Habits)
             {
-                // Untracked habits go to their own section (frozen, don't become completed)
                 if (!habit.IsTracked)
                 {
                     UntrackedHabits.Add(habit);
                 }
-                // A tracked habit is completed if it has a deadline that has passed
                 else if (habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date)
                 {
                     CompletedHabits.Add(habit);
                 }
-                // Active tracked habits
                 else
                 {
-                    ActiveHabits.Add(habit);
+                    activeList.Add(habit);
                 }
             }
 
-            // Apply 3-tier auto-sorting to Active Habits
-            var sortedActiveHabits = ActiveHabits
-                .Select(h => new
-                {
-                    Habit = h,
-                    TrackedToday = h.IsTrackedToday,
-                    CompletedToday = h.IsCompletedToday,
-                    SortPriority = GetSortPriority(h)
-                })
-                .OrderBy(x => x.SortPriority)
-                .ThenBy(x => x.Habit.DisplayOrder)
-                .Select(x => x.Habit)
-                .ToList();
+            // Sort active habits once, then add to the ObservableCollection
+            activeList.Sort((a, b) =>
+            {
+                var priorityCompare = GetSortPriority(a).CompareTo(GetSortPriority(b));
+                return priorityCompare != 0 ? priorityCompare : a.DisplayOrder.CompareTo(b.DisplayOrder);
+            });
 
-            ActiveHabits.Clear();
-            foreach (var habit in sortedActiveHabits)
+            foreach (var habit in activeList)
             {
                 ActiveHabits.Add(habit);
             }
