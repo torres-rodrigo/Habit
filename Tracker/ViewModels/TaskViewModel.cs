@@ -454,17 +454,12 @@ namespace Tracker.ViewModels
 
                 if (!confirm) return;
 
-                IsLoading = true;
                 await _dataService.DeleteTaskAsync(taskId);
                 await LoadTasksAsync();
             }
             catch (Exception ex)
             {
                 await Shell.Current.DisplayAlert("Error", $"Failed to delete task: {ex.Message}", "OK");
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 

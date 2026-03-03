@@ -295,17 +295,12 @@ namespace Tracker.ViewModels
 
                 if (!confirm) return;
 
-                IsLoading = true;
                 await _dataService.DeleteHabitAsync(habitId);
                 await LoadHabitsAsync();
             }
             catch (Exception ex)
             {
                 await Shell.Current.DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 
