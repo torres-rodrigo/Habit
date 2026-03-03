@@ -822,7 +822,7 @@ namespace Tracker.ViewModels
         }
     }
 
-    public class DayOfWeekItem : BaseViewModel
+    public class DayOfWeekItem : ObservableBase
     {
         public DayOfWeek Day { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -847,7 +847,7 @@ namespace Tracker.ViewModels
         }
     }
 
-    public class CalendarDayViewModel : BaseViewModel
+    public class CalendarDayViewModel : ObservableBase
     {
         private DateTime _date;
         public DateTime Date
@@ -982,7 +982,7 @@ namespace Tracker.ViewModels
         }
     }
 
-    public class CalendarWeekViewModel : BaseViewModel
+    public class CalendarWeekViewModel : ObservableBase
     {
         private int _weekNumber;
         public int WeekNumber
@@ -1000,7 +1000,7 @@ namespace Tracker.ViewModels
         public ObservableCollection<CalendarDayViewModel> Days { get; set; } = new();
     }
 
-    public class MonthItemViewModel : BaseViewModel
+    public class MonthItemViewModel : ObservableBase
     {
         public int MonthNumber { get; set; }
         public string MonthName { get; set; } = string.Empty;
@@ -1023,7 +1023,7 @@ namespace Tracker.ViewModels
         public string TextColor => "White";
     }
 
-    public class YearItemViewModel : BaseViewModel
+    public class YearItemViewModel : ObservableBase
     {
         private int _year;
         public int Year

@@ -290,7 +290,7 @@ public class EditTaskViewModel : BaseViewModel
     }
 }
 
-public class SubtaskItem : BaseViewModel
+public class SubtaskItem : ObservableBase
 {
     private Guid? _id;
     private string _name = string.Empty;

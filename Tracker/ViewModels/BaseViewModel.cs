@@ -3,7 +3,11 @@ using System.Runtime.CompilerServices;
 
 namespace Tracker.ViewModels
 {
-    public class BaseViewModel : INotifyPropertyChanged
+    /// <summary>
+    /// Lightweight base for any class needing INotifyPropertyChanged.
+    /// Used by small view models (calendar days, month items, etc.) that don't need IsBusy/Title.
+    /// </summary>
+    public class ObservableBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -21,7 +25,13 @@ namespace Tracker.ViewModels
             OnPropertyChanged(propertyName);
             return true;
         }
+    }
 
+    /// <summary>
+    /// Full base for page-level ViewModels with IsBusy, Title, and async helpers.
+    /// </summary>
+    public class BaseViewModel : ObservableBase
+    {
         /// <summary>
         /// Safely runs an async method without awaiting (fire-and-forget).
         /// Unlike discarding with "_ =", this ensures exceptions are not silently swallowed.

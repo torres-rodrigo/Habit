@@ -439,7 +439,7 @@ namespace Tracker.ViewModels
         }
     }
 
-    public class HabitCardViewModel : BaseViewModel
+    public class HabitCardViewModel : ObservableBase
     {
         private readonly Habit _habit;
 
@@ -671,7 +671,7 @@ namespace Tracker.ViewModels
         }
     }
 
-    public class DayCompletionViewModel : BaseViewModel
+    public class DayCompletionViewModel : ObservableBase
     {
         public Guid HabitId { get; set; }
         public DateTime Date { get; set; }
