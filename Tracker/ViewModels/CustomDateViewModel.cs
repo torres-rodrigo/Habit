@@ -1,10 +1,13 @@
 using System;
 using System.Windows.Input;
+using Tracker.Services;
 
 namespace Tracker.ViewModels
 {
     public class CustomDateViewModel : BaseViewModel
     {
+        private readonly IDialogService _dialogService;
+
         private string _yearText = string.Empty;
         private DateTime? _selectedMonth;
         private DateTime? _selectedWeekStart;
@@ -111,8 +114,9 @@ namespace Tracker.ViewModels
         public ICommand ConfirmCommand { get; }
         public ICommand CancelCommand { get; }
 
-        public CustomDateViewModel()
+        public CustomDateViewModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
             Title = "Custom Date";
 
             ClearYearCommand = new Command(ClearYear);
@@ -206,7 +210,7 @@ namespace Tracker.ViewModels
             if (string.IsNullOrWhiteSpace(YearText) && !SelectedMonth.HasValue &&
                 !SelectedWeekStart.HasValue && !SelectedDay.HasValue)
             {
-                await Shell.Current.DisplayAlert("Validation", "Please select a date option", "OK");
+                await _dialogService.DisplayAlertAsync("Validation", "Please select a date option", "OK");
                 return;
             }
 
@@ -219,7 +223,7 @@ namespace Tracker.ViewModels
                 // Year only: yyyy
                 if (!int.TryParse(YearText, out int year) || year < 1900 || year > 2100)
                 {
-                    await Shell.Current.DisplayAlert("Validation", "Please enter a valid year (1900-2100)", "OK");
+                    await _dialogService.DisplayAlertAsync("Validation", "Please enter a valid year (1900-2100)", "OK");
                     return;
                 }
                 startDate = new DateTime(year, 1, 1);

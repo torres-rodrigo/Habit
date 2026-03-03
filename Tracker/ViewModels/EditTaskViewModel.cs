@@ -9,6 +9,8 @@ namespace Tracker.ViewModels;
 public class EditTaskViewModel : BaseViewModel
 {
     private readonly IDataService _dataService;
+    private readonly INavigationService _navigationService;
+    private readonly IDialogService _dialogService;
     private string? _taskId;
     private string _taskName = string.Empty;
     private string _description = string.Empty;
@@ -104,9 +106,11 @@ public class EditTaskViewModel : BaseViewModel
     public bool IsEditingExistingTask => !string.IsNullOrEmpty(TaskId) && Guid.TryParse(TaskId, out _);
     public string CreatedDateFormatted => _taskCreatedDate.ToString("dd/MM/yyyy");
 
-    public EditTaskViewModel(IDataService dataService)
+    public EditTaskViewModel(IDataService dataService, INavigationService navigationService, IDialogService dialogService)
     {
         _dataService = dataService;
+        _navigationService = navigationService;
+        _dialogService = dialogService;
         Title = "New Task";
 
         AddSubtaskCommand = new Command(AddSubtask);
@@ -156,8 +160,8 @@ public class EditTaskViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", $"Failed to load task: {ex.Message}", "OK");
-            await Shell.Current.GoToAsync("..");
+            await _dialogService.DisplayAlertAsync("Error", $"Failed to load task: {ex.Message}", "OK");
+            await _navigationService.GoToAsync("..");
         }
     }
 
@@ -181,7 +185,7 @@ public class EditTaskViewModel : BaseViewModel
         // Validate input
         if (string.IsNullOrWhiteSpace(TaskName))
         {
-            await Shell.Current.DisplayAlert("Validation Error", "Please enter a task name.", "OK");
+            await _dialogService.DisplayAlertAsync("Validation Error", "Please enter a task name.", "OK");
             return;
         }
 
@@ -226,11 +230,11 @@ public class EditTaskViewModel : BaseViewModel
             };
 
             await _dataService.SaveTaskAsync(task);
-            await Shell.Current.GoToAsync("..");
+            await _navigationService.GoToAsync("..");
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", $"Failed to save task: {ex.Message}", "OK");
+            await _dialogService.DisplayAlertAsync("Error", $"Failed to save task: {ex.Message}", "OK");
         }
         finally
         {
@@ -244,7 +248,7 @@ public class EditTaskViewModel : BaseViewModel
 
         try
         {
-            var confirm = await Shell.Current.DisplayAlert(
+            var confirm = await _dialogService.DisplayAlertAsync(
                 "Delete Task",
                 "Are you sure you want to permanently delete this task? This action cannot be undone.",
                 "Delete",
@@ -253,17 +257,17 @@ public class EditTaskViewModel : BaseViewModel
             if (!confirm) return;
 
             await _dataService.DeleteTaskAsync(taskGuid);
-            await Shell.Current.GoToAsync("..");
+            await _navigationService.GoToAsync("..");
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", $"Failed to delete task: {ex.Message}", "OK");
+            await _dialogService.DisplayAlertAsync("Error", $"Failed to delete task: {ex.Message}", "OK");
         }
     }
 
     private async Task Cancel()
     {
-        await Shell.Current.GoToAsync("..");
+        await _navigationService.GoToAsync("..");
     }
 
     private static string ExtractPriorityName(string displayPriority)

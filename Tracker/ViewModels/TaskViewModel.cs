@@ -10,6 +10,8 @@ namespace Tracker.ViewModels
     public class TaskViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private readonly INavigationService _navigationService;
+        private readonly IDialogService _dialogService;
         private PriorityOption _selectedPriorityFilter;
         private DateTypeOption _selectedDateTypeFilter;
         private DatePeriodOption _selectedDatePeriodFilter;
@@ -175,9 +177,11 @@ namespace Tracker.ViewModels
         public ICommand TogglePinnedCollapseCommand { get; }
         public ICommand TogglePinCommand { get; }
 
-        public TaskViewModel(IDataService dataService)
+        public TaskViewModel(IDataService dataService, INavigationService navigationService, IDialogService dialogService)
         {
             _dataService = dataService;
+            _navigationService = navigationService;
+            _dialogService = dialogService;
             PendingTasks = new ObservableCollection<TodoTask>();
             CompletedTasks = new ObservableCollection<TodoTask>();
             PinnedTasks = new ObservableCollection<TodoTask>();
@@ -305,7 +309,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to load tasks: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to load tasks: {ex.Message}", "OK");
             }
             finally
             {
@@ -410,13 +414,13 @@ namespace Tracker.ViewModels
         private async void OnNavigateToHabit()
         {
             ShowOverlay = false;
-            await Shell.Current.GoToAsync("//habits/edithabit");
+            await _navigationService.GoToAsync("//habits/edithabit");
         }
 
         private async void OnNavigateToTask()
         {
             ShowOverlay = false;
-            await Shell.Current.GoToAsync("//tasks/edittask");
+            await _navigationService.GoToAsync("//tasks/edittask");
         }
 
         private async void OnEditTask(Guid taskId)
@@ -427,7 +431,7 @@ namespace Tracker.ViewModels
             if (taskInCompleted != null)
             {
                 // Task is completed - ask for confirmation
-                var confirm = await Shell.Current.DisplayAlert(
+                var confirm = await _dialogService.DisplayAlertAsync(
                     "Edit Completed Task",
                     "This task is already completed. Are you sure you want to edit it? This may affect your statistics.",
                     "Edit",
@@ -437,7 +441,7 @@ namespace Tracker.ViewModels
             }
 
             // Navigate to edit task page
-            await Shell.Current.GoToAsync($"//tasks/edittask?id={taskId}");
+            await _navigationService.GoToAsync($"//tasks/edittask?id={taskId}");
         }
 
         private async Task OnDeleteTaskAsync(Guid taskId)
@@ -446,7 +450,7 @@ namespace Tracker.ViewModels
 
             try
             {
-                var confirm = await Shell.Current.DisplayAlert(
+                var confirm = await _dialogService.DisplayAlertAsync(
                     "Delete Task",
                     "Are you sure you want to delete this task? This action cannot be undone.",
                     "Delete",
@@ -459,7 +463,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to delete task: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to delete task: {ex.Message}", "OK");
             }
         }
 
@@ -473,7 +477,7 @@ namespace Tracker.ViewModels
                 if (taskInCompleted != null)
                 {
                     // Task is being unmarked as complete - ask for confirmation
-                    var confirm = await Shell.Current.DisplayAlert(
+                    var confirm = await _dialogService.DisplayAlertAsync(
                         "Mark as Incomplete",
                         "Are you sure you want to mark this task as incomplete? This will change the completion date and may affect your statistics.",
                         "OK",
@@ -527,7 +531,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle task completion: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to toggle task completion: {ex.Message}", "OK");
             }
         }
 
@@ -605,7 +609,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle subtask completion: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to toggle subtask completion: {ex.Message}", "OK");
             }
         }
 
@@ -623,7 +627,7 @@ namespace Tracker.ViewModels
                 // Prevent pinning completed tasks
                 if (task.IsCompleted && !task.IsPinned)
                 {
-                    await Shell.Current.DisplayAlert(
+                    await _dialogService.DisplayAlertAsync(
                         "Cannot Pin Completed Task",
                         "Completed tasks cannot be pinned. Please unmark the task as complete first.",
                         "OK");
@@ -633,7 +637,7 @@ namespace Tracker.ViewModels
                 // Check if we're trying to pin a task when we already have 5 pinned
                 if (!task.IsPinned && PinnedTasks.Count >= 5)
                 {
-                    await Shell.Current.DisplayAlert(
+                    await _dialogService.DisplayAlertAsync(
                         "Maximum Pinned Tasks",
                         "You can only pin up to 5 tasks. Please unpin a task before pinning a new one.",
                         "OK");
@@ -649,7 +653,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle pin: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to toggle pin: {ex.Message}", "OK");
             }
         }
 

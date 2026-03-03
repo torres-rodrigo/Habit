@@ -11,6 +11,8 @@ namespace Tracker.ViewModels
     {
         private readonly IDataService _dataService;
         private readonly INotificationService _notificationService;
+        private readonly INavigationService _navigationService;
+        private readonly IDialogService _dialogService;
         private Guid _habitId;
         private bool _isSaving;
         private DateTime _currentDisplayMonth;
@@ -310,10 +312,12 @@ namespace Tracker.ViewModels
 
         public ICommand SaveNoteCommand { get; }
 
-        public EditHabitViewModel(IDataService dataService, INotificationService notificationService)
+        public EditHabitViewModel(IDataService dataService, INotificationService notificationService, INavigationService navigationService, IDialogService dialogService)
         {
             _dataService = dataService;
             _notificationService = notificationService;
+            _navigationService = navigationService;
+            _dialogService = dialogService;
             Title = "Edit Habit";
 
             DaysOfWeek = new ObservableCollection<DayOfWeekItem>
@@ -438,8 +442,8 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to load habit: {ex.Message}", "OK");
-                await Shell.Current.GoToAsync("..");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to load habit: {ex.Message}", "OK");
+                await _navigationService.GoToAsync("..");
             }
         }
 
@@ -450,13 +454,13 @@ namespace Tracker.ViewModels
             // Validate input
             if (string.IsNullOrWhiteSpace(Name))
             {
-                await Shell.Current.DisplayAlert("Validation Error", "Please enter a habit name.", "OK");
+                await _dialogService.DisplayAlertAsync("Validation Error", "Please enter a habit name.", "OK");
                 return;
             }
 
             if (!TrackEveryday && !DaysOfWeek.Any(d => d.IsSelected))
             {
-                await Shell.Current.DisplayAlert("Validation Error", "Please select at least one day to track this habit.", "OK");
+                await _dialogService.DisplayAlertAsync("Validation Error", "Please select at least one day to track this habit.", "OK");
                 return;
             }
 
@@ -535,11 +539,11 @@ namespace Tracker.ViewModels
                     await _notificationService.CancelHabitReminderAsync(habit.Id);
                 }
 
-                await Shell.Current.GoToAsync("..");
+                await _navigationService.GoToAsync("..");
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to save habit: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to save habit: {ex.Message}", "OK");
             }
             finally
             {
@@ -563,7 +567,7 @@ namespace Tracker.ViewModels
                     // Prevent untracking completed habits
                     if (isCompleted && IsTracked)
                     {
-                        await Shell.Current.DisplayAlert(
+                        await _dialogService.DisplayAlertAsync(
                             "Cannot Untrack Completed Habit",
                             "Completed habits cannot be untracked. Please change the deadline to make it active first.",
                             "OK");
@@ -576,7 +580,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle track status: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to toggle track status: {ex.Message}", "OK");
             }
         }
 
@@ -584,7 +588,7 @@ namespace Tracker.ViewModels
         {
             try
             {
-                var confirm = await Shell.Current.DisplayAlert(
+                var confirm = await _dialogService.DisplayAlertAsync(
                     "Delete Habit",
                     "Are you sure you want to permanently delete this habit? This action cannot be undone.",
                     "Delete",
@@ -596,11 +600,11 @@ namespace Tracker.ViewModels
                 await _notificationService.CancelHabitReminderAsync(_habitId);
 
                 await _dataService.DeleteHabitAsync(_habitId);
-                await Shell.Current.GoToAsync("..");
+                await _navigationService.GoToAsync("..");
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to delete habit: {ex.Message}", "OK");
             }
         }
 
@@ -804,17 +808,17 @@ namespace Tracker.ViewModels
             try
             {
                 await _dataService.SaveHabitNoteAsync(_habitId, SelectedNoteDate, NoteText);
-                await Shell.Current.DisplayAlert("Success", "Note saved successfully.", "OK");
+                await _dialogService.DisplayAlertAsync("Success", "Note saved successfully.", "OK");
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to save note: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to save note: {ex.Message}", "OK");
             }
         }
 
         private async void OnCancel()
         {
-            await Shell.Current.GoToAsync("..");
+            await _navigationService.GoToAsync("..");
         }
     }
 

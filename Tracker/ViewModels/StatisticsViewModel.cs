@@ -8,6 +8,7 @@ namespace Tracker.ViewModels
     public class StatisticsViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private readonly IDialogService _dialogService;
         private bool _isLoading;
         private bool _isTaskStatisticsCollapsed = false;
         private bool _isHabitStatisticsCollapsed = false;
@@ -123,9 +124,10 @@ namespace Tracker.ViewModels
         public ICommand CancelExportCommand { get; }
         public ICommand ExecuteExportCommand { get; }
 
-        public StatisticsViewModel(IDataService dataService)
+        public StatisticsViewModel(IDataService dataService, IDialogService dialogService)
         {
             _dataService = dataService;
+            _dialogService = dialogService;
             ActiveHabitStatistics = new ObservableCollection<HabitStatistics>();
             CompletedHabitStatistics = new ObservableCollection<HabitStatistics>();
             UntrackedHabitsByYear = new ObservableCollection<YearUntrackedCount>();
@@ -224,7 +226,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to load statistics: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to load statistics: {ex.Message}", "OK");
             }
             finally
             {

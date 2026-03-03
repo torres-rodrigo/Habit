@@ -26,6 +26,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IDataService, DatabaseService>();
 		// For testing with in-memory data, use:
 		// builder.Services.AddSingleton<IDataService, InMemoryDataService>();
+		builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
+		builder.Services.AddSingleton<IDialogService, ShellDialogService>();
 
 #if WINDOWS
 		builder.Services.AddSingleton<INotificationService, Platforms.Windows.NotificationService>();

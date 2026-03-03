@@ -11,6 +11,8 @@ namespace Tracker.ViewModels
     public class HabitViewModel : BaseViewModel
     {
         private readonly IDataService _dataService;
+        private readonly INavigationService _navigationService;
+        private readonly IDialogService _dialogService;
         private bool _showOverlay;
         private bool _isLoading;
         private bool _showArchived;
@@ -98,9 +100,11 @@ namespace Tracker.ViewModels
         public bool HasCompletedHabits => CompletedHabits.Count > 0;
         public bool HasUntrackedHabits => UntrackedHabits.Count > 0;
 
-        public HabitViewModel(IDataService dataService)
+        public HabitViewModel(IDataService dataService, INavigationService navigationService, IDialogService dialogService)
         {
             _dataService = dataService;
+            _navigationService = navigationService;
+            _dialogService = dialogService;
             Habits = new ObservableCollection<HabitCardViewModel>();
             ActiveHabits = new ObservableCollection<HabitCardViewModel>();
             CompletedHabits = new ObservableCollection<HabitCardViewModel>();
@@ -140,7 +144,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to load habits: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to load habits: {ex.Message}", "OK");
             }
             finally
             {
@@ -214,13 +218,13 @@ namespace Tracker.ViewModels
         private async void OnNavigateToHabit()
         {
             ShowOverlay = false;
-            await Shell.Current.GoToAsync("//habits/edithabit");
+            await _navigationService.GoToAsync("//habits/edithabit");
         }
 
         private async void OnNavigateToTask()
         {
             ShowOverlay = false;
-            await Shell.Current.GoToAsync("//tasks/edittask");
+            await _navigationService.GoToAsync("//tasks/edittask");
         }
 
         private async Task OnEditHabit(Guid habitId)
@@ -244,7 +248,7 @@ namespace Tracker.ViewModels
                 // Show confirmation modal for untracked habits
                 if (!habitCard.IsTracked)
                 {
-                    var confirm = await Shell.Current.DisplayAlert(
+                    var confirm = await _dialogService.DisplayAlertAsync(
                         "Edit Untracked Habit",
                         "This habit is untracked. Are you sure you want to edit it?",
                         "Edit",
@@ -255,7 +259,7 @@ namespace Tracker.ViewModels
                 // Show confirmation modal for completed habits
                 else if (habitCard.IsCompleted)
                 {
-                    var confirm = await Shell.Current.DisplayAlert(
+                    var confirm = await _dialogService.DisplayAlertAsync(
                         "Edit Completed Habit",
                         "This habit is already completed. Are you sure you want to edit it? This may affect your statistics.",
                         "Edit",
@@ -266,7 +270,7 @@ namespace Tracker.ViewModels
             }
 
             // Navigate to edit habit page
-            await Shell.Current.GoToAsync($"habits/edithabit?id={habitId}");
+            await _navigationService.GoToAsync($"habits/edithabit?id={habitId}");
         }
 
         private async Task OnDeleteHabit(Guid habitId)
@@ -275,7 +279,7 @@ namespace Tracker.ViewModels
 
             try
             {
-                var confirm = await Shell.Current.DisplayAlert(
+                var confirm = await _dialogService.DisplayAlertAsync(
                     "Delete Habit",
                     "Are you sure you want to delete this habit? This action cannot be undone.",
                     "Delete",
@@ -288,7 +292,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to delete habit: {ex.Message}", "OK");
             }
         }
 
@@ -318,7 +322,7 @@ namespace Tracker.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    await Shell.Current.DisplayAlert("Error", $"Failed to save order: {ex.Message}", "OK");
+                    await _dialogService.DisplayAlertAsync("Error", $"Failed to save order: {ex.Message}", "OK");
                 }
                 finally
                 {
@@ -425,7 +429,7 @@ namespace Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to toggle completion: {ex.Message}", "OK");
+                await _dialogService.DisplayAlertAsync("Error", $"Failed to toggle completion: {ex.Message}", "OK");
             }
         }
 
