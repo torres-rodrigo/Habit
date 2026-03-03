@@ -4,8 +4,6 @@ namespace Tracker.Views;
 
 public partial class CustomDatePopup : Grid
 {
-    private CustomDateViewModel? _viewModel;
-
     // Parameterless constructor for XAML instantiation
     public CustomDatePopup()
     {
@@ -16,7 +14,6 @@ public partial class CustomDatePopup : Grid
     public CustomDatePopup(CustomDateViewModel viewModel)
     {
         InitializeComponent();
-        _viewModel = viewModel;
         BindingContext = viewModel;
     }
 
