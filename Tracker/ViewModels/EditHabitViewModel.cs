@@ -561,11 +561,8 @@ namespace Tracker.ViewModels
                     var habit = await _dataService.GetHabitByIdAsync(_habitId);
                     if (habit == null) return;
 
-                    // Check if habit is completed (past deadline)
-                    bool isCompleted = habit.Deadline.HasValue && habit.Deadline.Value.Date < DateTime.Now.Date;
-
                     // Prevent untracking completed habits
-                    if (isCompleted && IsTracked)
+                    if (habit.Status == HabitStatus.Completed && IsTracked)
                     {
                         await _dialogService.DisplayAlertAsync(
                             "Cannot Untrack Completed Habit",

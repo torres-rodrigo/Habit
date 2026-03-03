@@ -4,6 +4,13 @@ using System.Linq;
 
 namespace Tracker.Models
 {
+    public enum HabitStatus
+    {
+        Active,
+        Completed,
+        Untracked
+    }
+
     public class Habit
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -23,6 +30,20 @@ namespace Tracker.Models
         public List<HabitCompletion> Completions { get; set; } = new();
         public List<HabitNote> Notes { get; set; } = new();
         public List<HabitTrackingPeriod> TrackingPeriods { get; set; } = new();
+
+        /// <summary>
+        /// Categorizes the habit as Active, Completed, or Untracked.
+        /// Single source of truth — use this instead of duplicating the logic.
+        /// </summary>
+        public HabitStatus Status
+        {
+            get
+            {
+                if (!IsTracked) return HabitStatus.Untracked;
+                if (Deadline.HasValue && Deadline.Value.Date < DateTime.Today) return HabitStatus.Completed;
+                return HabitStatus.Active;
+            }
+        }
 
         /// <summary>
         /// Period-aware check for whether the habit should be tracked on a given date.

@@ -153,30 +153,13 @@ namespace Tracker.ViewModels
                 CompletedHabitStatistics.Clear();
                 UntrackedHabitsByYear.Clear();
 
-                // Get all habits
+                // Get all habits and categorize using Habit.Status
                 var allHabits = await _dataService.GetAllHabitsAsync();
-                var now = DateTime.Now;
+                var habitsByStatus = allHabits.ToLookup(h => h.Status);
 
-                // Separate habits into active, completed, and untracked
-                var activeHabits = new List<Habit>();
-                var completedHabits = new List<Habit>();
-                var untrackedHabits = new List<Habit>();
-
-                foreach (var habit in allHabits)
-                {
-                    if (!habit.IsTracked)
-                    {
-                        untrackedHabits.Add(habit);
-                    }
-                    else if (habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date)
-                    {
-                        completedHabits.Add(habit);
-                    }
-                    else
-                    {
-                        activeHabits.Add(habit);
-                    }
-                }
+                var activeHabits = habitsByStatus[HabitStatus.Active].ToList();
+                var completedHabits = habitsByStatus[HabitStatus.Completed].ToList();
+                var untrackedHabits = habitsByStatus[HabitStatus.Untracked].ToList();
 
                 // Load statistics for active habits
                 foreach (var habit in activeHabits)

@@ -158,24 +158,22 @@ namespace Tracker.ViewModels
             CompletedHabits.Clear();
             UntrackedHabits.Clear();
 
-            var now = DateTime.Now;
-
-            // Categorize and sort active habits in a single pass
+            // Categorize using the single source of truth (Habit.Status)
             var activeList = new List<HabitCardViewModel>();
 
             foreach (var habit in Habits)
             {
-                if (!habit.IsTracked)
+                switch (habit.Status)
                 {
-                    UntrackedHabits.Add(habit);
-                }
-                else if (habit.Deadline.HasValue && habit.Deadline.Value.Date < now.Date)
-                {
-                    CompletedHabits.Add(habit);
-                }
-                else
-                {
-                    activeList.Add(habit);
+                    case HabitStatus.Untracked:
+                        UntrackedHabits.Add(habit);
+                        break;
+                    case HabitStatus.Completed:
+                        CompletedHabits.Add(habit);
+                        break;
+                    case HabitStatus.Active:
+                        activeList.Add(habit);
+                        break;
                 }
             }
 
@@ -448,6 +446,7 @@ namespace Tracker.ViewModels
         public string Description => _habit.Description;
         public bool IsNegativeHabit => _habit.IsNegativeHabit;
         public bool IsTracked => _habit.IsTracked;
+        public HabitStatus Status => _habit.Status;
         public string HabitColor
         {
             get
@@ -457,7 +456,7 @@ namespace Tracker.ViewModels
             }
         }
         public DateTime? Deadline => _habit.Deadline;
-        public bool IsCompleted => Deadline.HasValue && Deadline.Value.Date < DateTime.Now.Date;
+        public bool IsCompleted => _habit.Status == HabitStatus.Completed;
         public string UntrackedDateFormatted => _habit.UntrackedDate?.ToString("dd/MM/yyyy") ?? string.Empty;
         public ObservableCollection<DayCompletionViewModel> WeekDays { get; set; }
 
