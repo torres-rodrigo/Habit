@@ -134,7 +134,7 @@ namespace Tracker.ViewModels
                 var habits = await _dataService.GetAllHabitsAsync();
                 foreach (var habit in habits)
                 {
-                    Habits.Add(new HabitCardViewModel(habit, _dataService));
+                    Habits.Add(new HabitCardViewModel(habit));
                 }
                 OrganizeHabits();
             }
@@ -437,7 +437,7 @@ namespace Tracker.ViewModels
                 // Update only the toggled day and recalculate percentages
                 if (habitCard != null)
                 {
-                    await habitCard.UpdateDayCompletionAsync(dayCompletion.Date);
+                    habitCard.UpdateDayCompletion(dayCompletion.Date);
                 }
 
                 // Re-apply auto-sorting since completion status changed
@@ -458,7 +458,6 @@ namespace Tracker.ViewModels
     public class HabitCardViewModel : BaseViewModel
     {
         private readonly Habit _habit;
-        private readonly IDataService _dataService;
 
         public Guid Id => _habit.Id;
         public string Name => _habit.Name;
@@ -539,13 +538,12 @@ namespace Tracker.ViewModels
             private set => SetProperty(ref _weeklyCompletionDecimal, value);
         }
 
-        public HabitCardViewModel(Habit habit, IDataService dataService)
+        public HabitCardViewModel(Habit habit)
         {
             _habit = habit;
-            _dataService = dataService;
             _displayOrder = habit.DisplayOrder;
             WeekDays = new ObservableCollection<DayCompletionViewModel>();
-            _ = LoadWeekProgressAsync();
+            LoadWeekProgress();
         }
 
         public void UpdateDisplayOrder(int newOrder)
@@ -553,38 +551,36 @@ namespace Tracker.ViewModels
             DisplayOrder = newOrder;
         }
 
-        public async Task RefreshWeekProgressAsync()
+        public void RefreshWeekProgress()
         {
-            await LoadWeekProgressAsync();
+            LoadWeekProgress();
         }
 
-        public async Task UpdateDayCompletionAsync(DateTime date)
+        public void UpdateDayCompletion(DateTime date)
         {
-            // Find the specific day and update only its completion status
+            // Find the specific day and toggle its completion status
             var day = WeekDays.FirstOrDefault(d => d.Date.Date == date.Date);
             if (day != null)
             {
-                var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
-                day.IsCompleted = isCompleted;
-
-                // Update the underlying habit's Completions collection
                 var dateOnly = date.Date;
                 var existingCompletion = _habit.Completions.FirstOrDefault(c => c.CompletedDate.Date == dateOnly);
 
-                if (isCompleted && existingCompletion == null)
+                if (existingCompletion != null)
                 {
-                    // Add completion to the habit's collection
+                    // Was completed, now uncompleted
+                    _habit.Completions.Remove(existingCompletion);
+                    day.IsCompleted = false;
+                }
+                else
+                {
+                    // Was not completed, now completed
                     _habit.Completions.Add(new HabitCompletion
                     {
                         Id = Guid.NewGuid(),
                         HabitId = _habit.Id,
                         CompletedDate = dateOnly
                     });
-                }
-                else if (!isCompleted && existingCompletion != null)
-                {
-                    // Remove completion from the habit's collection
-                    _habit.Completions.Remove(existingCompletion);
+                    day.IsCompleted = true;
                 }
 
                 // Recalculate percentages without rebuilding the collection
@@ -615,7 +611,7 @@ namespace Tracker.ViewModels
             }
         }
 
-        private async Task LoadWeekProgressAsync()
+        private void LoadWeekProgress()
         {
             WeekDays.Clear();
 
@@ -646,16 +642,21 @@ namespace Tracker.ViewModels
                 System.Globalization.CalendarWeekRule.FirstDay,
                 DayOfWeek.Sunday);
 
+            // Build HashSet for O(1) completion lookups from already-loaded data
+            var completionDates = _habit.Completions.Select(c => c.CompletedDate.Date).ToHashSet();
+
+            // Hoist invariant lookup out of the loop
+            var currentPeriodStart = _habit.TrackingPeriods
+                .FirstOrDefault(p => p.EndDate == null)?.StartDate;
+
             int completedDays = 0;
             int trackedDays = 0;
 
             for (int i = 0; i < 7; i++)
             {
                 var date = startOfWeek.AddDays(i);
-                var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
+                var isCompleted = completionDates.Contains(date.Date);
                 var shouldTrack = _habit.ShouldTrackOnDay(date);
-                var currentPeriodStart = _habit.TrackingPeriods
-                    .FirstOrDefault(p => p.EndDate == null)?.StartDate;
 
                 if (shouldTrack)
                 {
