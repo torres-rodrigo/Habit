@@ -29,14 +29,57 @@ namespace Tracker.Models
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime? DueDate { get; set; }
         public string? Priority { get; set; }
-        public DateTime? CompletedDate { get; set; }
-        public bool IsCompleted { get; set; }
         public bool HasReminders { get; set; }
         public TimeSpan? ReminderTime { get; set; }
         public int DisplayOrder { get; set; }
         public bool AutoCompleteWithSubtasks { get; set; }
-        public bool IsPinned { get; set; }
         public List<SubTask> SubTasks { get; set; } = new();
+
+        // Properties that can change after binding — use backing fields with notification
+        private bool _isCompleted;
+        public bool IsCompleted
+        {
+            get => _isCompleted;
+            set
+            {
+                if (_isCompleted != value)
+                {
+                    _isCompleted = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsOverdue));
+                }
+            }
+        }
+
+        private DateTime? _completedDate;
+        public DateTime? CompletedDate
+        {
+            get => _completedDate;
+            set
+            {
+                if (_completedDate != value)
+                {
+                    _completedDate = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CompletedOnTime));
+                    OnPropertyChanged(nameof(CompletedAfterDeadline));
+                }
+            }
+        }
+
+        private bool _isPinned;
+        public bool IsPinned
+        {
+            get => _isPinned;
+            set
+            {
+                if (_isPinned != value)
+                {
+                    _isPinned = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public bool AllSubTasksCompleted => SubTasks.Count > 0 && SubTasks.All(st => st.IsCompleted);
         public bool CompletedOnTime => CompletedDate.HasValue && DueDate.HasValue && CompletedDate.Value <= DueDate.Value;
