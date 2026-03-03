@@ -495,6 +495,14 @@ namespace Tracker.ViewModels
 
                 await _dataService.ToggleTaskCompletionAsync(taskId);
 
+                // Fetch the updated task — if fetch fails, fall back to full reload
+                var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
+                if (updatedTask == null)
+                {
+                    await ApplyFiltersAsync();
+                    return;
+                }
+
                 // Find the task in any collection and move it to the appropriate one
                 var taskInPending = PendingTasks.FirstOrDefault(t => t.Id == taskId);
                 var taskInPinned = PinnedTasks.FirstOrDefault(t => t.Id == taskId);
@@ -503,37 +511,24 @@ namespace Tracker.ViewModels
                 if (taskInPending != null)
                 {
                     // Task was pending, now completed - move to completed collection
-                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
-                    if (updatedTask != null)
-                    {
-                        PendingTasks.Remove(taskInPending);
-                        CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
-                    }
+                    PendingTasks.Remove(taskInPending);
+                    CompletedTasks.Insert(0, updatedTask);
                 }
                 else if (taskInPinned != null)
                 {
                     // Task was pinned, now completed - unpin and move to completed collection
-                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
-                    if (updatedTask != null)
-                    {
-                        // Unpin the task
-                        updatedTask.IsPinned = false;
-                        await _dataService.SaveTaskAsync(updatedTask);
+                    updatedTask.IsPinned = false;
+                    await _dataService.SaveTaskAsync(updatedTask);
 
-                        PinnedTasks.Remove(taskInPinned);
-                        CompletedTasks.Insert(0, updatedTask); // Insert at top (most recent first)
-                        OnPropertyChanged(nameof(HasPinnedTasks));
-                    }
+                    PinnedTasks.Remove(taskInPinned);
+                    CompletedTasks.Insert(0, updatedTask);
+                    OnPropertyChanged(nameof(HasPinnedTasks));
                 }
                 else if (taskInCompleted != null)
                 {
                     // Task was completed, now pending - move to pending collection
-                    var updatedTask = await _dataService.GetTaskByIdAsync(taskId);
-                    if (updatedTask != null)
-                    {
-                        CompletedTasks.Remove(taskInCompleted);
-                        PendingTasks.Add(updatedTask);
-                    }
+                    CompletedTasks.Remove(taskInCompleted);
+                    PendingTasks.Add(updatedTask);
                 }
             }
             catch (Exception ex)
