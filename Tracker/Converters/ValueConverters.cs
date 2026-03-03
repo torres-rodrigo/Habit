@@ -203,7 +203,7 @@ namespace Tracker.Converters
         {
             if (value is bool boolValue)
             {
-                return boolValue ? "▶" : "▼";  // Collapsed: ▶, Expanded: ▼
+                return boolValue ? "▶" : "▼";
             }
             return "▼";
         }
@@ -220,7 +220,7 @@ namespace Tracker.Converters
         {
             if (value is bool boolValue)
             {
-                return boolValue ? "📌" : "📍";  // Pinned: 📌, Not Pinned: 📍
+                return boolValue ? "📌" : "📍";
             }
             return "📍";
         }

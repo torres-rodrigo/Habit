@@ -15,7 +15,7 @@ namespace Tracker.Services
             var monthStart = new DateTime(today.Year, today.Month, 1);
             var yearStart = new DateTime(today.Year, 1, 1);
 
-            // Build HashSet for O(1) completion lookups instead of O(n) per check
+            // Build HashSet for O(1) completion lookups
             var completionDates = habit.Completions.Select(c => c.CompletedDate.Date).ToHashSet();
 
             var dailyCompletions = completionDates.Contains(today) ? 1 : 0;
