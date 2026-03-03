@@ -28,7 +28,7 @@ public class EditTaskViewModel : BaseViewModel
         {
             _taskId = value;
             OnPropertyChanged();
-            _ = LoadTaskAsync();
+            RunAsync(LoadTaskAsync);
         }
     }
 

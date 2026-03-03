@@ -120,7 +120,7 @@ namespace Tracker.ViewModels
             StartDragCommand = new Command<HabitCardViewModel>(OnStartDrag);
             DropCommand = new Command<HabitCardViewModel>(OnDrop);
 
-            _ = LoadHabitsAsync();
+            RunAsync(LoadHabitsAsync);
         }
 
         private async Task LoadHabitsAsync()

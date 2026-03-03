@@ -39,7 +39,7 @@ namespace Tracker.ViewModels
             {
                 if (SetProperty(ref _selectedPriorityFilter, value))
                 {
-                    _ = ApplyFiltersAsync();
+                    RunAsync(ApplyFiltersAsync);
                 }
             }
         }
@@ -67,11 +67,11 @@ namespace Tracker.ViewModels
                         if (SelectedDatePeriodFilter?.Name == "Custom" &&
                             string.IsNullOrEmpty(CustomDateDisplayText))
                         {
-                            _ = ShowCustomDateModalAsync();
+                            ShowCustomDatePopup = true;
                         }
                     }
 
-                    _ = ApplyFiltersAsync();
+                    RunAsync(ApplyFiltersAsync);
                 }
             }
         }
@@ -92,7 +92,7 @@ namespace Tracker.ViewModels
                     // Show custom date modal if Custom is selected
                     if (value?.Name == "Custom")
                     {
-                        _ = ShowCustomDateModalAsync();
+                        ShowCustomDatePopup = true;
                     }
                     else
                     {
@@ -100,7 +100,7 @@ namespace Tracker.ViewModels
                         CustomDateDisplayText = string.Empty;
                         _customStartDate = null;
                         _customEndDate = null;
-                        _ = ApplyFiltersAsync();
+                        RunAsync(ApplyFiltersAsync);
                     }
                 }
             }
@@ -137,7 +137,7 @@ namespace Tracker.ViewModels
             {
                 if (SetProperty(ref _sortByDueDate, value))
                 {
-                    _ = ApplyFiltersAsync();
+                    RunAsync(ApplyFiltersAsync);
                 }
             }
         }
@@ -242,7 +242,7 @@ namespace Tracker.ViewModels
             });
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            _ = LoadTasksAsync();
+            RunAsync(LoadTasksAsync);
         }
 
         private async Task LoadTasksAsync()
@@ -330,18 +330,12 @@ namespace Tracker.ViewModels
             }
         }
 
-        private async Task ShowCustomDateModalAsync()
-        {
-            ShowCustomDatePopup = true;
-            await Task.CompletedTask;
-        }
-
         public void SetCustomDateRange(DateTime startDate, DateTime endDate, string displayText)
         {
             _customStartDate = startDate;
             _customEndDate = endDate;
             CustomDateDisplayText = displayText;
-            _ = ApplyFiltersAsync();
+            RunAsync(ApplyFiltersAsync);
         }
 
         private IEnumerable<TodoTask> ApplyDateFilter(IEnumerable<TodoTask> tasks)

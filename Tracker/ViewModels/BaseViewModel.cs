@@ -22,6 +22,22 @@ namespace Tracker.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// Safely runs an async method without awaiting (fire-and-forget).
+        /// Unlike discarding with "_ =", this ensures exceptions are not silently swallowed.
+        /// </summary>
+        protected async void RunAsync(Func<Task> asyncAction)
+        {
+            try
+            {
+                await asyncAction();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[{GetType().Name}] Unhandled async error: {ex.Message}");
+            }
+        }
+
         private bool _isBusy;
         public bool IsBusy
         {

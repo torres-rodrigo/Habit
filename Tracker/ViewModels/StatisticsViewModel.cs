@@ -136,7 +136,7 @@ namespace Tracker.ViewModels
             ShowExportPopupCommand = new Command(OnShowExportPopup);
             CancelExportCommand = new Command(OnCancelExport);
             ExecuteExportCommand = new Command(async () => await OnExecuteExportAsync());
-            _ = LoadStatisticsAsync();
+            RunAsync(LoadStatisticsAsync);
         }
 
         public async Task LoadStatisticsAsync()

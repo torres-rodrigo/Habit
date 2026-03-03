@@ -34,7 +34,7 @@ namespace Tracker.ViewModels
                 {
                     _habitId = habitId;
                     OnPropertyChanged(nameof(IsEditingExistingHabit));
-                    _ = LoadHabitAsync();
+                    RunAsync(LoadHabitAsync);
                 }
             }
         }
@@ -46,7 +46,7 @@ namespace Tracker.ViewModels
             {
                 _habitId = value;
                 OnPropertyChanged(nameof(IsEditingExistingHabit));
-                _ = LoadHabitAsync();
+                RunAsync(LoadHabitAsync);
             }
         }
 
@@ -254,7 +254,7 @@ namespace Tracker.ViewModels
                     OnPropertyChanged(nameof(IsNoteDateTrackable));
                     OnPropertyChanged(nameof(SaveNoteButtonColor));
                     OnPropertyChanged(nameof(NoteEditorText));
-                    _ = LoadNoteForDateAsync();
+                    RunAsync(LoadNoteForDateAsync);
                 }
             }
         }
