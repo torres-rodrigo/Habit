@@ -237,10 +237,7 @@ namespace Tracker.ViewModels
             }
 
             // Find the habit to check if it's completed or untracked
-            var habitCard = Habits.FirstOrDefault(h => h.Id == habitId)
-                ?? ActiveHabits.FirstOrDefault(h => h.Id == habitId)
-                ?? CompletedHabits.FirstOrDefault(h => h.Id == habitId)
-                ?? UntrackedHabits.FirstOrDefault(h => h.Id == habitId);
+            var habitCard = Habits.FirstOrDefault(h => h.Id == habitId);
 
             if (habitCard != null)
             {
@@ -396,10 +393,7 @@ namespace Tracker.ViewModels
                 return;
 
             // Check if the habit is completed (past deadline) or untracked
-            var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
-                ?? ActiveHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
-                ?? CompletedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId)
-                ?? UntrackedHabits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
+            var habitCard = Habits.FirstOrDefault(h => h.Id == dayCompletion.HabitId);
 
             if (habitCard != null)
             {
