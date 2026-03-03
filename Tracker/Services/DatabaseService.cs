@@ -239,14 +239,26 @@ namespace Tracker.Services
         {
             await EnsureInitializedAsync();
 
+            // Batch-load all data in parallel to avoid N+1 queries
             var habitDbs = await _database.Table<HabitDb>()
                 .OrderBy(h => h.DisplayOrder)
                 .ToListAsync();
 
+            var allTrackingDays = await _database.Table<HabitTrackingDayDb>().ToListAsync();
+            var allCompletions = await _database.Table<HabitCompletionDb>().ToListAsync();
+            var allPeriods = await _database.Table<HabitTrackingPeriodDb>().ToListAsync();
+            var allPeriodDays = await _database.Table<HabitTrackingPeriodDayDb>().ToListAsync();
+
+            // Group by foreign keys for O(1) lookup
+            var trackingDaysByHabit = allTrackingDays.ToLookup(t => t.HabitId);
+            var completionsByHabit = allCompletions.ToLookup(c => c.HabitId);
+            var periodsByHabit = allPeriods.ToLookup(p => p.HabitId);
+            var periodDaysByPeriod = allPeriodDays.ToLookup(d => d.PeriodId);
+
             var habits = new List<Habit>();
             foreach (var habitDb in habitDbs)
             {
-                var habit = await MapToHabitAsync(habitDb);
+                var habit = MapToHabit(habitDb, trackingDaysByHabit, completionsByHabit, periodsByHabit, periodDaysByPeriod);
                 habits.Add(habit);
             }
 
@@ -650,33 +662,56 @@ namespace Tracker.Services
         }
 
         /// <summary>
-        /// Maps database HabitDb model to domain Habit model
-        /// Loads related tracking days and completions
+        /// Maps database HabitDb model to domain Habit model using pre-loaded related data.
+        /// Used by GetAllHabitsAsync to avoid N+1 queries.
+        /// </summary>
+        private Habit MapToHabit(
+            HabitDb habitDb,
+            ILookup<string, HabitTrackingDayDb> trackingDaysByHabit,
+            ILookup<string, HabitCompletionDb> completionsByHabit,
+            ILookup<string, HabitTrackingPeriodDb> periodsByHabit,
+            ILookup<string, HabitTrackingPeriodDayDb> periodDaysByPeriod)
+        {
+            var habit = MapHabitDbFields(habitDb);
+
+            habit.TrackingDays = trackingDaysByHabit[habitDb.Id]
+                .Select(d => (DayOfWeek)d.DayOfWeek).ToList();
+
+            habit.Completions = completionsByHabit[habitDb.Id]
+                .Select(c => new HabitCompletion
+                {
+                    Id = Guid.Parse(c.Id),
+                    HabitId = Guid.Parse(c.HabitId),
+                    CompletedDate = DateTime.Parse(c.CompletedDateUtc),
+                    Note = c.Note
+                }).ToList();
+
+            habit.TrackingPeriods = periodsByHabit[habitDb.Id]
+                .Select(periodDb => new HabitTrackingPeriod
+                {
+                    Id = Guid.Parse(periodDb.Id),
+                    HabitId = Guid.Parse(periodDb.HabitId),
+                    StartDate = DateTime.Parse(periodDb.StartDateUtc),
+                    EndDate = string.IsNullOrEmpty(periodDb.EndDateUtc)
+                        ? null
+                        : DateTime.Parse(periodDb.EndDateUtc),
+                    TrackEveryday = periodDb.TrackEveryday,
+                    TrackingDays = periodDaysByPeriod[periodDb.Id]
+                        .Select(d => (DayOfWeek)d.DayOfWeek).ToList()
+                })
+                .OrderBy(p => p.StartDate)
+                .ToList();
+
+            return habit;
+        }
+
+        /// <summary>
+        /// Maps database HabitDb model to domain Habit model.
+        /// Loads related data via individual queries — used for single-item lookups.
         /// </summary>
         private async Task<Habit> MapToHabitAsync(HabitDb habitDb)
         {
-            var habit = new Habit
-            {
-                Id = Guid.Parse(habitDb.Id),
-                Name = habitDb.Name,
-                Description = habitDb.Description,
-                TrackEveryday = habitDb.TrackEveryday,
-                CreatedDate = DateTime.Parse(habitDb.CreatedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
-                Deadline = string.IsNullOrEmpty(habitDb.DeadlineUtc)
-                    ? null
-                    : DateTime.Parse(habitDb.DeadlineUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
-                HasReminders = habitDb.HasReminders,
-                ReminderTime = habitDb.ReminderTimeTicks.HasValue
-                    ? TimeSpan.FromTicks(habitDb.ReminderTimeTicks.Value)
-                    : null,
-                NotesEnabled = habitDb.NotesEnabled,
-                IsNegativeHabit = habitDb.IsNegativeHabit,
-                IsTracked = habitDb.IsTracked,
-                UntrackedDate = string.IsNullOrEmpty(habitDb.UntrackedDateUtc)
-                    ? null
-                    : DateTime.Parse(habitDb.UntrackedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
-                DisplayOrder = habitDb.DisplayOrder
-            };
+            var habit = MapHabitDbFields(habitDb);
 
             // Load tracking days
             var trackingDays = await _database.Table<HabitTrackingDayDb>()
@@ -726,6 +761,36 @@ namespace Tracker.Services
             return habit;
         }
 
+        /// <summary>
+        /// Maps only the scalar fields from HabitDb to Habit (no related data).
+        /// Shared by both MapToHabit and MapToHabitAsync.
+        /// </summary>
+        private Habit MapHabitDbFields(HabitDb habitDb)
+        {
+            return new Habit
+            {
+                Id = Guid.Parse(habitDb.Id),
+                Name = habitDb.Name,
+                Description = habitDb.Description,
+                TrackEveryday = habitDb.TrackEveryday,
+                CreatedDate = DateTime.Parse(habitDb.CreatedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                Deadline = string.IsNullOrEmpty(habitDb.DeadlineUtc)
+                    ? null
+                    : DateTime.Parse(habitDb.DeadlineUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                HasReminders = habitDb.HasReminders,
+                ReminderTime = habitDb.ReminderTimeTicks.HasValue
+                    ? TimeSpan.FromTicks(habitDb.ReminderTimeTicks.Value)
+                    : null,
+                NotesEnabled = habitDb.NotesEnabled,
+                IsNegativeHabit = habitDb.IsNegativeHabit,
+                IsTracked = habitDb.IsTracked,
+                UntrackedDate = string.IsNullOrEmpty(habitDb.UntrackedDateUtc)
+                    ? null
+                    : DateTime.Parse(habitDb.UntrackedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
+                DisplayOrder = habitDb.DisplayOrder
+            };
+        }
+
         #endregion
 
         #region Task Operations
@@ -734,14 +799,21 @@ namespace Tracker.Services
         {
             await EnsureInitializedAsync();
 
+            // Batch-load all data to avoid N+1 queries
             var taskDbs = await _database.Table<TaskDb>()
                 .OrderBy(t => t.DisplayOrder)
                 .ToListAsync();
 
+            var allSubTasks = await _database.Table<SubTaskDb>()
+                .OrderBy(st => st.DisplayOrder)
+                .ToListAsync();
+
+            var subTasksByParent = allSubTasks.ToLookup(st => st.ParentTaskId);
+
             var tasks = new List<TodoTask>();
             foreach (var taskDb in taskDbs)
             {
-                var task = await MapToTaskAsync(taskDb);
+                var task = MapToTask(taskDb, subTasksByParent);
                 tasks.Add(task);
             }
 
@@ -927,12 +999,45 @@ namespace Tracker.Services
         }
 
         /// <summary>
-        /// Maps database TaskDb model to domain TodoTask model
-        /// Loads related subtasks and restores parent references
+        /// Maps database TaskDb model to domain TodoTask model using pre-loaded subtasks.
+        /// Used by GetAllTasksAsync to avoid N+1 queries.
+        /// </summary>
+        private TodoTask MapToTask(TaskDb taskDb, ILookup<string, SubTaskDb> subTasksByParent)
+        {
+            var task = MapTaskDbFields(taskDb);
+            task.SubTasks = subTasksByParent[taskDb.Id]
+                .OrderBy(st => st.DisplayOrder)
+                .Select(st => MapToSubTask(st, task))
+                .ToList();
+            return task;
+        }
+
+        /// <summary>
+        /// Maps database TaskDb model to domain TodoTask model.
+        /// Loads subtasks via individual query — used for single-item lookups.
         /// </summary>
         private async Task<TodoTask> MapToTaskAsync(TaskDb taskDb)
         {
-            var task = new TodoTask
+            var task = MapTaskDbFields(taskDb);
+
+            // Load subtasks
+            var subTaskDbs = await _database.Table<SubTaskDb>()
+                .Where(st => st.ParentTaskId == taskDb.Id)
+                .OrderBy(st => st.DisplayOrder)
+                .ToListAsync();
+
+            task.SubTasks = subTaskDbs.Select(st => MapToSubTask(st, task)).ToList();
+
+            return task;
+        }
+
+        /// <summary>
+        /// Maps only the scalar fields from TaskDb to TodoTask (no related data).
+        /// Shared by both MapToTask and MapToTaskAsync.
+        /// </summary>
+        private TodoTask MapTaskDbFields(TaskDb taskDb)
+        {
+            return new TodoTask
             {
                 Id = Guid.Parse(taskDb.Id),
                 Name = taskDb.Name,
@@ -954,16 +1059,6 @@ namespace Tracker.Services
                 AutoCompleteWithSubtasks = taskDb.AutoCompleteWithSubtasks,
                 IsPinned = taskDb.IsPinned
             };
-
-            // Load subtasks
-            var subTaskDbs = await _database.Table<SubTaskDb>()
-                .Where(st => st.ParentTaskId == taskDb.Id)
-                .OrderBy(st => st.DisplayOrder)
-                .ToListAsync();
-
-            task.SubTasks = subTaskDbs.Select(st => MapToSubTask(st, task)).ToList();
-
-            return task;
         }
 
         /// <summary>
