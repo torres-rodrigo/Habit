@@ -5,8 +5,9 @@ using Tracker.Services;
 
 namespace Tracker.ViewModels
 {
-    public class StatisticsViewModel : BaseViewModel
+    public class StatisticsViewModel : BaseViewModel, IDisposable
     {
+        private bool _disposed;
         private readonly IDataService _dataService;
         private readonly IDialogService _dialogService;
         private bool _isLoading;
@@ -326,6 +327,16 @@ namespace Tracker.ViewModels
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
             }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
         }
     }
 }
