@@ -15,7 +15,10 @@ namespace Tracker.Services
             var monthStart = new DateTime(today.Year, today.Month, 1);
             var yearStart = new DateTime(today.Year, 1, 1);
 
-            var dailyCompletions = habit.Completions.Count(c => c.CompletedDate.Date == today);
+            // Build HashSet for O(1) completion lookups instead of O(n) per check
+            var completionDates = habit.Completions.Select(c => c.CompletedDate.Date).ToHashSet();
+
+            var dailyCompletions = completionDates.Contains(today) ? 1 : 0;
             var weeklyCompletions = habit.Completions.Count(c => c.CompletedDate >= weekStart);
             var monthlyCompletions = habit.Completions.Count(c => c.CompletedDate >= monthStart);
             var yearlyCompletions = habit.Completions.Count(c => c.CompletedDate >= yearStart);
@@ -41,8 +44,8 @@ namespace Tracker.Services
                 if (habit.ShouldTrackOnDay(d)) yearlyTarget++;
             }
 
-            var currentStreak = CalculateCurrentStreak(habit);
-            var longestStreak = CalculateLongestStreak(habit);
+            var currentStreak = CalculateCurrentStreak(habit, completionDates);
+            var longestStreak = CalculateLongestStreak(habit, completionDates);
 
             // Calculate all-time expected completions
             var allTimeExpected = 0;
@@ -179,7 +182,7 @@ namespace Tracker.Services
             };
         }
 
-        private static int CalculateCurrentStreak(Habit habit)
+        private static int CalculateCurrentStreak(Habit habit, HashSet<DateTime> completionDates)
         {
             var streak = 0;
             var date = DateTime.Today;
@@ -189,7 +192,7 @@ namespace Tracker.Services
             {
                 if (habit.ShouldTrackOnDay(date))
                 {
-                    if (habit.Completions.Any(c => c.CompletedDate.Date == date))
+                    if (completionDates.Contains(date))
                     {
                         streak++;
                     }
@@ -204,20 +207,20 @@ namespace Tracker.Services
             return streak;
         }
 
-        private static int CalculateLongestStreak(Habit habit)
+        private static int CalculateLongestStreak(Habit habit, HashSet<DateTime> completionDates)
         {
-            if (habit.Completions.Count == 0) return 0;
+            if (completionDates.Count == 0) return 0;
 
             var longestStreak = 0;
             var currentStreak = 0;
-            var date = habit.CreatedDate;
+            var date = habit.CreatedDate.Date;
             var today = DateTime.Today;
 
             while (date <= today)
             {
                 if (habit.ShouldTrackOnDay(date))
                 {
-                    if (habit.Completions.Any(c => c.CompletedDate.Date == date))
+                    if (completionDates.Contains(date))
                     {
                         currentStreak++;
                         longestStreak = Math.Max(longestStreak, currentStreak);
