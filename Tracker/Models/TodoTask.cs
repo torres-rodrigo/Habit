@@ -28,7 +28,7 @@ namespace Tracker.Models
         public string Description { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime? DueDate { get; set; }
-        public string? Priority { get; set; }
+        public TaskPriority Priority { get; set; }
         public bool HasReminders { get; set; }
         public TimeSpan? ReminderTime { get; set; }
         public int DisplayOrder { get; set; }

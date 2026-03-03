@@ -977,7 +977,7 @@ namespace Tracker.Services
                 Description = task.Description,
                 CreatedDateUtc = task.CreatedDate.ToUniversalTime().ToString("o"),
                 DueDateUtc = task.DueDate?.ToUniversalTime().ToString("o"),
-                Priority = task.Priority,
+                Priority = task.Priority.ToString(),
                 CompletedDateUtc = task.CompletedDate?.ToUniversalTime().ToString("o"),
                 IsCompleted = task.IsCompleted,
                 HasReminders = task.HasReminders,
@@ -1036,7 +1036,7 @@ namespace Tracker.Services
                 DueDate = string.IsNullOrEmpty(taskDb.DueDateUtc)
                     ? null
                     : DateTime.Parse(taskDb.DueDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),
-                Priority = taskDb.Priority,
+                Priority = Enum.TryParse<TaskPriority>(taskDb.Priority, out var priority) ? priority : TaskPriority.None,
                 CompletedDate = string.IsNullOrEmpty(taskDb.CompletedDateUtc)
                     ? null
                     : DateTime.Parse(taskDb.CompletedDateUtc, null, DateTimeStyles.RoundtripKind).ToLocalTime(),

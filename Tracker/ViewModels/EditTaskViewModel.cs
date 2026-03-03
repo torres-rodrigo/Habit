@@ -139,7 +139,7 @@ public class EditTaskViewModel : BaseViewModel
                 Description = task.Description ?? string.Empty;
                 HasDueDate = task.DueDate.HasValue;
                 DueDate = task.DueDate ?? DateTime.Today;
-                SelectedPriority = FormatPriorityForDisplay(task.Priority ?? "None");
+                SelectedPriority = FormatPriorityForDisplay(task.Priority);
                 AutoCompleteWithSubtasks = task.AutoCompleteWithSubtasks;
                 _taskCreatedDate = task.CreatedDate;
 
@@ -218,7 +218,7 @@ public class EditTaskViewModel : BaseViewModel
                 Name = TaskName,
                 Description = string.IsNullOrWhiteSpace(Description) ? string.Empty : Description,
                 DueDate = HasDueDate ? DueDate : null,
-                Priority = ExtractPriorityName(SelectedPriority),
+                Priority = ExtractPriority(SelectedPriority),
                 CreatedDate = existingTask?.CreatedDate ?? DateTime.Now,
                 IsCompleted = existingTask?.IsCompleted ?? false,
                 CompletedDate = existingTask?.CompletedDate,
@@ -270,21 +270,22 @@ public class EditTaskViewModel : BaseViewModel
         await _navigationService.GoToAsync("..");
     }
 
-    private static string ExtractPriorityName(string displayPriority)
+    private static TaskPriority ExtractPriority(string displayPriority)
     {
-        if (string.IsNullOrEmpty(displayPriority)) return "None";
-        
-        // Remove symbols: ●, ⬡, ▼ and trim
-        return displayPriority.Replace("●", "").Replace("⬡", "").Replace("▼", "").Trim();
+        if (string.IsNullOrEmpty(displayPriority)) return TaskPriority.None;
+
+        // Remove symbols and trim, then parse to enum
+        var cleaned = displayPriority.Replace("●", "").Replace("⬡", "").Replace("▼", "").Trim();
+        return Enum.TryParse<TaskPriority>(cleaned, out var priority) ? priority : TaskPriority.None;
     }
 
-    private static string FormatPriorityForDisplay(string priority)
+    private static string FormatPriorityForDisplay(TaskPriority priority)
     {
         return priority switch
         {
-            "Low" => "● Low",
-            "Medium" => "⬡ Medium",
-            "High" => "▼ High",
+            TaskPriority.Low => "● Low",
+            TaskPriority.Medium => "⬡ Medium",
+            TaskPriority.High => "▼ High",
             _ => "None"
         };
     }

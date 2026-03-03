@@ -251,12 +251,19 @@ namespace Tracker.ViewModels
                 var allTasks = await _dataService.GetAllTasksAsync();
 
                 // Apply priority filter
-                var filteredTasks = SelectedPriorityFilter?.Name switch
+                IEnumerable<TodoTask> filteredTasks;
+                if (SelectedPriorityFilter?.Name == "ALL")
                 {
-                    "ALL" => allTasks,
-                    "None" => allTasks.Where(t => string.IsNullOrEmpty(t.Priority) || t.Priority == "None"),
-                    _ => allTasks.Where(t => t.Priority == SelectedPriorityFilter?.Name)
-                };
+                    filteredTasks = allTasks;
+                }
+                else if (Enum.TryParse<TaskPriority>(SelectedPriorityFilter?.Name, out var filterPriority))
+                {
+                    filteredTasks = allTasks.Where(t => t.Priority == filterPriority);
+                }
+                else
+                {
+                    filteredTasks = allTasks;
+                }
 
                 // Apply date filter
                 filteredTasks = ApplyDateFilter(filteredTasks);

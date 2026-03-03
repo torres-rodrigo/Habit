@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Tracker.Models;
 
 namespace Tracker.Converters
 {
@@ -136,8 +137,11 @@ namespace Tracker.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            var priority = value as string;
-            return !string.IsNullOrEmpty(priority) && priority != "None";
+            if (value is TaskPriority priority)
+            {
+                return priority != TaskPriority.None;
+            }
+            return false;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -150,14 +154,17 @@ namespace Tracker.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            var priority = value as string;
-            return priority switch
+            if (value is TaskPriority priority)
             {
-                "Low" => Color.FromArgb("#39FF14"),      // Fluorescent green
-                "Medium" => Color.FromArgb("#FF8C00"),   // Bright orange
-                "High" => Color.FromArgb("#FF0000"),     // Bright red
-                _ => Colors.Transparent
-            };
+                return priority switch
+                {
+                    TaskPriority.Low => Color.FromArgb("#39FF14"),      // Fluorescent green
+                    TaskPriority.Medium => Color.FromArgb("#FF8C00"),   // Bright orange
+                    TaskPriority.High => Color.FromArgb("#FF0000"),     // Bright red
+                    _ => Colors.Transparent
+                };
+            }
+            return Colors.Transparent;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -170,16 +177,18 @@ namespace Tracker.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            var priority = value as string;
-            var targetShape = parameter as string;
-
-            return priority switch
+            if (value is TaskPriority priority)
             {
-                "Low" => targetShape == "Circle",
-                "Medium" => targetShape == "Hexagon",
-                "High" => targetShape == "Triangle",
-                _ => false
-            };
+                var targetShape = parameter as string;
+                return priority switch
+                {
+                    TaskPriority.Low => targetShape == "Circle",
+                    TaskPriority.Medium => targetShape == "Hexagon",
+                    TaskPriority.High => targetShape == "Triangle",
+                    _ => false
+                };
+            }
+            return false;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
