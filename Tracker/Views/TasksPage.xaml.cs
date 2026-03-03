@@ -19,32 +19,45 @@ public partial class TasksPage : ContentPage
         // Set the BindingContext for the custom date popup
         CustomDatePopupControl.BindingContext = customDateViewModel;
 
-        // Wire custom date events between CustomDateViewModel and TaskViewModel
-        _customDateViewModel.DateSelected += result =>
-        {
-            _viewModel.SetCustomDateRange(result.StartDate, result.EndDate, result.DisplayText);
-            _viewModel.ShowCustomDatePopup = false;
-        };
+        // Wire events (using named methods so they can be unsubscribed)
+        _customDateViewModel.DateSelected += OnCustomDateSelected;
+        _customDateViewModel.DateCancelled += OnCustomDateCancelled;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        _customDateViewModel.DateCancelled += () =>
-        {
-            _viewModel.RevertDatePeriodFilter();
-        };
+        // Unsubscribe when page is unloaded to prevent leaks
+        Unloaded += OnPageUnloaded;
+    }
 
-        // Manually bind the popup visibility to the ViewModel property
-        _viewModel.PropertyChanged += (s, e) =>
+    private void OnPageUnloaded(object? sender, EventArgs e)
+    {
+        _customDateViewModel.DateSelected -= OnCustomDateSelected;
+        _customDateViewModel.DateCancelled -= OnCustomDateCancelled;
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+
+    private void OnCustomDateSelected(CustomDateResult result)
+    {
+        _viewModel.SetCustomDateRange(result.StartDate, result.EndDate, result.DisplayText);
+        _viewModel.ShowCustomDatePopup = false;
+    }
+
+    private void OnCustomDateCancelled()
+    {
+        _viewModel.RevertDatePeriodFilter();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TaskViewModel.ShowCustomDatePopup))
         {
-            if (e.PropertyName == nameof(TaskViewModel.ShowCustomDatePopup))
+            CustomDatePopupControl.IsVisible = _viewModel.ShowCustomDatePopup;
+
+            // Reset selections when popup opens
+            if (_viewModel.ShowCustomDatePopup)
             {
-                CustomDatePopupControl.IsVisible = _viewModel.ShowCustomDatePopup;
-
-                // Reset selections when popup opens
-                if (_viewModel.ShowCustomDatePopup)
-                {
-                    _customDateViewModel.ResetAllSelections();
-                }
+                _customDateViewModel.ResetAllSelections();
             }
-        };
+        }
     }
 
     protected override async void OnAppearing()
