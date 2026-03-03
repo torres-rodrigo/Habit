@@ -459,18 +459,8 @@ namespace Tracker.Services
                     }
                 }
 
-                // Update completions (delete all + insert new)
-                conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
-                foreach (var completion in habit.Completions)
-                {
-                    conn.Insert(new HabitCompletionDb
-                    {
-                        Id = completion.Id.ToString(),
-                        HabitId = habitId,
-                        CompletedDateUtc = completion.CompletedDate.Date.ToString("yyyy-MM-dd"),
-                        Note = completion.Note
-                    });
-                }
+                // Completions are managed separately via ToggleHabitCompletionAsync —
+                // not rewritten here to avoid destructive bulk delete/re-insert on every save.
             });
         }
 
