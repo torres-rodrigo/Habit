@@ -1015,13 +1015,12 @@ namespace Tracker.ViewModels
                 if (SetProperty(ref _isSelected, value))
                 {
                     OnPropertyChanged(nameof(BackgroundColor));
-                    OnPropertyChanged(nameof(TextColor));
                 }
             }
         }
 
         public string BackgroundColor => IsSelected ? "Green" : "Transparent";
-        public string TextColor => IsSelected ? "White" : "#FFFFFF";
+        public string TextColor => "White";
     }
 
     public class YearItemViewModel : BaseViewModel
@@ -1050,12 +1049,11 @@ namespace Tracker.ViewModels
                 if (SetProperty(ref _isSelected, value))
                 {
                     OnPropertyChanged(nameof(BackgroundColor));
-                    OnPropertyChanged(nameof(TextColor));
                 }
             }
         }
 
         public string BackgroundColor => IsSelected ? "Green" : "Transparent";
-        public string TextColor => IsSelected ? "White" : "#FFFFFF";
+        public string TextColor => "White";
     }
 }
