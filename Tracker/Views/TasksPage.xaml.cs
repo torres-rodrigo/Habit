@@ -19,6 +19,18 @@ public partial class TasksPage : ContentPage
         // Set the BindingContext for the custom date popup
         CustomDatePopupControl.BindingContext = customDateViewModel;
 
+        // Wire custom date events between CustomDateViewModel and TaskViewModel
+        _customDateViewModel.DateSelected += result =>
+        {
+            _viewModel.SetCustomDateRange(result.StartDate, result.EndDate, result.DisplayText);
+            _viewModel.ShowCustomDatePopup = false;
+        };
+
+        _customDateViewModel.DateCancelled += () =>
+        {
+            _viewModel.RevertDatePeriodFilter();
+        };
+
         // Manually bind the popup visibility to the ViewModel property
         _viewModel.PropertyChanged += (s, e) =>
         {

@@ -101,6 +101,9 @@ namespace Tracker.ViewModels
             set => SetProperty(ref _isDayEnabled, value);
         }
 
+        public event Action<CustomDateResult>? DateSelected;
+        public event Action? DateCancelled;
+
         public ICommand ClearYearCommand { get; }
         public ICommand ClearMonthCommand { get; }
         public ICommand ClearWeekCommand { get; }
@@ -117,7 +120,7 @@ namespace Tracker.ViewModels
             ClearWeekCommand = new Command(ClearWeek);
             ClearDayCommand = new Command(ClearDay);
             ConfirmCommand = new Command(async () => await ConfirmAsync());
-            CancelCommand = new Command(async () => await CancelAsync());
+            CancelCommand = new Command(Cancel);
         }
 
         private void UpdateEnabledStates()
@@ -254,27 +257,17 @@ namespace Tracker.ViewModels
                 return;
             }
 
-            // Pass the result back to TaskViewModel
-            // We'll need to get the TaskViewModel instance somehow
-            // For now, use MessagingCenter or pass it through navigation parameters
-#pragma warning disable CS0618 // Type or member is obsolete
-            MessagingCenter.Send(this, "CustomDateSelected", new CustomDateResult
+            DateSelected?.Invoke(new CustomDateResult
             {
                 StartDate = startDate,
                 EndDate = endDate,
                 DisplayText = displayText
             });
-#pragma warning restore CS0618 // Type or member is obsolete
-
-            await Task.CompletedTask;
         }
 
-        private async Task CancelAsync()
+        private void Cancel()
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            MessagingCenter.Send(this, "CustomDateCancelled");
-#pragma warning restore CS0618 // Type or member is obsolete
-            await Task.CompletedTask;
+            DateCancelled?.Invoke();
         }
     }
 

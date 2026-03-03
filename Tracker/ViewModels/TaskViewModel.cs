@@ -225,23 +225,6 @@ namespace Tracker.ViewModels
             TogglePinnedCollapseCommand = new Command(() => IsPinnedCollapsed = !IsPinnedCollapsed);
             TogglePinCommand = new Command<Guid>(async (id) => await OnTogglePinAsync(id));
 
-            // Subscribe to custom date selection messages
-#pragma warning disable CS0618 // Type or member is obsolete
-            MessagingCenter.Subscribe<CustomDateViewModel, CustomDateResult>(this, "CustomDateSelected", (sender, result) =>
-            {
-                SetCustomDateRange(result.StartDate, result.EndDate, result.DisplayText);
-                ShowCustomDatePopup = false;
-            });
-
-            MessagingCenter.Subscribe<CustomDateViewModel>(this, "CustomDateCancelled", (sender) =>
-            {
-                // Revert to previous selection (Current Year)
-                _selectedDatePeriodFilter = DatePeriodFilterOptions[1];
-                OnPropertyChanged(nameof(SelectedDatePeriodFilter));
-                ShowCustomDatePopup = false;
-            });
-#pragma warning restore CS0618 // Type or member is obsolete
-
             RunAsync(LoadTasksAsync);
         }
 
@@ -328,6 +311,13 @@ namespace Tracker.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        public void RevertDatePeriodFilter()
+        {
+            _selectedDatePeriodFilter = DatePeriodFilterOptions[1]; // Current Year
+            OnPropertyChanged(nameof(SelectedDatePeriodFilter));
+            ShowCustomDatePopup = false;
         }
 
         public void SetCustomDateRange(DateTime startDate, DateTime endDate, string displayText)
