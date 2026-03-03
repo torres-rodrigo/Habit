@@ -72,6 +72,25 @@ namespace Tracker.Services
                 ReminderTime = new TimeSpan(20, 0, 0)
             };
 
+            // Add initial tracking periods for sample habits
+            exerciseHabit.TrackingPeriods.Add(new HabitTrackingPeriod
+            {
+                HabitId = exerciseHabit.Id,
+                StartDate = exerciseHabit.CreatedDate.Date,
+                EndDate = null,
+                TrackEveryday = true,
+                TrackingDays = new()
+            });
+
+            readingHabit.TrackingPeriods.Add(new HabitTrackingPeriod
+            {
+                HabitId = readingHabit.Id,
+                StartDate = readingHabit.CreatedDate.Date,
+                EndDate = null,
+                TrackEveryday = false,
+                TrackingDays = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday }
+            });
+
             _habits.Add(exerciseHabit);
             _habits.Add(readingHabit);
 
@@ -151,11 +170,59 @@ namespace Tracker.Services
             var existing = _habits.FirstOrDefault(h => h.Id == habit.Id);
             if (existing != null)
             {
+                // Check if tracking config changed
+                var configChanged = existing.TrackEveryday != habit.TrackEveryday;
+                if (!configChanged && !habit.TrackEveryday)
+                {
+                    configChanged = !existing.TrackingDays.OrderBy(d => d)
+                        .SequenceEqual(habit.TrackingDays.OrderBy(d => d));
+                }
+
+                if (configChanged && habit.TrackingPeriods.Count > 0)
+                {
+                    var activePeriod = habit.TrackingPeriods.FirstOrDefault(p => p.EndDate == null);
+                    if (activePeriod != null)
+                    {
+                        var today = DateTime.Today;
+                        if (activePeriod.StartDate.Date == today)
+                        {
+                            // Update in place
+                            activePeriod.TrackEveryday = habit.TrackEveryday;
+                            activePeriod.TrackingDays = new List<DayOfWeek>(habit.TrackingDays);
+                        }
+                        else
+                        {
+                            // Close old period, create new one
+                            activePeriod.EndDate = today.AddDays(-1);
+                            habit.TrackingPeriods.Add(new HabitTrackingPeriod
+                            {
+                                HabitId = habit.Id,
+                                StartDate = today,
+                                EndDate = null,
+                                TrackEveryday = habit.TrackEveryday,
+                                TrackingDays = new List<DayOfWeek>(habit.TrackingDays)
+                            });
+                        }
+                    }
+                }
+
                 _habits.Remove(existing);
             }
             else
             {
                 habit.DisplayOrder = _habits.Count;
+                // Create initial period for new habit
+                if (habit.TrackingPeriods.Count == 0)
+                {
+                    habit.TrackingPeriods.Add(new HabitTrackingPeriod
+                    {
+                        HabitId = habit.Id,
+                        StartDate = habit.CreatedDate.Date,
+                        EndDate = null,
+                        TrackEveryday = habit.TrackEveryday,
+                        TrackingDays = new List<DayOfWeek>(habit.TrackingDays)
+                    });
+                }
             }
             _habits.Add(habit);
             return Task.CompletedTask;
@@ -368,11 +435,26 @@ namespace Tracker.Services
             var monthlyCompletions = habit.Completions.Count(c => c.CompletedDate >= monthStart);
             var yearlyCompletions = habit.Completions.Count(c => c.CompletedDate >= yearStart);
 
-            var weeklyTarget = habit.TrackEveryday ? 7 : habit.TrackingDays.Count;
-            var monthlyTarget = habit.TrackEveryday ? DateTime.DaysInMonth(today.Year, today.Month) :
-                GetDaysInMonthForWeekdays(today.Year, today.Month, habit.TrackingDays);
-            var yearlyTarget = habit.TrackEveryday ? (DateTime.IsLeapYear(today.Year) ? 366 : 365) :
-                GetDaysInYearForWeekdays(today.Year, habit.TrackingDays);
+            // Calculate targets using period-aware day-by-day iteration
+            var weeklyTarget = 0;
+            for (var d = weekStart; d < weekStart.AddDays(7); d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) weeklyTarget++;
+            }
+
+            var monthlyTarget = 0;
+            var lastDayOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+            for (var d = monthStart; d <= lastDayOfMonth; d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) monthlyTarget++;
+            }
+
+            var yearlyTarget = 0;
+            var lastDayOfYear = new DateTime(today.Year, 12, 31);
+            for (var d = yearStart; d <= lastDayOfYear; d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) yearlyTarget++;
+            }
 
             var currentStreak = CalculateCurrentStreak(habit);
             var longestStreak = CalculateLongestStreak(habit);
@@ -525,8 +607,9 @@ namespace Tracker.Services
         {
             var streak = 0;
             var date = DateTime.Today;
+            var earliestDate = habit.CreatedDate.Date;
 
-            while (true)
+            while (date >= earliestDate)
             {
                 if (ShouldTrackOnDay(habit, date))
                 {
@@ -576,8 +659,7 @@ namespace Tracker.Services
 
         private bool ShouldTrackOnDay(Habit habit, DateTime date)
         {
-            if (habit.TrackEveryday) return true;
-            return habit.TrackingDays.Contains(date.DayOfWeek);
+            return habit.ShouldTrackOnDay(date);
         }
 
         private int GetDaysInMonthForWeekdays(int year, int month, List<DayOfWeek> weekdays)

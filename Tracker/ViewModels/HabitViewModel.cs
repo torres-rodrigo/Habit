@@ -504,8 +504,7 @@ namespace Tracker.ViewModels
         {
             get
             {
-                var today = DateTime.Today.DayOfWeek;
-                return _habit.TrackEveryday || _habit.TrackingDays.Contains(today);
+                return _habit.ShouldTrackOnDay(DateTime.Today);
             }
         }
 
@@ -654,7 +653,9 @@ namespace Tracker.ViewModels
             {
                 var date = startOfWeek.AddDays(i);
                 var isCompleted = await _dataService.IsHabitCompletedOnDateAsync(_habit.Id, date);
-                var shouldTrack = _habit.TrackEveryday || _habit.TrackingDays.Contains(date.DayOfWeek);
+                var shouldTrack = _habit.ShouldTrackOnDay(date);
+                var currentPeriodStart = _habit.TrackingPeriods
+                    .FirstOrDefault(p => p.EndDate == null)?.StartDate;
 
                 if (shouldTrack)
                 {
@@ -675,7 +676,8 @@ namespace Tracker.ViewModels
                     IsToday = date.Date == referenceDate.Date,
                     HabitColor = HabitColor,
                     IsHabitCompleted = IsCompleted,
-                    HabitCreatedDate = _habit.CreatedDate
+                    HabitCreatedDate = _habit.CreatedDate,
+                    CurrentPeriodStartDate = currentPeriodStart
                 });
             }
 
@@ -707,6 +709,8 @@ namespace Tracker.ViewModels
         public bool ShouldTrack { get; set; }
         public bool IsToday { get; set; }
         public bool IsHabitCompleted { get; set; } // Indicates if the parent habit is completed (past deadline)
+        public DateTime? CurrentPeriodStartDate { get; set; }
+        public bool IsInCurrentPeriod => !CurrentPeriodStartDate.HasValue || Date.Date >= CurrentPeriodStartDate.Value.Date;
         public bool IsWithinValidRange
         {
             get
@@ -717,7 +721,16 @@ namespace Tracker.ViewModels
                 return Date.Date >= HabitCreatedDate.Date && Date.Date <= endOfWeek;
             }
         }
-        public bool CanToggle => ShouldTrack && IsWithinValidRange && !IsHabitCompleted;
-        public double DayOpacity => !ShouldTrack ? 0.3 : (!IsWithinValidRange ? 0.4 : 1.0);
+        public bool CanToggle => ShouldTrack && IsWithinValidRange && !IsHabitCompleted && IsInCurrentPeriod;
+        public double DayOpacity
+        {
+            get
+            {
+                if (!ShouldTrack) return 0.3;
+                if (!IsWithinValidRange) return 0.4;
+                if (!IsInCurrentPeriod) return 0.5;
+                return 1.0;
+            }
+        }
     }
 }

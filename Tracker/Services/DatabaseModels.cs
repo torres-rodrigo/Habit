@@ -42,6 +42,40 @@ namespace Tracker.Services
     }
 
     /// <summary>
+    /// Database table for Habit Tracking Periods (history of tracking config changes)
+    /// </summary>
+    [Table("HabitTrackingPeriods")]
+    public class HabitTrackingPeriodDb
+    {
+        [PrimaryKey]
+        public string Id { get; set; } = string.Empty;
+
+        [Indexed]
+        public string HabitId { get; set; } = string.Empty;
+
+        public string StartDateUtc { get; set; } = string.Empty; // "yyyy-MM-dd" format
+
+        public string? EndDateUtc { get; set; } // "yyyy-MM-dd" format, null for current/active
+
+        public bool TrackEveryday { get; set; }
+    }
+
+    /// <summary>
+    /// Junction table for tracking period days (which days of week this period tracks)
+    /// </summary>
+    [Table("HabitTrackingPeriodDays")]
+    public class HabitTrackingPeriodDayDb
+    {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [Indexed]
+        public string PeriodId { get; set; } = string.Empty;
+
+        public int DayOfWeek { get; set; } // 0-6 (Sunday-Saturday)
+    }
+
+    /// <summary>
     /// Database table for Habit completions
     /// </summary>
     [Table("HabitCompletions")]

@@ -443,7 +443,7 @@ PERSONAL TODO
 probably going to have to move toggles and filtes to hamburguer menu
 
 manage case where habit frequency changes so as to not break statistics and fix stats so that they start counting from
-habit creation
+habit creation DO minor checking for dates
 
 Performance review
 

@@ -17,7 +17,7 @@ namespace Tracker.Services
     {
         private readonly SQLiteAsyncConnection _database;
         private readonly Task _initializationTask;
-        private const int CurrentDatabaseVersion = 5;
+        private const int CurrentDatabaseVersion = 6;
 
         public DatabaseService()
         {
@@ -47,6 +47,8 @@ namespace Tracker.Services
             await _database.CreateTableAsync<HabitTrackingDayDb>();
             await _database.CreateTableAsync<HabitCompletionDb>();
             await _database.CreateTableAsync<HabitNoteDb>();
+            await _database.CreateTableAsync<HabitTrackingPeriodDb>();
+            await _database.CreateTableAsync<HabitTrackingPeriodDayDb>();
             await _database.CreateTableAsync<TaskDb>();
             await _database.CreateTableAsync<SubTaskDb>();
             await _database.CreateTableAsync<DatabaseInfoDb>();
@@ -62,6 +64,10 @@ namespace Tracker.Services
                 "CREATE INDEX IF NOT EXISTS idx_habit_notes_habit_id ON HabitNotes(HabitId)");
             await _database.ExecuteAsync(
                 "CREATE INDEX IF NOT EXISTS idx_habit_notes_date ON HabitNotes(DateUtc)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_tracking_periods_habit_id ON HabitTrackingPeriods(HabitId)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_tracking_period_days_period_id ON HabitTrackingPeriodDays(PeriodId)");
             await _database.ExecuteAsync(
                 "CREATE INDEX IF NOT EXISTS idx_subtasks_parent_task_id ON SubTasks(ParentTaskId)");
 
@@ -97,6 +103,41 @@ namespace Tracker.Services
         /// </summary>
         private async Task MigrateDatabaseAsync(int fromVersion, int toVersion)
         {
+            if (fromVersion < 6)
+            {
+                // Version 6: Add HabitTrackingPeriods - seed initial period for every existing habit
+                var habits = await _database.Table<HabitDb>().ToListAsync();
+                foreach (var habitDb in habits)
+                {
+                    var trackingDays = await _database.Table<HabitTrackingDayDb>()
+                        .Where(t => t.HabitId == habitDb.Id)
+                        .ToListAsync();
+
+                    var createdDate = DateTime.Parse(habitDb.CreatedDateUtc, null,
+                        DateTimeStyles.RoundtripKind).ToLocalTime();
+
+                    var periodId = Guid.NewGuid().ToString();
+
+                    await _database.InsertAsync(new HabitTrackingPeriodDb
+                    {
+                        Id = periodId,
+                        HabitId = habitDb.Id,
+                        StartDateUtc = createdDate.Date.ToString("yyyy-MM-dd"),
+                        EndDateUtc = null,
+                        TrackEveryday = habitDb.TrackEveryday
+                    });
+
+                    foreach (var day in trackingDays)
+                    {
+                        await _database.InsertAsync(new HabitTrackingPeriodDayDb
+                        {
+                            PeriodId = periodId,
+                            DayOfWeek = day.DayOfWeek
+                        });
+                    }
+                }
+            }
+
             // Update version
             await _database.ExecuteAsync(
                 "UPDATE DatabaseInfo SET Value = ? WHERE Key = 'Version'",
@@ -274,6 +315,138 @@ namespace Tracker.Services
                     });
                 }
 
+                // Handle tracking periods
+                if (existing == null)
+                {
+                    // NEW HABIT: Create initial period from creation date
+                    var periodId = Guid.NewGuid().ToString();
+                    conn.Insert(new HabitTrackingPeriodDb
+                    {
+                        Id = periodId,
+                        HabitId = habitId,
+                        StartDateUtc = habit.CreatedDate.Date.ToString("yyyy-MM-dd"),
+                        EndDateUtc = null,
+                        TrackEveryday = habit.TrackEveryday
+                    });
+
+                    foreach (var day in habit.TrackingDays)
+                    {
+                        conn.Insert(new HabitTrackingPeriodDayDb
+                        {
+                            PeriodId = periodId,
+                            DayOfWeek = (int)day
+                        });
+                    }
+                }
+                else
+                {
+                    // EXISTING HABIT: Check if tracking config changed
+                    var activePeriods = conn.Table<HabitTrackingPeriodDb>()
+                        .Where(p => p.HabitId == habitId)
+                        .ToList()
+                        .Where(p => p.EndDateUtc == null)
+                        .ToList();
+
+                    if (activePeriods.Count > 0)
+                    {
+                        var activePeriod = activePeriods.First();
+                        var configChanged = false;
+
+                        if (activePeriod.TrackEveryday != habit.TrackEveryday)
+                        {
+                            configChanged = true;
+                        }
+                        else if (!habit.TrackEveryday)
+                        {
+                            var existingPeriodDays = conn.Table<HabitTrackingPeriodDayDb>()
+                                .Where(d => d.PeriodId == activePeriod.Id)
+                                .ToList()
+                                .Select(d => d.DayOfWeek)
+                                .OrderBy(d => d)
+                                .ToList();
+
+                            var newDays = habit.TrackingDays
+                                .Select(d => (int)d)
+                                .OrderBy(d => d)
+                                .ToList();
+
+                            configChanged = !existingPeriodDays.SequenceEqual(newDays);
+                        }
+
+                        if (configChanged)
+                        {
+                            var today = DateTime.Today.ToString("yyyy-MM-dd");
+
+                            if (activePeriod.StartDateUtc == today)
+                            {
+                                // Period started today - update in place
+                                activePeriod.TrackEveryday = habit.TrackEveryday;
+                                conn.Update(activePeriod);
+
+                                conn.Execute("DELETE FROM HabitTrackingPeriodDays WHERE PeriodId = ?",
+                                    activePeriod.Id);
+                                foreach (var day in habit.TrackingDays)
+                                {
+                                    conn.Insert(new HabitTrackingPeriodDayDb
+                                    {
+                                        PeriodId = activePeriod.Id,
+                                        DayOfWeek = (int)day
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                // Close active period (end = yesterday)
+                                var yesterday = DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd");
+                                activePeriod.EndDateUtc = yesterday;
+                                conn.Update(activePeriod);
+
+                                // Create new period starting today
+                                var newPeriodId = Guid.NewGuid().ToString();
+                                conn.Insert(new HabitTrackingPeriodDb
+                                {
+                                    Id = newPeriodId,
+                                    HabitId = habitId,
+                                    StartDateUtc = today,
+                                    EndDateUtc = null,
+                                    TrackEveryday = habit.TrackEveryday
+                                });
+
+                                foreach (var day in habit.TrackingDays)
+                                {
+                                    conn.Insert(new HabitTrackingPeriodDayDb
+                                    {
+                                        PeriodId = newPeriodId,
+                                        DayOfWeek = (int)day
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No active period exists - create one defensively
+                        var periodId = Guid.NewGuid().ToString();
+                        conn.Insert(new HabitTrackingPeriodDb
+                        {
+                            Id = periodId,
+                            HabitId = habitId,
+                            StartDateUtc = habit.CreatedDate.Date.ToString("yyyy-MM-dd"),
+                            EndDateUtc = null,
+                            TrackEveryday = habit.TrackEveryday
+                        });
+
+                        foreach (var day in habit.TrackingDays)
+                        {
+                            conn.Insert(new HabitTrackingPeriodDayDb
+                            {
+                                PeriodId = periodId,
+                                DayOfWeek = (int)day
+                            });
+                        }
+                    }
+                }
+
                 // Update completions (delete all + insert new)
                 conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
                 foreach (var completion in habit.Completions)
@@ -299,6 +472,19 @@ namespace Tracker.Services
             {
                 // Cascade delete tracking days
                 conn.Execute("DELETE FROM HabitTrackingDays WHERE HabitId = ?", habitId);
+
+                // Cascade delete tracking period days and periods
+                var periodIds = conn.Table<HabitTrackingPeriodDb>()
+                    .Where(p => p.HabitId == habitId)
+                    .ToList()
+                    .Select(p => p.Id)
+                    .ToList();
+
+                foreach (var periodId in periodIds)
+                {
+                    conn.Execute("DELETE FROM HabitTrackingPeriodDays WHERE PeriodId = ?", periodId);
+                }
+                conn.Execute("DELETE FROM HabitTrackingPeriods WHERE HabitId = ?", habitId);
 
                 // Cascade delete completions
                 conn.Execute("DELETE FROM HabitCompletions WHERE HabitId = ?", habitId);
@@ -509,6 +695,33 @@ namespace Tracker.Services
                 CompletedDate = DateTime.Parse(c.CompletedDateUtc),
                 Note = c.Note
             }).ToList();
+
+            // Load tracking periods
+            var periods = await _database.Table<HabitTrackingPeriodDb>()
+                .Where(p => p.HabitId == habitDb.Id)
+                .ToListAsync();
+
+            habit.TrackingPeriods = new List<HabitTrackingPeriod>();
+            foreach (var periodDb in periods)
+            {
+                var periodDays = await _database.Table<HabitTrackingPeriodDayDb>()
+                    .Where(d => d.PeriodId == periodDb.Id)
+                    .ToListAsync();
+
+                habit.TrackingPeriods.Add(new HabitTrackingPeriod
+                {
+                    Id = Guid.Parse(periodDb.Id),
+                    HabitId = Guid.Parse(periodDb.HabitId),
+                    StartDate = DateTime.Parse(periodDb.StartDateUtc),
+                    EndDate = string.IsNullOrEmpty(periodDb.EndDateUtc)
+                        ? null
+                        : DateTime.Parse(periodDb.EndDateUtc),
+                    TrackEveryday = periodDb.TrackEveryday,
+                    TrackingDays = periodDays.Select(d => (DayOfWeek)d.DayOfWeek).ToList()
+                });
+            }
+
+            habit.TrackingPeriods = habit.TrackingPeriods.OrderBy(p => p.StartDate).ToList();
 
             return habit;
         }
@@ -795,11 +1008,26 @@ namespace Tracker.Services
             var monthlyCompletions = habit.Completions.Count(c => c.CompletedDate >= monthStart);
             var yearlyCompletions = habit.Completions.Count(c => c.CompletedDate >= yearStart);
 
-            var weeklyTarget = habit.TrackEveryday ? 7 : habit.TrackingDays.Count;
-            var monthlyTarget = habit.TrackEveryday ? DateTime.DaysInMonth(today.Year, today.Month) :
-                GetDaysInMonthForWeekdays(today.Year, today.Month, habit.TrackingDays);
-            var yearlyTarget = habit.TrackEveryday ? (DateTime.IsLeapYear(today.Year) ? 366 : 365) :
-                GetDaysInYearForWeekdays(today.Year, habit.TrackingDays);
+            // Calculate targets using period-aware day-by-day iteration
+            var weeklyTarget = 0;
+            for (var d = weekStart; d < weekStart.AddDays(7); d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) weeklyTarget++;
+            }
+
+            var monthlyTarget = 0;
+            var lastDayOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+            for (var d = monthStart; d <= lastDayOfMonth; d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) monthlyTarget++;
+            }
+
+            var yearlyTarget = 0;
+            var lastDayOfYear = new DateTime(today.Year, 12, 31);
+            for (var d = yearStart; d <= lastDayOfYear; d = d.AddDays(1))
+            {
+                if (ShouldTrackOnDay(habit, d)) yearlyTarget++;
+            }
 
             var currentStreak = CalculateCurrentStreak(habit);
             var longestStreak = CalculateLongestStreak(habit);
@@ -962,8 +1190,9 @@ namespace Tracker.Services
         {
             var streak = 0;
             var date = DateTime.Today;
+            var earliestDate = habit.CreatedDate.Date;
 
-            while (true)
+            while (date >= earliestDate)
             {
                 if (ShouldTrackOnDay(habit, date))
                 {
@@ -1013,8 +1242,7 @@ namespace Tracker.Services
 
         private bool ShouldTrackOnDay(Habit habit, DateTime date)
         {
-            if (habit.TrackEveryday) return true;
-            return habit.TrackingDays.Contains(date.DayOfWeek);
+            return habit.ShouldTrackOnDay(date);
         }
 
         private int GetDaysInMonthForWeekdays(int year, int month, List<DayOfWeek> weekdays)

@@ -24,6 +24,7 @@ namespace Tracker.ViewModels
         private HashSet<DateTime> _currentCompletions = new();
         private DateTime _selectedNoteDate = DateTime.Today;
         private string _noteText = string.Empty;
+        private List<HabitTrackingPeriod> _trackingPeriods = new();
 
         public string HabitIdString
         {
@@ -403,6 +404,7 @@ namespace Tracker.ViewModels
                 {
                     _loadedHabit = habit;
                     _habitCreatedDate = habit.CreatedDate;
+                    _trackingPeriods = habit.TrackingPeriods;
 
                     // Store original completions for comparison on save
                     _originalCompletions = habit.Completions.Select(c => c.CompletedDate.Date).ToHashSet();
@@ -735,6 +737,15 @@ namespace Tracker.ViewModels
 
         private bool ShouldTrackOnDate(DateTime date)
         {
+            // For dates in historical (closed) periods, use stored config
+            if (_trackingPeriods.Count > 0)
+            {
+                var activePeriod = _trackingPeriods.FirstOrDefault(p => p.EndDate == null);
+                var period = _trackingPeriods.FirstOrDefault(p => p.ContainsDate(date));
+                if (period != null && period != activePeriod)
+                    return period.ShouldTrackOnDay(date);
+            }
+            // For current period dates, use live UI state (checkboxes)
             if (TrackEveryday) return true;
             return DaysOfWeek.Any(d => d.IsSelected && d.Day == date.DayOfWeek);
         }
