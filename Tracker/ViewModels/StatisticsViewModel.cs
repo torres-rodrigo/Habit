@@ -274,6 +274,7 @@ namespace Tracker.ViewModels
             {
                 IsExporting = true;
                 _cancellationTokenSource = new CancellationTokenSource();
+                var token = _cancellationTokenSource.Token;
                 ExportStatusMessage = "Please wait...";
 
                 // Get the actual database path (it's tracker.db in LocalApplicationData)
@@ -293,25 +294,13 @@ namespace Tracker.ViewModels
                 var backupFileName = $"tracker-{DateTime.Now:yyyy-MM-dd}-bak.db";
                 var targetPath = Path.Combine(documentsPath, backupFileName);
 
-                // Copy the database file
-                await Task.Run(() =>
-                {
-                    File.Copy(dbPath, targetPath, overwrite: true);
-                }, _cancellationTokenSource.Token);
+                // Stream-based copy that actually respects cancellation
+                await using var sourceStream = new FileStream(dbPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                await using var targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write);
+                await sourceStream.CopyToAsync(targetStream, token);
 
-                if (_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    ExportStatusMessage = string.Empty;
-                    if (File.Exists(targetPath))
-                    {
-                        File.Delete(targetPath);
-                    }
-                }
-                else
-                {
-                    ExportStatusMessage = $"SUCCESS! DB exported to {targetPath}";
-                    IsExportSuccessful = true;
-                }
+                ExportStatusMessage = $"SUCCESS! DB exported to {targetPath}";
+                IsExportSuccessful = true;
             }
             catch (OperationCanceledException)
             {
