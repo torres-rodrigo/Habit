@@ -440,6 +440,9 @@ For issues or questions, please create an issue in the project repository.
 
 PERSONAL TODO
 
+Make habit week selector responsive
+Make task cards responsive 
+
 probably going to have to move toggles and filtes to hamburguer menu
 
 manage case where habit frequency changes so as to not break statistics and fix stats so that they start counting from

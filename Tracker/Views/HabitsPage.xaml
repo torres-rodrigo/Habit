@@ -629,7 +629,7 @@
                 
                 <Grid RowDefinitions="Auto,*,Auto" Padding="0">
                     <!-- Header -->
-                    <Grid Grid.Row="0" Padding="24,20">
+                    <Grid Grid.Row="0" Padding="24,24,24, -20">
                         <Label Text="Create New"
                                FontSize="22"
                                FontAttributes="Bold"
@@ -639,7 +639,7 @@
                     </Grid>
                     
                     <!-- Options -->
-                    <VerticalStackLayout Grid.Row="1" Spacing="12" Padding="20,0" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Row="1" Spacing="10" Padding="20,0" VerticalOptions="Center">
                         <Border BackgroundColor="#3A3A3A"
                                 Stroke="#4A4A4A"
                                 StrokeThickness="1"
@@ -647,7 +647,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12"/>
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="60,*,40" Padding="20,20">
+                            <Grid ColumnDefinitions="60,*,40" Padding="20,15">
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding NavigateToHabitCommand}"/>
                                 </Grid.GestureRecognizers>
@@ -690,7 +690,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12"/>
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="60,*,40" Padding="20,20">
+                            <Grid ColumnDefinitions="60,*,40" Padding="20,15">
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding NavigateToTaskCommand}"/>
                                 </Grid.GestureRecognizers>
